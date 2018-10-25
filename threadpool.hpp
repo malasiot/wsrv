@@ -12,7 +12,7 @@ class dispatch_queue {
     typedef std::function<void(void)> fp_t;
 
 public:
-    dispatch_queue(std::string name, size_t thread_cnt = 1);
+    dispatch_queue(size_t thread_cnt = 1);
     ~dispatch_queue();
 
     // dispatch and copy
@@ -27,7 +27,7 @@ public:
     dispatch_queue& operator=(dispatch_queue&& rhs) = delete;
 
 private:
-    std::string name_;
+
     std::mutex lock_;
     std::vector<std::thread> threads_;
     std::queue<fp_t> q_;
@@ -37,11 +37,9 @@ private:
     void dispatch_thread_handler(void);
 };
 
-dispatch_queue::dispatch_queue(std::string name, size_t thread_cnt) :
-    name_(name), threads_(thread_cnt)
+dispatch_queue::dispatch_queue(size_t thread_cnt) :
+    threads_(thread_cnt)
 {
-    printf("Creating dispatch queue: %s\n", name.c_str());
-    printf("Dispatch threads: %zu\n", thread_cnt);
 
     for(size_t i = 0; i < threads_.size(); i++)
     {
@@ -52,8 +50,6 @@ dispatch_queue::dispatch_queue(std::string name, size_t thread_cnt) :
 
 dispatch_queue::~dispatch_queue()
 {
-    printf("Destructor: Destroying dispatch threads...\n");
-
     // Signal to dispatch threads that it's time to wrap up
     quit_ = true;
     cv_.notify_all();
