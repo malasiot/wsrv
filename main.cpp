@@ -130,7 +130,7 @@ struct Connection {
             close() ;
         }
 
-        close() ;
+
     }
 
     bool accept(int fd) {
@@ -199,8 +199,9 @@ struct Connection {
         bufferevent_setcb(buf_ev_, buffered_on_read, buffered_on_write,
                           buffered_on_error, this);
 
-        /* We have to enable it before our callbacks will be
-         * called. */
+
+        bufferevent_base_set(evbase_, buf_ev_);
+
         bufferevent_enable(buf_ev_, EV_READ);
 
         return true ;
@@ -229,6 +230,12 @@ static workqueue_t workqueue;
 /* Signal handler function (defined below). */
 static void sighandler(int signal);
 
+static void server_job_function(struct job *job) {
+    Connection *client = (Connection *)job->user_data;
+    client->dispatch() ;
+    delete client ;
+    free(job);
+}
 
 
 void on_accept(evutil_socket_t fd, short ev, void *arg) {
@@ -240,26 +247,28 @@ void on_accept(evutil_socket_t fd, short ev, void *arg) {
         return ;
     }
 
-
+/*
     pool->dispatch([client](){
- event_base_dispatch(client->evbase_);
+ client->dispatch() ;
+ delete client ;
 
 cout << "ok here" << endl ;
     });
+*/
 
 
-
-#if 0
+#if 1
+    job_t *job ;
     /* Create a job object and add it to the work queue. */
     if ((job = (job_t *)malloc(sizeof(*job))) == NULL) {
         warn("failed to allocate memory for job state");
-        closeAndFreeClient(client);
+        delete client ;
         return;
     }
     job->job_function = server_job_function;
     job->user_data = client;
 
-    workqueue_add_job(workqueue, job);
+    workqueue_add_job(&workqueue, job);
  #endif
 }
 
@@ -323,7 +332,7 @@ int runServer(void) {
 
 
     /* Initialize work queue. */
-#if 0
+#if 1
     if (workqueue_init(&workqueue, NUM_THREADS)) {
         perror("Failed to create work queue");
         close(listenfd);

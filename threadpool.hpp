@@ -72,8 +72,8 @@ void dispatch_queue::dispatch(const fp_t& op)
 
     // Manual unlocking is done before notifying, to avoid waking up
     // the waiting thread only to block again (see notify_one for details)
-    lock.unlock();
-    cv_.notify_all();
+  //  lock.unlock();
+    cv_.notify_one();
 }
 
 void dispatch_queue::dispatch(fp_t&& op)
@@ -89,26 +89,25 @@ void dispatch_queue::dispatch(fp_t&& op)
 
 void dispatch_queue::dispatch_thread_handler(void)
 {
-    std::unique_lock<std::mutex> lock(lock_);
 
-    do {
-        //Wait until we have data or a quit signal
-        cv_.wait(lock, [this]{
-            return (q_.size() || quit_);
-        });
 
-        //after wait, we own the lock
-        if(q_.size() && !quit_)
+    while (!quit_) {
+
+        fp_t task ;
         {
-            auto op = std::move(q_.front());
+            std::unique_lock<std::mutex> lock(lock_);
+            //Wait until we have data or a quit signal
+            cv_.wait(lock, [this]{
+                return (q_.size() || quit_);
+            });
+
+            task = std::move(q_.front());
             q_.pop();
 
             //unlock now that we're done messing with the queue
-            lock.unlock();
-
-            op();
-
-            lock.lock();
+          //  lock.unlock();
         }
-    } while (!quit_);
+        task();
+
+    } ;
 }

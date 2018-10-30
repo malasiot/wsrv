@@ -1,11 +1,21 @@
 cmake_minimum_required(VERSION 2.8)
-project(wsrv)
+project(ws)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMake/ ${CMAKE_MODULE_PATH} )
 
-add_definitions(-std=c++11)
+find_package(Sqlite3 REQUIRED)
+find_package(ZLIB REQUIRED)
 
-find_package(Libevent2 REQUIRED)
+include_directories(
+    include
+    ${SQLITE3_INCLUDE_DIR}
+    ${ZLIB_INCLUDE_DIR}
+)
 
-add_executable(main main.cpp workqueue.cpp workqueue.hpp threadpool.hpp)
-target_link_libraries(main ${LIBEVENT2_LIBRARIES} -lpthread)
+ADD_DEFINITIONS( -std=c++11 )
+
+SET (SRC_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/src)
+SET (INCLUDE_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/include/ws)
+
+add_subdirectory(src)
+#add_subdirectory(test)
