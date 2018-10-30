@@ -20,9 +20,10 @@ public:
 
     void handle(const Request &req, Response &resp) override {
 
-        if ( req.matches("GET", "/map/") ) {
+        Dictionary attrs ;
+        if ( req.matches("GET", R"(/user/{id:\d+}/{action:show|hide}/)", attrs) ) {
 
-            resp.write("map") ;
+            resp.write("hello " + attrs.get("id")) ;
             return ;
         }
 

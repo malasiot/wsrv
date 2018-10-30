@@ -15,6 +15,7 @@ struct RouteElement {
 
     string name_ ;
     string pattern_ ;
+    int idx_ = -1;
     bool optional_ ;
 };
 
@@ -93,7 +94,7 @@ bool RouteImpl::parse(const string &pattern) {
 class UriPatternMatcher {
 public:
 
-    bool matches(const string &pattern, const RouteImpl &route, const string &uri, Dictionary &vars) ;
+    bool matches(const string &pattern, RouteImpl &route, const string &uri, Dictionary &vars) ;
 
     static UriPatternMatcher &instance() {
         static UriPatternMatcher the_instance ;
@@ -101,7 +102,7 @@ public:
     }
 
 private:
-    std::regex makeRegexFromPattern(const string &pat, const RouteImpl &route_data);
+    std::regex makeRegexFromPattern(const string &pat, RouteImpl &route_data);
     bool matchPattern(const std::regex &rx, const RouteImpl &route, const string &path, Dictionary &vars) ;
 
     std::map<std::string, std::regex> cache_ ;
@@ -111,22 +112,22 @@ private:
 bool UriPatternMatcher::matchPattern(const std::regex &rx, const RouteImpl &route, const string &path, Dictionary &vars)
 {
     // TODO implement without named capture groups
-#if 0
+
     std::smatch results ;
     if ( std::regex_match(path, results, rx) ) {
         for( const RouteElement &e: route.elements_ ) {
-            if ( !e.name_.empty() ) {
-                string val = results[e.name_].str() ;
+            if ( e.idx_ > 0 ) {
+                string val = results[e.idx_].str() ;
                 if ( !val.empty() ) vars[e.name_] = val ;
             }
         }
         return true ;
     }
-#endif
+
     return false ;
 }
 
-bool UriPatternMatcher::matches(const string &pattern, const RouteImpl &route, const string &uri, Dictionary &vars) {
+bool UriPatternMatcher::matches(const string &pattern, RouteImpl &route, const string &uri, Dictionary &vars) {
     std::unique_lock<std::mutex> l(cache_mutex_) ;
 
     auto it = cache_.find(pattern) ;
@@ -140,18 +141,20 @@ bool UriPatternMatcher::matches(const string &pattern, const RouteImpl &route, c
     }
 }
 
-std::regex  UriPatternMatcher::makeRegexFromPattern(const string &pat, const RouteImpl &route) {
+std::regex  UriPatternMatcher::makeRegexFromPattern(const string &pat, RouteImpl &route) {
     string rx ;
 
     vector<string> patterns ;
-    for( const RouteElement &e: route.elements_ ) {
+    uint capture_idx = 1 ;
+    for( RouteElement &e: route.elements_ ) {
         string param = e.name_ ;
         string pattern = e.pattern_ ;
 
         if ( pattern.empty() ) pattern = "[^\\/]+" ;
 
         if ( !param.empty() ) {
-            patterns.push_back("(?<" + param + ">" + pattern +  ")" ) ;
+            patterns.push_back("(" + pattern +  ")" ) ;
+            e.idx_ = capture_idx ++ ;
         }
         else
             patterns.push_back( "(?:" + pattern + ")") ;
