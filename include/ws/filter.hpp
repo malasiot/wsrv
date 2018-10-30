@@ -2,7 +2,6 @@
 #define WS_FILTER_HPP
 
 #include <string>
-#include <boost/noncopyable.hpp>
 
 #include <ws/request.hpp>
 #include <ws/response.hpp>
@@ -13,9 +12,11 @@ class FilterChain ;
 
 /// Middleware handler
 ///
-class Filter: private boost::noncopyable
+class Filter
 {
 public:
+
+    Filter( const Filter& ) = delete;
 
     explicit Filter() = default;
 

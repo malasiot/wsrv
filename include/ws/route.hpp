@@ -4,7 +4,6 @@
 #include <string>
 #include <ws/dictionary.hpp>
 
-
 namespace ws {
 
 struct RouteImpl ;

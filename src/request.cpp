@@ -1,10 +1,6 @@
 #include <ws/request.hpp>
 #include <ws/route.hpp>
 
-#include <boost/thread.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/tokenizer.hpp>
-
 using namespace std ;
 
 namespace ws {
@@ -31,10 +27,13 @@ bool Request::matches(const string &method, const Route &pattern) const
     return matchesMethod(method) && pattern.matches(path_, attributes) ;
 }
 
-bool Request::matchesMethod(const string &method) const
-{
+bool Request::matchesMethod(const string &method) const {
     vector<string> methods ;
-    boost::split( methods, method, boost::is_any_of(" |"), boost::token_compress_on );
+
+    static std::regex regex{R"([\s|]+)"}; // split on space and caret
+    std::sregex_token_iterator it{method.begin(), method.end(), regex, -1};
+    methods.assign(it, {}) ;
+
     return std::find(methods.begin(), methods.end(), method_) != methods.end() ;
 }
 

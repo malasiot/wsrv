@@ -8,4 +8,4 @@ include_directories(
 add_definitions( -std=c++11 )
 
 add_executable(test_server test_server.cpp )
-target_link_libraries(test_server ws_http_server ${Boost_LIBRARIES} dl z pthread)
+target_link_libraries(test_server ws_http_server)

@@ -2,13 +2,13 @@
 #define WS_CONNECTION_MANAGER_HPP
 
 #include <set>
-#include <boost/shared_ptr.hpp>
-#include <boost/thread.hpp>
+#include <memory>
+#include <mutex>
 
 namespace ws {
 
 class HttpConnection ;
-typedef boost::shared_ptr<HttpConnection> ConnectionPtr;
+typedef std::shared_ptr<HttpConnection> ConnectionPtr;
 
 /// Manages open connections so that they may be cleanly stopped when the server
 /// needs to shut down.
@@ -34,7 +34,7 @@ public:
 private:
     /// The managed connections.
     std::set<ConnectionPtr> connections_;
-    boost::mutex mutex_ ;
+    std::mutex mutex_ ;
 };
 
 

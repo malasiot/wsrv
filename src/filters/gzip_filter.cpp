@@ -1,19 +1,17 @@
 #include <ws/filters/gzip_filter.hpp>
 #include <ws/filter_chain.hpp>
 #include <ws/zstream.hpp>
-
-#include <boost/regex.hpp>
-#include <boost/algorithm/string.hpp>
+#include <regex>
 
 using namespace std ;
 
 namespace ws {
 
-static boost::regex gzip_include_mime_rx("(text/.*)|(application/x-javascript.*)|(application/xhtml+xml)|(application/xml)") ;
+static regex gzip_include_mime_rx("(text/.*)|(application/x-javascript.*)|(application/xhtml+xml)|(application/xml)") ;
 static const size_t gzip_min_content_length = 200 ;
 
 bool content_benefits_from_compression(const string &mime) {
-    if ( boost::regex_match(mime,  gzip_include_mime_rx) ) return true ;
+    if (regex_match(mime,  gzip_include_mime_rx) ) return true ;
     return false ;
 }
 
@@ -27,7 +25,7 @@ void GZipFilter::handle(Request &req, Response &resp, FilterChain &chain)
     string mime = resp.headers_.get("Content-Type") ;
 
     if ( resp.status_ == Response::ok &&
-         boost::algorithm::contains(saccept, "gzip") &&
+         saccept.find("gzip") != string::npos &&
          encoding != "gzip" &&
          !resp.content_.empty() &&
          resp.content_.length() > gzip_min_content_length &&

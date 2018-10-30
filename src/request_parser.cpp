@@ -12,6 +12,8 @@
 // https://github.com/AndreLouisCaron/httpxx
 
 #include "detail/request_parser.hpp"
+#include "detail/util.hpp"
+
 #include <ws/request.hpp>
 
 #include <algorithm>
@@ -19,13 +21,8 @@
 #include <utility>
 #include <fstream>
 
-#include <boost/algorithm/string.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/regex.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/tokenizer.hpp>
-#include <boost/iostreams/stream.hpp>
-
+#include <algorithm>
+#include <regex>
 
 using namespace std ;
 
@@ -222,9 +219,8 @@ static string normalize_path( const string &src ) {
     if ( src.empty() ) return "/" ;
 
     std::vector<std::string> src_segments, dst_segments;
-    boost::split(src_segments, src, [](char ch) {
-         return ch == '/';
-    });
+
+    src_segments = split(src, "/") ;
 
     for( const string &seg: src_segments ) {
         if ( seg.empty() ) continue ;
@@ -239,7 +235,10 @@ static string normalize_path( const string &src ) {
     }
 
     if ( dst_segments.empty() ) return "/" ;
-    string res = "/" + boost::join(dst_segments, "/") ;
+    string res = "/" ;
+
+    res += join(dst_segments, "/") ;
+
     return res ;
 }
 
@@ -259,9 +258,7 @@ static bool parse_url(Request &req, const string url)
 
     if ( !req.query_.empty() )
     {
-        std::vector<std::string> args ;
-
-        boost::split(args, req.query_, boost::is_any_of("&"), boost::algorithm::token_compress_on);
+        std::vector<std::string> args = split(req.query_, "&");
 
         for(int i=0 ; i<args.size() ; i++ )
         {
@@ -291,10 +288,10 @@ static bool parse_cookie(Request &session, const std::string &data)
 
     if ( pos == -1 ) return false ;
 
-    boost::regex rx("[ \n\r\t\f\v]*") ;
-    boost::smatch rm ;
+    std::regex rx("[ \n\r\t\f\v]*") ;
+    std::smatch rm ;
 
-    boost::regex_search(data, rm, rx) ;
+    std::regex_search(data, rm, rx) ;
     int wscount = rm[0].length() ;
 
     std::string name = data.substr(wscount, pos - wscount);
@@ -369,8 +366,7 @@ static std::string get_next_line(std::istream &strm, int maxc = 1000)
     return res ;
 }
 
-namespace fs = boost::filesystem ;
-
+#if 0
 fs::path get_temporary_path(const std::string &dir, const std::string &prefix, const std::string &ext)
 {
     std::string retVal ;
@@ -391,7 +387,7 @@ fs::path get_temporary_path(const std::string &dir, const std::string &prefix, c
 
     return temp;
 }
-
+#endif
 
 static bool parse_mime_data(Request &session, istream &strm, const string &fld, const string &file_name,
                           const string &content_type,
@@ -461,6 +457,8 @@ static bool parse_mime_data(Request &session, istream &strm, const string &fld, 
 
 static bool parse_multipart_data(Request &session, istream &strm, const string &bnd)
 {
+    static std::regex crx(R"#(form-data;\s*name="(.*?)(?=")"(?:\s*;\s*filename="(.*?)(?=")")?)#");
+
     std::string s = get_next_line(strm) ;
     if ( s.empty() ) return false ;
 
@@ -481,13 +479,13 @@ static bool parse_multipart_data(Request &session, istream &strm, const string &
             if ( pos != string::npos ) {
                 std::string key, val ;
                 key.assign(s, 0, pos) ;
-                boost::trim(key) ;
+                trim(key) ;
                 val.assign(s, pos+1, s.length() - pos) ;
-                boost::trim(val) ;
+                trim(val) ;
 
-                boost::smatch subm ;
+                std::smatch subm ;
                 if ( key == "Content-Disposition" ) {
-                    if ( boost::regex_match(val, subm, boost::regex(R"#(form-data;\s*name="(.*?)(?=")"(?:\s*;\s*filename="(.*?)(?=")")?)#") ) )
+                    if ( std::regex_match(val, subm, crx ) )
                     {
                         form_field = subm[1] ;
                         file_name = subm[2] ;
@@ -515,6 +513,8 @@ static bool parse_multipart_data(Request &session, istream &strm, const string &
 
 static bool parse_form_data(Request &session, istream &strm)
 {
+    static std::regex brx("multipart/form-data;\\s*boundary=(.*)");
+
     size_t content_length = session.SERVER_.value<int>("Content-Length", 0) ;
 
     std::string content_type = session.SERVER_.get("Content-Type") ;
@@ -522,22 +522,19 @@ static bool parse_form_data(Request &session, istream &strm)
     if ( content_type.empty() && content_length > 0 )
         return false ;
 
-    boost::smatch subm ;
+    smatch subm ;
 
-    if ( boost::starts_with(content_type, "application/x-www-form-urlencoded") )
+    if ( startsWith(content_type, "application/x-www-form-urlencoded") )
     {
         // parse name value pairs
 
         std::string s = get_next_line(strm, content_length) ;
 
-        typedef boost::tokenizer<boost::char_separator<char>>   tokenizer;
 
-        boost::char_separator<char> sep("&");
-        tokenizer tokens(s, sep);
-
-        for (tokenizer::iterator it = tokens.begin(); it != tokens.end(); ++it)
-        {
-            std::string str = (*it) ;
+        size_t begin = 0, end;
+        std::string token;
+        while ((end = s.find('&', begin)) != std::string::npos) {
+            std::string str = s.substr(begin, end) ;
 
             size_t pos = str.find('=') ;
             if ( pos == string::npos ) return false ;
@@ -546,18 +543,17 @@ static bool parse_form_data(Request &session, istream &strm)
             key = str.substr(0, pos) ;
             val = str.substr(pos+1) ;
             session.POST_[url_decode(key.c_str())] = url_decode(val.c_str()) ;
+            end = begin + 1 ;
         }
     }
-    else if ( boost::regex_match(content_type, subm, boost::regex("multipart/form-data;\\s*boundary=(.*)")  )) {
+    else if ( std::regex_match(content_type, subm, brx )) {
         std::string boundary = subm[1] ;
         parse_multipart_data(session, strm, boundary) ;
-
     }
     else if ( content_length )  {
         session.content_.resize(content_length) ;
         strm.read(&session.content_[0], content_length) ;
         session.content_type_ = content_type ;
-
     }
 
     return true ;

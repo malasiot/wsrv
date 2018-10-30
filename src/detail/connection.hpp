@@ -11,11 +11,7 @@
 #ifndef WS_CONNECTION_HPP
 #define WS_CONNECTION_HPP
 
-#include <boost/asio.hpp>
-#include <boost/array.hpp>
-#include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
+
 
 #include <ws/response.hpp>
 #include <ws/request.hpp>
@@ -28,21 +24,27 @@
 #include "request_parser.hpp"
 #include "connection_manager.hpp"
 
+#include <asio/buffered_read_stream.hpp>
+#include <asio/ip/tcp.hpp>
+#include <asio/write.hpp>
+
+#include <iostream>
+
 namespace ws {
 
 class ConnectionManager ;
 class ServerImpl ;
 
 
-extern std::vector<boost::asio::const_buffer> response_to_buffers(Response &rep, bool) ;
+extern std::vector<asio::const_buffer> response_to_buffers(Response &rep, bool) ;
 
 /// Represents a single HttpConnection from a client.
 
 class HttpConnection:
-        public boost::enable_shared_from_this<HttpConnection>
+        public std::enable_shared_from_this<HttpConnection>
 {
 public:
-    explicit HttpConnection(boost::asio::ip::tcp::socket socket,
+    explicit HttpConnection(asio::ip::tcp::socket socket,
                         ConnectionManager& manager,
                         FilterChain &handler) : socket_(std::move(socket)),
         connection_manager_(manager), handler_(handler) {}
@@ -64,7 +66,7 @@ private:
 
     void read() {
         auto self(this->shared_from_this());
-        socket_.async_read_some(boost::asio::buffer(buffer_), [self, this] (boost::system::error_code e, std::size_t bytes_transferred) {
+        socket_.async_read_some(asio::buffer(buffer_), [self, this] (std::error_code e, std::size_t bytes_transferred) {
             if (!e)
             {
                 boost::tribool result;
@@ -118,7 +120,7 @@ private:
                     read() ;
                 }
             }
-            else if (e != boost::asio::error::operation_aborted)
+            else if (e != asio::error::operation_aborted)
             {
                 connection_manager_.stop(self) ;
             }
@@ -126,31 +128,31 @@ private:
         });
     }
 
-    void write(const std::vector<boost::asio::const_buffer> &buffers)  {
+    void write(const std::vector<asio::const_buffer> &buffers)  {
         auto self(this->shared_from_this());
-        boost::asio::async_write(socket_, buffers, [this, self](boost::system::error_code e, std::size_t) {
+        asio::async_write(socket_, buffers, [this, self](asio::error_code e, std::size_t) {
             if (!e)
             {
                 // Initiate graceful Connection closure.
-                boost::system::error_code ignored_ec;
-                socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored_ec);
+                std::error_code ignored_ec;
+                socket_.shutdown(asio::ip::tcp::socket::shutdown_both, ignored_ec);
             }
 
-            if (e != boost::asio::error::operation_aborted)
+            if (e != asio::error::operation_aborted)
             {
                 connection_manager_.stop(self) ;
             }
        });
     }
 
-     boost::asio::ip::tcp::socket socket_;
+     asio::ip::tcp::socket socket_;
 
 
      /// The handler of incoming HttpRequest.
      FilterChain &handler_;
 
      /// Buffer for incoming data.
-     boost::array<char, 8192> buffer_;
+     std::array<char, 8192> buffer_;
 
      ConnectionManager& connection_manager_ ;
 

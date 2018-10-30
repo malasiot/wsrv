@@ -7,7 +7,6 @@
 
 #include <ws/filter_chain.hpp>
 
-
 namespace ws {
 
 class ServerImpl ;

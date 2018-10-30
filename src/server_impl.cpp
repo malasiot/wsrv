@@ -1,6 +1,5 @@
 #include "server_impl.hpp"
 #include "detail/connection.hpp"
-#include <boost/make_shared.hpp>
 
 namespace ws {
 
@@ -24,12 +23,12 @@ ServerImpl::ServerImpl
     do_await_stop();
 
     // Open the acceptor with the option to reuse the address (i.e. SO_REUSEADDR).
-    boost::asio::ip::tcp::resolver resolver(acceptor_.get_io_service());
-    boost::asio::ip::tcp::resolver::query query(address, port);
-    boost::asio::ip::tcp::endpoint endpoint = *resolver.resolve(query);
+    asio::ip::tcp::resolver resolver(acceptor_.get_io_service());
+    asio::ip::tcp::resolver::query query(address, port);
+    asio::ip::tcp::endpoint endpoint = *resolver.resolve(query);
 
     acceptor_.open(endpoint.protocol());
-    acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
+    acceptor_.set_option(asio::ip::tcp::acceptor::reuse_address(true));
     acceptor_.bind(endpoint);
     acceptor_.listen();
 
@@ -53,7 +52,7 @@ void ServerImpl::run()
 void ServerImpl::start_accept()
 {
     //new_connection_.reset(new connection(io_service_pool_.get_io_service(), handler_factory_));
-    acceptor_.async_accept(socket_, [this] ( const boost::system::error_code& e ){
+    acceptor_.async_accept(socket_, [this] ( const std::error_code& e ){
 
         // Check whether the server was stopped by a signal before this
              // completion handler had a chance to run.
@@ -65,7 +64,7 @@ void ServerImpl::start_accept()
              if (!e)
              {
 
-               connection_manager_.start(boost::make_shared<HttpConnection>(
+               connection_manager_.start(std::make_shared<HttpConnection>(
                    std::move(socket_), connection_manager_, filters_));
              }
 
@@ -85,7 +84,7 @@ void ServerImpl::handle_stop()
 void ServerImpl::do_await_stop()
 {
   signals_.async_wait(
-      [this](boost::system::error_code /*ec*/, int /*signo*/)
+      [this](std::error_code /*ec*/, int /*signo*/)
       {
         // The server is stopped by cancelling all outstanding asynchronous
         // operations. Once all operations have finished the io_service::run()

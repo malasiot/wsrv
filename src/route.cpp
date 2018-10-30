@@ -1,9 +1,8 @@
 #include <ws/route.hpp>
-#include <boost/regex.hpp>
-#include <boost/thread.hpp>
-#include <boost/algorithm/string.hpp>
 
 #include <cassert>
+#include <mutex>
+#include <iostream>
 
 using namespace std ;
 
@@ -102,17 +101,19 @@ public:
     }
 
 private:
-    boost::regex makeRegexFromPattern(const string &pat, const RouteImpl &route_data);
-    bool matchPattern(const boost::regex &rx, const RouteImpl &route, const string &path, Dictionary &vars) ;
+    std::regex makeRegexFromPattern(const string &pat, const RouteImpl &route_data);
+    bool matchPattern(const std::regex &rx, const RouteImpl &route, const string &path, Dictionary &vars) ;
 
-    std::map<std::string, boost::regex> cache_ ;
-    mutable boost::mutex cache_mutex_ ;
+    std::map<std::string, std::regex> cache_ ;
+    mutable std::mutex cache_mutex_ ;
 };
 
-bool UriPatternMatcher::matchPattern(const boost::regex &rx, const RouteImpl &route, const string &path, Dictionary &vars)
+bool UriPatternMatcher::matchPattern(const std::regex &rx, const RouteImpl &route, const string &path, Dictionary &vars)
 {
-    boost::smatch results ;
-    if ( boost::regex_match(path, results, rx) ) {
+    // TODO implement without named capture groups
+#if 0
+    std::smatch results ;
+    if ( std::regex_match(path, results, rx) ) {
         for( const RouteElement &e: route.elements_ ) {
             if ( !e.name_.empty() ) {
                 string val = results[e.name_].str() ;
@@ -121,25 +122,25 @@ bool UriPatternMatcher::matchPattern(const boost::regex &rx, const RouteImpl &ro
         }
         return true ;
     }
-
+#endif
     return false ;
 }
 
 bool UriPatternMatcher::matches(const string &pattern, const RouteImpl &route, const string &uri, Dictionary &vars) {
-    boost::unique_lock<boost::mutex> l(cache_mutex_) ;
+    std::unique_lock<std::mutex> l(cache_mutex_) ;
 
     auto it = cache_.find(pattern) ;
     if ( it != cache_.end() )  // pattern exists in cache
         return matchPattern(it->second, route, uri, vars) ;
     else {
-        boost::regex rxs = makeRegexFromPattern(pattern, route) ;
+        std::regex rxs = makeRegexFromPattern(pattern, route) ;
         bool res = matchPattern(rxs, route, uri, vars) ;
         cache_[pattern] = std::move(rxs) ;
         return res ;
     }
 }
 
-boost::regex  UriPatternMatcher::makeRegexFromPattern(const string &pat, const RouteImpl &route) {
+std::regex  UriPatternMatcher::makeRegexFromPattern(const string &pat, const RouteImpl &route) {
     string rx ;
 
     vector<string> patterns ;
@@ -170,12 +171,12 @@ boost::regex  UriPatternMatcher::makeRegexFromPattern(const string &pat, const R
 
 
     try {
-        boost::regex res(rx, boost::regex::perl) ;
+        std::regex res(rx) ;
         return res ;
     }
-    catch ( boost::bad_expression &e ) {
-        cout << e.what() << endl ;
-        return boost::regex() ;
+    catch ( std::regex_error &e ) {
+        std::cout << e.what() << endl ;
+        return std::regex() ;
     }
 }
 

@@ -1,6 +1,8 @@
 #include "detail/filesystem.hpp"
 
 #include <fstream>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 using namespace std ;
 
@@ -20,7 +22,17 @@ string readFileToString(const string &fileName)
     return res ;
 }
 
+bool fileExists(const string &p) {
+    struct stat buffer;
+    return ::stat(p.c_str(), &buffer) == 0 ;
+}
 
+time_t fileLastWriteTime(const std::string &p) {
+    struct stat result;
+    if ( ::stat(p.c_str(), &result) == 0 )
+        return result.st_mtime;
+    return 0 ;
+}
 
 
 }

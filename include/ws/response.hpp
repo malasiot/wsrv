@@ -5,13 +5,11 @@
 #include <vector>
 
 #include <ws/dictionary.hpp>
-//#include <wspp/util/variant.hpp>
-//#include <wspp/util/i18n.hpp>
+
 
 namespace ws {
 
 
-/// A reply to be sent to a client.
 struct Response
 {
     /// The status of the reply.
@@ -63,8 +61,6 @@ struct Response
 
     // Calls write() appropriately setting the content type
     void writeJSON(const std::string &json) ;
-    // Same as above taking as input a Variant converted to JSON string
-  //  void writeJSONVariant(const Variant &json) ;
 
     // Will write a string and set content type and content length. It will also set status to OK.
     void write(const std::string &content, const std::string &mime = "text/html") ;

@@ -3,12 +3,9 @@
 #include <ws/zstream.hpp>
 
 #include <ws/exceptions.hpp>
+#include <asio/buffered_read_stream.hpp>
 
-#include <boost/lexical_cast.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/asio.hpp>
-#include <boost/date_time.hpp>
-#include <boost/regex.hpp>
+#include <regex>
 
 #include <fstream>
 #include <iostream>
@@ -19,7 +16,6 @@
 #include "detail/filesystem.hpp"
 
 using namespace std ;
-namespace fs = boost::filesystem ;
 
 namespace ws {
 
@@ -58,44 +54,44 @@ const std::string bad_gateway =
 const std::string service_unavailable =
         "HTTP/1.0 503 Service Unavailable\r\n";
 
-boost::asio::const_buffer to_buffer(Response::Status status)
+asio::const_buffer to_buffer(Response::Status status)
 {
     switch (status)
     {
     case Response::ok:
-        return boost::asio::buffer(ok);
+        return asio::buffer(ok);
     case Response::created:
-        return boost::asio::buffer(created);
+        return asio::buffer(created);
     case Response::accepted:
-        return boost::asio::buffer(accepted);
+        return asio::buffer(accepted);
     case Response::no_content:
-        return boost::asio::buffer(no_content);
+        return asio::buffer(no_content);
     case Response::multiple_choices:
-        return boost::asio::buffer(multiple_choices);
+        return asio::buffer(multiple_choices);
     case Response::moved_permanently:
-        return boost::asio::buffer(moved_permanently);
+        return asio::buffer(moved_permanently);
     case Response::moved_temporarily:
-        return boost::asio::buffer(moved_temporarily);
+        return asio::buffer(moved_temporarily);
     case Response::not_modified:
-        return boost::asio::buffer(not_modified);
+        return asio::buffer(not_modified);
     case Response::bad_request:
-        return boost::asio::buffer(bad_request);
+        return asio::buffer(bad_request);
     case Response::unauthorized:
-        return boost::asio::buffer(unauthorized);
+        return asio::buffer(unauthorized);
     case Response::forbidden:
-        return boost::asio::buffer(forbidden);
+        return asio::buffer(forbidden);
     case Response::not_found:
-        return boost::asio::buffer(not_found);
+        return asio::buffer(not_found);
     case Response::internal_server_error:
-        return boost::asio::buffer(internal_server_error);
+        return asio::buffer(internal_server_error);
     case Response::not_implemented:
-        return boost::asio::buffer(not_implemented);
+        return asio::buffer(not_implemented);
     case Response::bad_gateway:
-        return boost::asio::buffer(bad_gateway);
+        return asio::buffer(bad_gateway);
     case Response::service_unavailable:
-        return boost::asio::buffer(service_unavailable);
+        return asio::buffer(service_unavailable);
     default:
-        return boost::asio::buffer(internal_server_error);
+        return asio::buffer(internal_server_error);
     }
 }
 
@@ -114,21 +110,21 @@ const char crlf[] = { '\r', '\n' };
 /// not be changed until the write operation has completed.
 
 
-std::vector<boost::asio::const_buffer> response_to_buffers(Response &rep, bool is_head)
+std::vector<asio::const_buffer> response_to_buffers(Response &rep, bool is_head)
 {
-    std::vector<boost::asio::const_buffer> buffers;
+    std::vector<asio::const_buffer> buffers;
     buffers.push_back(status_strings::to_buffer(rep.status_));
 
     for( const auto &h: rep.headers_ )
     {
-        buffers.push_back(boost::asio::buffer(h.first));
-        buffers.push_back(boost::asio::buffer(misc_strings::name_value_separator));
-        buffers.push_back(boost::asio::buffer(h.second));
-        buffers.push_back(boost::asio::buffer(misc_strings::crlf));
+        buffers.push_back(asio::buffer(h.first));
+        buffers.push_back(asio::buffer(misc_strings::name_value_separator));
+        buffers.push_back(asio::buffer(h.second));
+        buffers.push_back(asio::buffer(misc_strings::crlf));
     }
     if ( !is_head ) {
-        buffers.push_back(boost::asio::buffer(misc_strings::crlf));
-        buffers.push_back(boost::asio::buffer(rep.content_));
+        buffers.push_back(asio::buffer(misc_strings::crlf));
+        buffers.push_back(asio::buffer(rep.content_));
     }
     return buffers;
 }
@@ -296,8 +292,8 @@ void Response::encodeFileData(const std::string &bytes, const std::string &encod
     headers_.add("Last-Modified", mtime_buf) ;
 
 
-    headers_.add("Etag", boost::lexical_cast<std::string>(mod_time)) ;
-    headers_.add("Content-Length", boost::lexical_cast<std::string>(bytes.size())) ;
+    headers_.add("Etag", std::to_string(mod_time)) ;
+    headers_.add("Content-Length", std::to_string(bytes.size())) ;
 
     content_.assign(bytes) ;
 }
@@ -311,14 +307,22 @@ std::map<string, string> well_known_mime_types {
 #define strnicmp strncasecmp
 #endif
 
-static string get_file_mime(const string &mime,  const boost::filesystem::path &p)
+static string get_file_mime(const string &mime,  const std::string &p)
 {
     if ( !mime.empty() ) return mime ;
 
-    string extension = p.extension().string() ;
-
-    if ( extension == ".gz" )
-        extension = p.stem().extension().string() ;
+    string extension ;
+    size_t pos = p.find_last_of('.') ;
+    if ( pos != string::npos ) {
+        extension = p.substr(pos) ;
+        if ( extension == ".gz" ) {
+            string stem = p.substr(0, pos) ;
+            size_t epos = stem.find_last_of('.') ;
+            if ( epos != string::npos ) {
+                extension = stem.substr(epos) ;
+            }
+        }
+    }
 
     if ( !extension.empty() )
     {
@@ -333,12 +337,12 @@ static string get_file_mime(const string &mime,  const boost::filesystem::path &
 
 void Response::encodeFile(const std::string &file_path, const std::string &encoding, const std::string &mime )
 {
-    if ( !fs::exists(file_path) ) {
+    if ( !fileExists(file_path) ) {
         throw HttpResponseException(Response::not_found) ;
         return ;
     }
 
-    time_t mod_time = boost::filesystem::last_write_time(file_path);
+    time_t mod_time = fileLastWriteTime(file_path);
 
     string bytes = readFileToString(file_path) ;
 

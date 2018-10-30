@@ -1,9 +1,9 @@
 #include "server_impl.hpp"
 
 #include <stdexcept>
-#include <boost/thread/thread.hpp>
-#include <boost/bind.hpp>
-#include <boost/shared_ptr.hpp>
+#include <thread>
+#include <functional>
+
 
 namespace ws {
 namespace detail {
@@ -18,8 +18,8 @@ io_service_pool::io_service_pool(std::size_t pool_size)
     // exit until they are explicitly stopped.
     for (std::size_t i = 0; i < pool_size; ++i)
     {
-        io_service_ptr io_service(new boost::asio::io_service);
-        work_ptr work(new boost::asio::io_service::work(*io_service));
+        io_service_ptr io_service(new asio::io_service);
+        work_ptr work(new asio::io_service::work(*io_service));
         io_services_.push_back(io_service);
         work_.push_back(work);
     }
@@ -28,12 +28,14 @@ io_service_pool::io_service_pool(std::size_t pool_size)
 void io_service_pool::run()
 {
     // Create a pool of threads to run all of the io_services.
-    std::vector<boost::shared_ptr<boost::thread> > threads;
+    std::vector<std::shared_ptr<std::thread>> threads;
     for (std::size_t i = 0; i < io_services_.size(); ++i)
     {
-        boost::shared_ptr<boost::thread> thread(new boost::thread(
-                                                    boost::bind(&boost::asio::io_service::run, io_services_[i])));
+        auto p = io_services_[i] ;
+        std::shared_ptr<std::thread> thread(new std::thread(
+                                                    [p]{ p->run(); })) ;
         threads.push_back(thread);
+
     }
 
     // Wait for all threads in the pool to exit.
@@ -48,10 +50,10 @@ void io_service_pool::stop()
         io_services_[i]->stop();
 }
 
-boost::asio::io_service& io_service_pool::get_io_service()
+asio::io_service& io_service_pool::get_io_service()
 {
     // Use a round-robin scheme to choose the next io_service to use.
-    boost::asio::io_service& io_service = *io_services_[next_io_service_];
+    asio::io_service& io_service = *io_services_[next_io_service_];
     ++next_io_service_;
     if (next_io_service_ == io_services_.size())
         next_io_service_ = 0;

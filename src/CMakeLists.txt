@@ -4,6 +4,7 @@ SET ( SOURCES
     detail/io_service_pool.hpp
     detail/request_parser.hpp
     detail/http_parser.h
+    detail/util.hpp
 
     ${INCLUDE_ROOT}/response.hpp
     ${INCLUDE_ROOT}/request_handler.hpp
@@ -16,7 +17,6 @@ SET ( SOURCES
 #    ${INCLUDE_ROOT}/fs_session_handler.hpp
     ${INCLUDE_ROOT}/session.hpp
     ${INCLUDE_ROOT}/route.hpp
-    ${INCLUDE_ROOT}/router.hpp
     ${INCLUDE_ROOT}/filter.hpp
     ${INCLUDE_ROOT}/exceptions.hpp
 #    ${INCLUDE_ROOT}/filters/request_logger.hpp
@@ -28,6 +28,7 @@ SET ( SOURCES
     server.cpp
     filesystem.cpp
     crypto.cpp
+    util.cpp
 
     response.cpp
     request.cpp
@@ -47,8 +48,10 @@ SET ( SOURCES
     filters/gzip_filter.cpp
 )
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
 ADD_LIBRARY(ws_http_server SHARED ${SOURCES})
-TARGET_LINK_LIBRARIES(ws_http_server ${Boost_LIBRARIES} ${CRYPTOPP_LIBRARIES} dl z pthread )
+TARGET_LINK_LIBRARIES(ws_http_server ${CRYPTOPP_LIBRARIES} z )
 
 
 

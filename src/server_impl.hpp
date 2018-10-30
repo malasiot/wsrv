@@ -1,13 +1,13 @@
 #ifndef WS_SERVER_IMPL_HPP
 #define WS_SERVER_IMPL_HPP
 
-#include <boost/asio.hpp>
+#include <asio/signal_set.hpp>
+
 #include <string>
 #include <vector>
-#include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include <ws/filter_chain.hpp>
+
 #include "detail/connection.hpp"
 #include "detail/io_service_pool.hpp"
 #include "detail/connection_manager.hpp"
@@ -42,7 +42,7 @@ private:
     void start_accept();
 
     /// Handle completion of an asynchronous accept operation.
-    void handle_accept(const boost::system::error_code& e);
+    void handle_accept(const std::error_code& e);
 
     /// Handle a request to stop the server.
     void handle_stop();
@@ -53,15 +53,15 @@ private:
     detail::io_service_pool io_service_pool_;
 
     /// The signal_set is used to register for process termination notifications.
-    boost::asio::signal_set signals_;
+    asio::signal_set signals_;
 
     /// Acceptor used to listen for incoming connections.
-    boost::asio::ip::tcp::acceptor acceptor_;
+    asio::ip::tcp::acceptor acceptor_;
 
     ConnectionManager connection_manager_;
 
      /// The next socket to be accepted.
-    boost::asio::ip::tcp::socket socket_;
+    asio::ip::tcp::socket socket_;
 
     std::unique_ptr<RequestHandler> handler_ ;
     FilterChain filters_ ;

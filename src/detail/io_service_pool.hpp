@@ -1,21 +1,21 @@
 #ifndef WS_IO_SERVICE_POOL_HPP
 #define WS_IO_SERVICE_POOL_HPP
 
-#include <boost/asio.hpp>
 #include <vector>
-#include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
+#include <asio/io_service.hpp>
 
 namespace ws {
 namespace detail {
 
 /// A pool of io_service objects.
 class io_service_pool
-        : private boost::noncopyable
+
 {
 public:
     /// Construct the io_service pool.
     explicit io_service_pool(std::size_t pool_size);
+
+    io_service_pool(const io_service_pool &) = delete ;
 
     /// Run all io_service objects in the pool.
     void run();
@@ -24,11 +24,11 @@ public:
     void stop();
 
     /// Get an io_service to use.
-    boost::asio::io_service& get_io_service();
+    asio::io_service& get_io_service();
 
 private:
-    typedef boost::shared_ptr<boost::asio::io_service> io_service_ptr;
-    typedef boost::shared_ptr<boost::asio::io_service::work> work_ptr;
+    typedef std::shared_ptr<asio::io_service> io_service_ptr;
+    typedef std::shared_ptr<asio::io_service::work> work_ptr;
 
     /// The pool of io_services.
     std::vector<io_service_ptr> io_services_;

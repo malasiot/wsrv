@@ -19,7 +19,7 @@ ConnectionManager::ConnectionManager()
 
 void ConnectionManager::start(ConnectionPtr c)
 {
-    boost::unique_lock<boost::mutex> lock(mutex_) ;
+    std::unique_lock<std::mutex> lock(mutex_) ;
 
     connections_.insert(c);
     c->start();
@@ -27,7 +27,7 @@ void ConnectionManager::start(ConnectionPtr c)
 
 void ConnectionManager::stop(ConnectionPtr c)
 {
-    boost::unique_lock<boost::mutex> lock(mutex_) ;
+    std::unique_lock<std::mutex> lock(mutex_) ;
     if ( connections_.count(c) )
           connections_.erase(c);
     c->stop();
@@ -35,7 +35,7 @@ void ConnectionManager::stop(ConnectionPtr c)
 
 void ConnectionManager::stop_all()
 {
-    boost::unique_lock<boost::mutex> lock(mutex_) ;
+    std::unique_lock<std::mutex> lock(mutex_) ;
     for (auto c: connections_)
         c->stop();
     connections_.clear();

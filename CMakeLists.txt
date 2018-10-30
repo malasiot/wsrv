@@ -8,8 +8,8 @@ find_package(ZLIB REQUIRED)
 find_package(cryptopp REQUIRED)
 
 # Boost
-FIND_PACKAGE(Boost 1.49 REQUIRED COMPONENTS
-        regex filesystem system coroutine context program_options thread locale )
+#FIND_PACKAGE(Boost 1.49 REQUIRED COMPONENTS
+#        regex filesystem system coroutine context program_options thread locale )
 
 include_directories(
     include
