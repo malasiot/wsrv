@@ -1,7 +1,4 @@
 #include <ws/fs_session_handler.hpp>
-//#include <ws/transaction.hpp>
-
-#include <boost/filesystem.hpp>
 
 #include <iostream>
 #include <chrono>
@@ -9,34 +6,10 @@
 
 using namespace std ;
 
-namespace fs = boost::filesystem ;
 
-namespace wspp { namespace server {
+namespace ws {
 
-FileSystemSessionHandler::FileSystemSessionHandler(const std::string &db_file) {
-
-    // open database
-
-    if ( db_file.empty() ) {
-        fs::path tmp = fs::temp_directory_path() / "wsx_session.sqlite" ;
-        db_.open("sqlite:db=" + tmp.native() + ";mode=rc;mutex=full") ;
-    }
-    else {
-        fs::path p(db_file) ;
-        if ( !fs::exists(p) ) {
-            boost::system::error_code ec ;
-            fs::create_directories(p.parent_path(), ec) ;
-            db_.open("sqlite:" + p.native() + ";mode=rc;mutex=full" ) ;
-        }
-    }
-
-
-    db_.execute("PRAGMA auto_vacuum = 1") ;
-    db_.execute("PRAGMA journal_mode = WAL");
-    db_.execute("PRAGMA synchronous = NORMAL") ;
-    db_.execute("CREATE TABLE IF NOT EXISTS sessions ( sid TEXT PRIMARY KEY NOT NULL, data BLOB DEFAULT NULL, ts INTEGER NOT NULL );") ;
-    db_.execute("CREATE UNIQUE INDEX IF NOT EXISTS sessions_index ON sessions (sid);") ;
-
+FileSystemSessionHandler::FileSystemSessionHandler(const std::string &root_folder): folder_(root_folder) {
 }
 
 bool FileSystemSessionHandler::open() {
@@ -228,5 +201,4 @@ void FileSystemSessionHandler::gc() {
 }
 
 
-} // namespace server
-} // namespace wspp
+} // namespace ws

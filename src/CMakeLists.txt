@@ -14,7 +14,7 @@ SET ( SOURCES
     server_impl.hpp
 
     ${INCLUDE_ROOT}/session_handler.hpp
-#    ${INCLUDE_ROOT}/fs_session_handler.hpp
+    ${INCLUDE_ROOT}/fs_session_handler.hpp
     ${INCLUDE_ROOT}/session.hpp
     ${INCLUDE_ROOT}/route.hpp
     ${INCLUDE_ROOT}/filter.hpp
@@ -36,7 +36,7 @@ SET ( SOURCES
     server_impl.cpp
     http_parser.c
     session_handler.cpp
-#   ${SRC_ROOT}/fs_session_handler.cpp
+    fs_session_handler.cpp
     session.cpp
     route.cpp
     filter_chain.cpp

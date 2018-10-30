@@ -7,15 +7,14 @@
 
 #include <string>
 
-namespace wspp { namespace server {
+namespace ws {
 
 
-// SQlite3 storage of session data
+// File storage of session data
 
 class FileSystemSessionHandler: public SessionHandler {
 public:
-    FileSystemSessionHandler(const std::string &db_file = std::string()) ;
-
+    FileSystemSessionHandler(const std::string &folder) ;
 private:
 
     virtual bool open() override ;
@@ -36,11 +35,11 @@ private:
 
     void gc() ;
 
- //   db::Connection db_ ;
+private:
+    std::string folder_ ;
 };
 
 
-} // namespace server
-} // namespace wspp
+} // namespace ws
 
 #endif
