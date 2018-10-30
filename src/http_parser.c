@@ -21,7 +21,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  */
-#include <ws/detail/http_parser.h>
+#include "detail/http_parser.h"
 
 #include <assert.h>
 #include <stddef.h>

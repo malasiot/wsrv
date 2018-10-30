@@ -1,7 +1,7 @@
 
 #include <ws/response.hpp>
 #include <ws/zstream.hpp>
-#include <ws/filesystem.hpp>
+
 #include <ws/exceptions.hpp>
 
 #include <boost/lexical_cast.hpp>
@@ -16,9 +16,10 @@
 #include <string>
 #include <time.h>
 
+#include "detail/filesystem.hpp"
+
 using namespace std ;
 namespace fs = boost::filesystem ;
-using namespace wspp::util ;
 
 namespace ws {
 

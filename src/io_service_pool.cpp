@@ -1,5 +1,4 @@
-
-#include <ws/server.hpp>
+#include "server_impl.hpp"
 
 #include <stdexcept>
 #include <boost/thread/thread.hpp>

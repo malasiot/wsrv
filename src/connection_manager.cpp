@@ -8,8 +8,8 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#include <ws/detail/connection_manager.hpp>
-#include <ws/detail/connection.hpp>
+#include "detail/connection_manager.hpp"
+#include "detail/connection.hpp"
 
 namespace ws {
 

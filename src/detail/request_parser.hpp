@@ -15,7 +15,7 @@
 #include <boost/tuple/tuple.hpp>
 #include <map>
 
-#include <ws/detail/http_parser.h>
+#include "http_parser.h"
 
 namespace ws {
 

@@ -1,13 +1,17 @@
 SET ( SOURCES
-    ${INCLUDE_ROOT}/detail/connection.hpp
-    ${INCLUDE_ROOT}/detail/connection_manager.hpp
-    ${INCLUDE_ROOT}/detail/io_service_pool.hpp
+    detail/connection.hpp
+    detail/connection_manager.hpp
+    detail/io_service_pool.hpp
+    detail/request_parser.hpp
+    detail/http_parser.h
+
     ${INCLUDE_ROOT}/response.hpp
     ${INCLUDE_ROOT}/request_handler.hpp
     ${INCLUDE_ROOT}/request.hpp
-    ${INCLUDE_ROOT}/detail/request_parser.hpp
     ${INCLUDE_ROOT}/server.hpp
-    ${INCLUDE_ROOT}/detail/http_parser.h
+
+    server_impl.hpp
+
     ${INCLUDE_ROOT}/session_handler.hpp
 #    ${INCLUDE_ROOT}/fs_session_handler.hpp
     ${INCLUDE_ROOT}/session.hpp
@@ -19,29 +23,32 @@ SET ( SOURCES
     ${INCLUDE_ROOT}/filters/static_file_handler.hpp
     ${INCLUDE_ROOT}/filters/gzip_filter.hpp
 
-    ${SRC_ROOT}/connection_manager.cpp
-    ${SRC_ROOT}/io_service_pool.cpp
+    connection_manager.cpp
+    io_service_pool.cpp
+    server.cpp
+    filesystem.cpp
+    crypto.cpp
 
-    ${SRC_ROOT}/response.cpp
-    ${SRC_ROOT}/request.cpp
-    ${SRC_ROOT}/request_parser.cpp
-    ${SRC_ROOT}/server.cpp
-    ${SRC_ROOT}/http_parser.c
-    ${SRC_ROOT}/session_handler.cpp
-#    ${SRC_ROOT}/fs_session_handler.cpp
-    ${SRC_ROOT}/session.cpp
-    ${SRC_ROOT}/route.cpp
-    ${SRC_ROOT}/filter_chain.cpp
-    ${SRC_ROOT}/exceptions.cpp
-    ${SRC_ROOT}/dictionary.cpp
+    response.cpp
+    request.cpp
+    request_parser.cpp
+    server_impl.cpp
+    http_parser.c
+    session_handler.cpp
+#   ${SRC_ROOT}/fs_session_handler.cpp
+    session.cpp
+    route.cpp
+    filter_chain.cpp
+    exceptions.cpp
+    dictionary.cpp
 
 #    ${SRC_ROOT}/filters/request_logger.cpp
-    ${SRC_ROOT}/filters/static_file_handler.cpp
-    ${SRC_ROOT}/filters/gzip_filter.cpp
+    filters/static_file_handler.cpp
+    filters/gzip_filter.cpp
 )
 
 ADD_LIBRARY(ws_http_server SHARED ${SOURCES})
-TARGET_LINK_LIBRARIES(ws_http_server ${Boost_LIBRARIES} dl z pthread )
+TARGET_LINK_LIBRARIES(ws_http_server ${Boost_LIBRARIES} ${CRYPTOPP_LIBRARIES} dl z pthread )
 
 
 

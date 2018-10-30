@@ -11,7 +11,7 @@
 // adopted from C++ wrapper of nodejs parser
 // https://github.com/AndreLouisCaron/httpxx
 
-#include <ws/detail/request_parser.hpp>
+#include "detail/request_parser.hpp"
 #include <ws/request.hpp>
 
 #include <algorithm>

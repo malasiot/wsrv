@@ -5,6 +5,11 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMake/ ${CMAKE_MODULE_PATH} )
 
 find_package(Sqlite3 REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(cryptopp REQUIRED)
+
+# Boost
+FIND_PACKAGE(Boost 1.49 REQUIRED COMPONENTS
+        regex filesystem system coroutine context program_options thread locale )
 
 include_directories(
     include
@@ -18,4 +23,4 @@ SET (SRC_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/src)
 SET (INCLUDE_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/include/ws)
 
 add_subdirectory(src)
-#add_subdirectory(test)
+add_subdirectory(test)

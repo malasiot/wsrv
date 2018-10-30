@@ -24,13 +24,14 @@
 #include <ws/request_handler.hpp>
 #include <ws/filter_chain.hpp>
 #include <ws/exceptions.hpp>
-#include <ws/detail/request_parser.hpp>
-#include <ws/detail/connection_manager.hpp>
+
+#include "request_parser.hpp"
+#include "connection_manager.hpp"
 
 namespace ws {
 
 class ConnectionManager ;
-class Server ;
+class ServerImpl ;
 
 
 extern std::vector<boost::asio::const_buffer> response_to_buffers(Response &rep, bool) ;
@@ -48,7 +49,7 @@ public:
 
 private:
 
-    friend class Server ;
+    friend class ServerImpl ;
     friend class ConnectionManager ;
 
 
