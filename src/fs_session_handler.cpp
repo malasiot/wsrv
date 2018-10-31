@@ -4,12 +4,157 @@
 #include <chrono>
 #include <random>
 
+#include <sqlite3.h>
+
 using namespace std ;
 
 
 namespace ws {
 
-FileSystemSessionHandler::FileSystemSessionHandler(const std::string &root_folder): folder_(root_folder) {
+class SQLite3SessionStorage {
+public:
+
+    bool open(const std::string &db_path) ;
+
+    ~SQLite3SessionStorage() {
+        if ( handle_ ) sqlite3_close(handle_);
+    }
+
+    void execute(const std::string &cmd) ;
+    void writeSessionData(const std::string &id, const string &data);
+    void readSessionData(const std::string &id, string &data);
+    void deleteSessions(uint64_t t);
+    bool contains(const string &id);
+
+private:
+    sqlite3 *handle_ = nullptr ;
+
+};
+
+class SQLite3SessionStorageException: public std::runtime_error {
+public:
+    SQLite3SessionStorageException(const string &msg, sqlite3 *handle):
+        std::runtime_error(msg + ": " + sqlite3_errmsg(handle)) {}
+
+    SQLite3SessionStorageException(const string &msg, const char *error): std::runtime_error(msg + ": " + error) {}
+};
+
+bool SQLite3SessionStorage::open(const std::string &db_path) {
+
+    if ( sqlite3_open_v2(db_path.c_str(), &handle_, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nullptr) )
+        throw SQLite3SessionStorageException("Can't open session storage database", handle_) ;
+
+    try {
+        execute("PRAGMA auto_vacuum = 1") ;
+        execute("PRAGMA journal_mode = WAL");
+        execute("PRAGMA synchronous = NORMAL") ;
+        execute("CREATE TABLE IF NOT EXISTS sessions ( sid TEXT PRIMARY KEY NOT NULL, data BLOB DEFAULT NULL, ts INTEGER NOT NULL );") ;
+        execute("CREATE UNIQUE INDEX IF NOT EXISTS sessions_index ON sessions (sid);") ;
+        return true ;
+    }
+    catch ( SQLite3SessionStorageException & ) {
+        return false ;
+    }
+}
+
+void SQLite3SessionStorage::execute(const string &cmd)
+{
+    char *error_msg ;
+    if ( sqlite3_exec(handle_, cmd.c_str(), nullptr, nullptr, &error_msg) ) {
+        throw SQLite3SessionStorageException("Error executing sql command", error_msg) ;
+    }
+}
+
+void SQLite3SessionStorage::writeSessionData(const std::string &id, const string &data) {
+
+    sqlite3_stmt *stmt = nullptr ;
+
+    if ( sqlite3_prepare_v2(handle_, "REPLACE INTO sessions (sid, data, ts) VALUES (?, ?, ?)", -1, &stmt, nullptr) != SQLITE_OK ) {
+        throw SQLite3SessionStorageException("Error executing sql command", handle_) ;
+    }
+
+    if ( sqlite3_bind_text(stmt, 1, id.c_str(), id.length(), nullptr) != SQLITE_OK  ||
+         sqlite3_bind_blob(stmt, 2, data.data(), data.size(), nullptr) != SQLITE_OK ||
+         sqlite3_bind_int64(stmt, 3, std::chrono::system_clock::now().time_since_epoch().count()) != SQLITE_OK ) {
+        throw SQLite3SessionStorageException("Error executing sql prepared statement bind command", handle_) ;
+    }
+
+    if ( sqlite3_step(stmt) != SQLITE_DONE )
+        throw SQLite3SessionStorageException("Error writing session data", handle_) ;
+
+
+    sqlite3_finalize(stmt);
+}
+
+void SQLite3SessionStorage::readSessionData(const std::string &id, string &data) {
+
+    sqlite3_stmt *stmt = nullptr ;
+
+    if ( sqlite3_prepare_v2(handle_, "SELECT data FROM sessions WHERE sid = ? LIMIT 1", -1, &stmt, nullptr) != SQLITE_OK ) {
+        throw SQLite3SessionStorageException("Error executing sql command", handle_) ;
+    }
+
+    if ( sqlite3_bind_text(stmt, 1, id.c_str(), id.length(), nullptr) != SQLITE_OK  ) {
+        throw SQLite3SessionStorageException("Error executing sql prepared statement bind command", handle_) ;
+    }
+
+    if ( sqlite3_step(stmt) != SQLITE_ROW )
+        throw SQLite3SessionStorageException("Error reading session data", handle_) ;
+
+    const char *blob = (const char *)sqlite3_column_blob(stmt, 0) ;
+    int blob_sz = sqlite3_column_bytes(stmt, 0) ;
+
+    data.assign(blob, blob_sz) ;
+
+    sqlite3_finalize(stmt);
+
+}
+
+void SQLite3SessionStorage::deleteSessions(uint64_t t) {
+    sqlite3_stmt *stmt = nullptr ;
+
+    if ( sqlite3_prepare_v2(handle_, "DELETE FROM sessions WHERE ts < ?", -1, &stmt, nullptr) != SQLITE_OK ) {
+        throw SQLite3SessionStorageException("Error executing sql command", handle_) ;
+    }
+
+    if ( sqlite3_bind_int64(stmt, 1, t) != SQLITE_OK ) {
+        throw SQLite3SessionStorageException("Error executing sql prepared statement bind command", handle_) ;
+    }
+
+    if ( sqlite3_step(stmt) != SQLITE_DONE )
+        throw SQLite3SessionStorageException("Error deleting session data", handle_) ;
+
+
+    sqlite3_finalize(stmt);
+}
+
+bool SQLite3SessionStorage::contains(const string &id) {
+    sqlite3_stmt *stmt = nullptr ;
+
+    if ( sqlite3_prepare_v2(handle_, "SELECT sid FROM sessions WHERE sid = ? LIMIT 1", -1, &stmt, nullptr) != SQLITE_OK ) {
+        throw SQLite3SessionStorageException("Error executing sql command", handle_) ;
+    }
+
+    if ( sqlite3_bind_text(stmt, 1, id.c_str(), id.length(), nullptr) != SQLITE_OK ) {
+        throw SQLite3SessionStorageException("Error executing sql prepared statement bind command", handle_) ;
+    }
+
+    int rc = sqlite3_step(stmt) ;
+
+    sqlite3_finalize(stmt);
+
+    if ( rc == SQLITE_DONE )
+        return false ;
+    else if ( rc == SQLITE_ROW )
+        return true ;
+    else
+       throw SQLite3SessionStorageException("Error quering session data", handle_) ;
+}
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+FileSystemSessionHandler::FileSystemSessionHandler(const std::string &db_path)  {
+    storage_.reset(new SQLite3SessionStorage()) ;
+    storage_->open(db_path) ;
 }
 
 bool FileSystemSessionHandler::open() {
@@ -90,6 +235,8 @@ static string read_string(istream &strm) {
     return res ;
 }
 
+FileSystemSessionHandler::~FileSystemSessionHandler() = default ;
+
 string FileSystemSessionHandler::serializeData(const Dictionary &data)
 {
     ostringstream strm(ios::out | ios::binary) ;
@@ -121,17 +268,11 @@ bool FileSystemSessionHandler::writeSessionData(const string &id, const string &
 {
     try {
 
-        Transaction trans(db_) ;
-        Statement cmd(db_, "REPLACE INTO sessions (sid, data, ts) VALUES (?, ?, ?)",
-                          id,
-                          Blob(data.data(), data.size()),
-                          (uint64_t)std::chrono::system_clock::now().time_since_epoch().count()) ;
-        cmd.exec() ;
-        trans.commit() ;
+        storage_->writeSessionData(id, data) ;
 
         return true ;
     }
-    catch ( Exception & ) {
+    catch ( SQLite3SessionStorageException & ) {
        return false ;
     }
 
@@ -140,25 +281,18 @@ bool FileSystemSessionHandler::writeSessionData(const string &id, const string &
 bool FileSystemSessionHandler::readSessionData(const string &id, string &data)
 {
     try {
-        Query q(db_, "SELECT data FROM sessions WHERE sid = ? LIMIT 1", id) ;
-        QueryResult res = q.exec() ;
-        if ( res.next() ) {
-            Blob bdata = res.get<Blob>(0) ;
-            data.assign(bdata.data(), bdata.size()) ;
-            return true ;
-        }
-        return false ;
+        storage_->readSessionData(id, data) ;
+       return true ;
     }
-    catch ( Exception &e ) {
-        cerr << e.what() << endl ;
+    catch ( SQLite3SessionStorageException &e ) {
+       cerr << e.what() << endl ;
        return false ;
     }
 }
 
 bool FileSystemSessionHandler::contains(const string &id) {
-    Query q(db_, "SELECT sid FROM sessions WHERE sid = ? LIMIT 1", id) ;
-    QueryResult res = q.exec() ;
-    return res.next() ;
+    return storage_->contains(id) ;
+
 }
 
 bool FileSystemSessionHandler::write(const Session &session) {
@@ -173,6 +307,7 @@ bool FileSystemSessionHandler::read(Session &session) {
     if ( !readSessionData(id, data) ) return false ;
     deserializeData(data, session.data()) ;
     gc() ;
+    return true ;
 }
 
 // php like session garbage collection
@@ -193,9 +328,7 @@ void FileSystemSessionHandler::gc() {
 
         auto t = std::chrono::system_clock::now() - session_entry_max_lifetime ;
 
-        Statement cmd(db_, "DELETE FROM sessions WHERE ts < ?",
-                      (uint64_t)t.time_since_epoch().count()) ;
-        cmd.exec() ;
+        storage_->deleteSessions((uint64_t)t.time_since_epoch().count()) ;
     }
 
 }

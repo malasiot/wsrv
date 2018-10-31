@@ -31,6 +31,7 @@ public:
 
     void setHandler(RequestHandler *handler);
 
+
     /// Run the server's io_service loop.
     void run();
 
@@ -65,6 +66,7 @@ private:
 
     std::unique_ptr<RequestHandler> handler_ ;
     FilterChain filters_ ;
+
 };
 
 } // namespace ws

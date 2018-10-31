@@ -19,7 +19,7 @@ SET ( SOURCES
     ${INCLUDE_ROOT}/route.hpp
     ${INCLUDE_ROOT}/filter.hpp
     ${INCLUDE_ROOT}/exceptions.hpp
-#    ${INCLUDE_ROOT}/filters/request_logger.hpp
+    ${INCLUDE_ROOT}/filters/request_logger.hpp
     ${INCLUDE_ROOT}/filters/static_file_handler.hpp
     ${INCLUDE_ROOT}/filters/gzip_filter.hpp
 
@@ -43,7 +43,7 @@ SET ( SOURCES
     exceptions.cpp
     dictionary.cpp
 
-#    ${SRC_ROOT}/filters/request_logger.cpp
+    filters/request_logger.cpp
     filters/static_file_handler.cpp
     filters/gzip_filter.cpp
 )
@@ -51,7 +51,7 @@ SET ( SOURCES
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 ADD_LIBRARY(ws_http_server SHARED ${SOURCES})
-TARGET_LINK_LIBRARIES(ws_http_server ${CRYPTOPP_LIBRARIES} z )
+TARGET_LINK_LIBRARIES(ws_http_server ${CRYPTOPP_LIBRARIES} ${SQLITE3_LIBRARY} z )
 
 
 

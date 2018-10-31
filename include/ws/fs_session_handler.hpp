@@ -10,11 +10,14 @@
 namespace ws {
 
 
-// File storage of session data
+// File storage of session data based on an sqlite3 database
+
+class SQLite3SessionStorage ;
 
 class FileSystemSessionHandler: public SessionHandler {
 public:
-    FileSystemSessionHandler(const std::string &folder) ;
+    FileSystemSessionHandler(const std::string &db_path) ;
+    ~FileSystemSessionHandler() ;
 private:
 
     virtual bool open() override ;
@@ -36,7 +39,8 @@ private:
     void gc() ;
 
 private:
-    std::string folder_ ;
+
+    std::unique_ptr<SQLite3SessionStorage> storage_ ;
 };
 
 

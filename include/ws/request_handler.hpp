@@ -5,6 +5,7 @@
 
 #include <ws/request.hpp>
 #include <ws/response.hpp>
+#include <ws/logger.hpp>
 
 namespace ws {
 
@@ -20,7 +21,6 @@ public:
 
     virtual void handle(const Request &req, Response &resp) = 0;
 };
-
 
 } // namespace ws
 

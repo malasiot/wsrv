@@ -100,7 +100,12 @@ private:
                          }
 
                         catch ( std::runtime_error &e ) {
-                            std::cout << e.what() << std::endl ;
+                        /*    if ( logger_ ) {
+                                std::string msg("Server exception: ") ;
+                                msg += e.what() ;
+                                logger_->log(msg) ;
+                            }
+                            */
                             response_.stockReply(Response::internal_server_error) ;
                         }
                     }
@@ -161,7 +166,6 @@ private:
 
      Request request_ ;
      Response response_ ;
-
 };
 
 

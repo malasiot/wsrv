@@ -5,6 +5,7 @@
 #include <memory>
 
 #include <ws/filter.hpp>
+#include <ws/logger.hpp>
 
 namespace ws {
 

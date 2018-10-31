@@ -5,40 +5,45 @@
 #include <ws/filter_chain.hpp>
 #include <ws/exceptions.hpp>
 
-//#include <wspp/database/exception.hpp>
+#include <sstream>
 
-using namespace wspp::util ;
+using namespace std ;
 
-namespace wspp { namespace server {
+namespace ws {
 
-#if 0
 void RequestLoggerFilter::handle(Request &req, Response &resp, FilterChain &chain) {
     try {
         chain.next(req, resp) ;
-        LOG_X_STREAM(logger_, Info, "Response to " <<
+
+        ostringstream strm ;
+        strm << "Response to " <<
                  req.SERVER_.get("REMOTE_ADDR", "127.0.0.1")
                  << ": \"" << req.method_ << " " << req.path_
                  << ((req.query_.empty()) ? "" : "?" + req.query_) << " "
                  << req.protocol_ << "\" "
                  << resp.status_ << " " << resp.headers_.value<int>("Content-Length", 0)
-                 ) ;
+                  ;
+        if ( logger_ ) logger_->log(Logger::Info, strm.str()) ;
     }
     catch ( HttpResponseException &e ) {
-        LOG_X_STREAM(logger_, Error, "Response to " <<
+        ostringstream strm ;
+        strm << "Response to " <<
                  req.SERVER_.get("REMOTE_ADDR", "127.0.0.1")
                  << ": \"" << req.method_ << " " << req.path_
                  << ((req.query_.empty()) ? "" : "?" + req.query_) << " "
                  << req.protocol_ << "\" "
-                 << resp.status_
-                 ) ;
+                 << resp.status_ ;
+        if ( logger_ ) logger_->log(Logger::Info, strm.str()) ;
+
         throw e ;
     }
-    catch ( db::Exception &e ) {
-        LOG_X_STREAM(logger_, Debug, "SQL error: " << e.what()) ;
+    catch ( std::exception &e ) {
+        ostringstream strm ;
+        strm << "Fatal error: " << e.what() ;
+        if ( logger_ ) logger_->log(Logger::Error, strm.str()) ;
         throw e ;
     }
 }
 
-#endif
-} // namespace server
-} // namespace wspp
+
+} // namespace ws

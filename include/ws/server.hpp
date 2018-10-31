@@ -34,6 +34,7 @@ public:
     /// Stop server loop
     void stop() ;
 
+
 private:
 
     std::unique_ptr<ServerImpl> impl_ ;
