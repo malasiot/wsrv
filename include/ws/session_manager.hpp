@@ -1,5 +1,5 @@
-#ifndef WS_SESSION_HANDLER_HPP
-#define WS_SESSION_HANDLER_HPP
+#ifndef WS_SESSION_MANAGER_HPP
+#define WS_SESSION_MANAGER_HPP
 
 #include <string>
 #include <ws/dictionary.hpp>
@@ -11,9 +11,9 @@ namespace ws {
 
 class Session ;
 
-class SessionHandler {
+class SessionManager {
 public:
-    SessionHandler(): session_cookie_path_("/") {}
+    SessionManager(): session_cookie_path_("/") {}
 
     // initialize any resources
     virtual bool open() = 0 ;

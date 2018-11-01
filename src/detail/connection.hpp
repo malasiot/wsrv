@@ -12,13 +12,12 @@
 #define WS_CONNECTION_HPP
 
 
-
 #include <ws/response.hpp>
 #include <ws/request.hpp>
 //#include <ws/util/logger.hpp>
 
 #include <ws/request_handler.hpp>
-#include <ws/filter_chain.hpp>
+#include <ws/session_manager.hpp>
 #include <ws/exceptions.hpp>
 
 #include "request_parser.hpp"
@@ -46,9 +45,16 @@ class HttpConnection:
 public:
     explicit HttpConnection(asio::ip::tcp::socket socket,
                         ConnectionManager& manager,
-                        FilterChain &handler) : socket_(std::move(socket)),
-        connection_manager_(manager), handler_(handler) {}
+                        RequestHandler *handler,
+                            SessionManager *sm) : socket_(std::move(socket)),
+        connection_manager_(manager), handler_(handler), request_(this), session_manager_(sm) {}
 
+    Session &getSession() {
+        if ( !session_ )
+            session_.reset(new Session(*session_manager_, request_, response_)) ;
+
+        return *session_ ;
+    }
 private:
 
     friend class ServerImpl ;
@@ -81,31 +87,11 @@ private:
                         request_.SERVER_.add("REMOTE_ADDR", socket_.remote_endpoint().address().to_string() ) ;
 
                          try {
-                             handler_.handle(request_, response_) ;
-
-                             if ( response_.status_ != Response::ok )
-                                 response_.stockReply(response_.status_);
-                         }
-                         catch ( HttpResponseException &e  ) {
-
-                            response_.status_ = e.code_ ;
-                            if ( e.reason_.empty() )
-                                response_.stockReply(e.code_);
-                            else {
-                                response_.content_.assign(e.reason_);
-                                response_.setContentType("text/html");
-                                response_.setContentLength() ;
-                            }
+                             handler_->handle(request_, response_) ;
 
                          }
 
                         catch ( std::runtime_error &e ) {
-                        /*    if ( logger_ ) {
-                                std::string msg("Server exception: ") ;
-                                msg += e.what() ;
-                                logger_->log(msg) ;
-                            }
-                            */
                             response_.stockReply(Response::internal_server_error) ;
                         }
                     }
@@ -150,11 +136,14 @@ private:
        });
     }
 
+
+
      asio::ip::tcp::socket socket_;
 
-
      /// The handler of incoming HttpRequest.
-     FilterChain &handler_;
+     RequestHandler *handler_;
+
+     SessionManager *session_manager_ ;
 
      /// Buffer for incoming data.
      std::array<char, 8192> buffer_;
@@ -166,6 +155,8 @@ private:
 
      Request request_ ;
      Response response_ ;
+
+     std::unique_ptr<Session> session_ ;
 };
 
 

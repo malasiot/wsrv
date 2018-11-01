@@ -1,11 +1,11 @@
 #include <ws/session.hpp>
-#include <ws/session_handler.hpp>
+#include <ws/session_manager.hpp>
 
 using namespace std ;
 
 namespace ws {
 
-Session::Session(SessionHandler &handler, const Request &req, Response &resp, const std::string &suffix): handler_(handler) {
+Session::Session(SessionManager &handler, const Request &req, Response &resp, const std::string &suffix): handler_(handler) {
     if ( handler_.open() ) {
 
         // check cookies and request args if session present

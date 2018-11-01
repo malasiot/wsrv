@@ -5,7 +5,6 @@
 
 #include <ws/request.hpp>
 #include <ws/response.hpp>
-#include <ws/logger.hpp>
 
 namespace ws {
 

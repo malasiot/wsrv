@@ -242,7 +242,7 @@ static string normalize_path( const string &src ) {
     return res ;
 }
 
-static bool parse_url(Request &req, const string url)
+bool RequestParser::parse_url(Request &req, const string &url)
 {
     http_parser_url u ;
 
@@ -282,7 +282,7 @@ static bool parse_url(Request &req, const string url)
 
 }
 
-static bool parse_cookie(Request &session, const std::string &data)
+bool RequestParser::parse_cookie(Request &session, const std::string &data)
 {
     int pos = data.find("=") ;
 
@@ -302,7 +302,7 @@ static bool parse_cookie(Request &session, const std::string &data)
     return true ;
 }
 
-static bool parse_cookies(Request &session)
+bool RequestParser::parse_cookies(Request &session)
 {
     const char *ck = "Cookie" ;
 
@@ -389,7 +389,7 @@ fs::path get_temporary_path(const std::string &dir, const std::string &prefix, c
 }
 #endif
 
-static bool parse_mime_data(Request &session, istream &strm, const string &fld, const string &file_name,
+bool RequestParser::parse_mime_data(Request &session, istream &strm, const string &fld, const string &file_name,
                           const string &content_type,
                           const string trans_encoding,
                           const string &bnd)
@@ -455,7 +455,7 @@ static bool parse_mime_data(Request &session, istream &strm, const string &fld, 
 }
 
 
-static bool parse_multipart_data(Request &session, istream &strm, const string &bnd)
+bool RequestParser::parse_multipart_data(Request &session, istream &strm, const string &bnd)
 {
     static std::regex crx(R"#(form-data;\s*name="(.*?)(?=")"(?:\s*;\s*filename="(.*?)(?=")")?)#");
 
@@ -511,7 +511,7 @@ static bool parse_multipart_data(Request &session, istream &strm, const string &
 }
 
 
-static bool parse_form_data(Request &session, istream &strm)
+bool RequestParser::parse_form_data(Request &session, istream &strm)
 {
     static std::regex brx("multipart/form-data;\\s*boundary=(.*)");
 

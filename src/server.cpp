@@ -4,28 +4,29 @@
 
 namespace ws {
 
-Server::~Server() = default ;
+HttpServer::~HttpServer() = default ;
 
-Server::Server(const std::string& address, const std::string& port,
+HttpServer::HttpServer(const std::string& address, const std::string& port,
                std::size_t io_service_pool_size): impl_(new ServerImpl(address, port, io_service_pool_size)) {
 }
 
-void Server::addFilter(Filter *filter) {
-    impl_->addFilter(filter) ;
-}
 
-void Server::setHandler(RequestHandler *handler) {
+void HttpServer::setHandler(RequestHandler *handler) {
     impl_->setHandler(handler) ;
 
 }
 
-void Server::run() {
+void HttpServer::run() {
     impl_->run() ;
 }
 
 
-void Server::stop() {
+void HttpServer::stop() {
     impl_->stop() ;
+}
+
+void HttpServer::setSessionManager(SessionManager *sm) {
+    impl_->setSessionManager(sm) ;
 }
 
 

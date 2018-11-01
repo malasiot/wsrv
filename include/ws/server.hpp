@@ -5,24 +5,22 @@
 #include <vector>
 #include <memory>
 
-#include <ws/filter_chain.hpp>
+#include <ws/request_handler.hpp>
+#include <ws/session_manager.hpp>
 
 namespace ws {
 
 class ServerImpl ;
 
-class Server {
+class HttpServer {
 
 public:
     /// Construct the server to listen on the specified TCP address and port, and
     /// serve up files from the given directory.
-    explicit Server(const std::string& address, const std::string& port,
+    explicit HttpServer(const std::string& address, const std::string& port,
                     std::size_t io_service_pool_size = 4);
 
-    ~Server() ;
-    // intercept filter/middleware to the service chain
-
-    void addFilter(Filter *filter);
+    ~HttpServer() ;
 
     // set request handler for this service
 
@@ -34,6 +32,7 @@ public:
     /// Stop server loop
     void stop() ;
 
+    void setSessionManager(SessionManager *) ;
 
 private:
 

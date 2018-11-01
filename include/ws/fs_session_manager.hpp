@@ -1,9 +1,8 @@
-#ifndef __WSPP_SERVER_FS_SESSION_HANDLER_HPP__
-#define __WSPP_SERVER_FS_SESSION_HANDLER_HPP__
+#ifndef WS_FS_SESSION_MANAGER_HPP
+#define WS_FS_SESSION_MANAGER_HPP
 
-#include <ws/session_handler.hpp>
+#include <ws/session_manager.hpp>
 #include <ws/dictionary.hpp>
-//#include <wspp/database/connection.hpp>
 
 #include <string>
 
@@ -14,10 +13,10 @@ namespace ws {
 
 class SQLite3SessionStorage ;
 
-class FileSystemSessionHandler: public SessionHandler {
+class FileSystemSessionManager: public SessionManager {
 public:
-    FileSystemSessionHandler(const std::string &db_path) ;
-    ~FileSystemSessionHandler() ;
+    FileSystemSessionManager(const std::string &db_path) ;
+    ~FileSystemSessionManager() ;
 private:
 
     virtual bool open() override ;

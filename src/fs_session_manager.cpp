@@ -1,4 +1,4 @@
-#include <ws/fs_session_handler.hpp>
+#include <ws/fs_session_manager.hpp>
 
 #include <iostream>
 #include <chrono>
@@ -152,20 +152,20 @@ bool SQLite3SessionStorage::contains(const string &id) {
 }
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-FileSystemSessionHandler::FileSystemSessionHandler(const std::string &db_path)  {
+FileSystemSessionManager::FileSystemSessionManager(const std::string &db_path)  {
     storage_.reset(new SQLite3SessionStorage()) ;
     storage_->open(db_path) ;
 }
 
-bool FileSystemSessionHandler::open() {
+bool FileSystemSessionManager::open() {
     return true ;
 }
 
-bool FileSystemSessionHandler::close() {
+bool FileSystemSessionManager::close() {
     return true ;
 }
 
-string FileSystemSessionHandler::uniqueSID() {
+string FileSystemSessionManager::uniqueSID() {
     int max_tries = 4 ;
     while ( max_tries > 0 ) {
         string sid = generateSID() ;
@@ -235,9 +235,9 @@ static string read_string(istream &strm) {
     return res ;
 }
 
-FileSystemSessionHandler::~FileSystemSessionHandler() = default ;
+FileSystemSessionManager::~FileSystemSessionManager() = default ;
 
-string FileSystemSessionHandler::serializeData(const Dictionary &data)
+string FileSystemSessionManager::serializeData(const Dictionary &data)
 {
     ostringstream strm(ios::out | ios::binary) ;
 
@@ -251,7 +251,7 @@ string FileSystemSessionHandler::serializeData(const Dictionary &data)
     return strm.str() ;
 }
 
-void FileSystemSessionHandler::deserializeData(const string &data, Dictionary &dict)
+void FileSystemSessionManager::deserializeData(const string &data, Dictionary &dict)
 {
     istringstream strm(data, ios::in | ios::binary) ;
 
@@ -264,7 +264,7 @@ void FileSystemSessionHandler::deserializeData(const string &data, Dictionary &d
     }
 }
 
-bool FileSystemSessionHandler::writeSessionData(const string &id, const string &data)
+bool FileSystemSessionManager::writeSessionData(const string &id, const string &data)
 {
     try {
 
@@ -278,7 +278,7 @@ bool FileSystemSessionHandler::writeSessionData(const string &id, const string &
 
 }
 
-bool FileSystemSessionHandler::readSessionData(const string &id, string &data)
+bool FileSystemSessionManager::readSessionData(const string &id, string &data)
 {
     try {
         storage_->readSessionData(id, data) ;
@@ -290,19 +290,19 @@ bool FileSystemSessionHandler::readSessionData(const string &id, string &data)
     }
 }
 
-bool FileSystemSessionHandler::contains(const string &id) {
+bool FileSystemSessionManager::contains(const string &id) {
     return storage_->contains(id) ;
 
 }
 
-bool FileSystemSessionHandler::write(const Session &session) {
+bool FileSystemSessionManager::write(const Session &session) {
     string id = session.id() ;
     string data = serializeData(session.data()) ;
     return writeSessionData(id, data) ;
 }
 
 
-bool FileSystemSessionHandler::read(Session &session) {
+bool FileSystemSessionManager::read(Session &session) {
     string id = session.id(), data ;
     if ( !readSessionData(id, data) ) return false ;
     deserializeData(data, session.data()) ;
@@ -312,7 +312,7 @@ bool FileSystemSessionHandler::read(Session &session) {
 
 // php like session garbage collection
 
-void FileSystemSessionHandler::gc() {
+void FileSystemSessionManager::gc() {
     static const auto session_entry_max_lifetime = std::chrono::minutes(60) ;
     static const uint64_t session_gc_probability = 1 ;
     static const uint64_t session_gc_divisor = 1000 ;

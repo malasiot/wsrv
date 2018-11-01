@@ -113,9 +113,9 @@ const char crlf[] = { '\r', '\n' };
 std::vector<asio::const_buffer> response_to_buffers(Response &rep, bool is_head)
 {
     std::vector<asio::const_buffer> buffers;
-    buffers.push_back(status_strings::to_buffer(rep.status_));
+    buffers.push_back(status_strings::to_buffer(rep.getStatus()));
 
-    for( const auto &h: rep.headers_ )
+    for( const auto &h: rep.headers() )
     {
         buffers.push_back(asio::buffer(h.first));
         buffers.push_back(asio::buffer(misc_strings::name_value_separator));
@@ -124,7 +124,7 @@ std::vector<asio::const_buffer> response_to_buffers(Response &rep, bool is_head)
     }
     if ( !is_head ) {
         buffers.push_back(asio::buffer(misc_strings::crlf));
-        buffers.push_back(asio::buffer(rep.content_));
+        buffers.push_back(asio::buffer(rep.content()));
     }
     return buffers;
 }
@@ -373,9 +373,60 @@ void Response::setContentLength() {
     headers_.replace("Content-Length", to_string(content_.size())) ;
 }
 
-void Response::append(const string &content)
-{
+void Response::compress() {
+
+    ostringstream compressed(ios::binary) ;
+
+    {
+        ozstream zstrm(compressed) ;
+        zstrm.write(content_.data(), content_.size()) ;
+    }
+
+    content_.assign(compressed.str()) ;
+    headers_.replace("Content-Encoding", "gzip") ;
+    setContentLength();
+}
+
+string Response::toString() const {
+    ostringstream strm ;
+    if ( status_ == Response::ok )
+        strm << status_ << " " << headers_.value<int>("Content-Length", 0) ;
+     else
+        strm << status_ ;
+
+    return strm.str() ;
+}
+
+static regex gzip_include_mime_rx("(text/.*)|(application/x-javascript.*)|(application/javascript)|(application/xhtml+xml)|(application/xml)") ;
+static const size_t gzip_min_content_length = 200 ;
+
+bool Response::contentBenefitsFromCompression() {
+    size_t content_len = content_.size() ;
+    if ( content_len < gzip_min_content_length ) return false ;
+
+    string encoding = headers_.get("Content-Encoding") ;
+    if ( encoding == "gzip" ) return false ;
+
+    string mime = headers_.get("Content-Type") ;
+    if ( mime.empty() ) return false ;
+
+    return  ( regex_match(mime,  gzip_include_mime_rx) ) ;
+}
+
+
+void Response::append(const string &content) {
     content_.append(content) ;
+}
+
+bool Response::serveStaticFile(const string &folder, const string &path) {
+    string p(folder + '/' + path) ;
+
+    if ( fileExists(p) ) {
+        encodeFile(p);
+        return true ;
+    }
+
+    return false ;
 }
 
 void Response::setCookie(const string &name, const string &value, time_t expires, const string &path, const string &domain, bool secure, bool http_only)

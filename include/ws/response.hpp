@@ -31,13 +31,12 @@ struct Response
         not_implemented = 501,
         bad_gateway = 502,
         service_unavailable = 503
-    } status_ = not_found ;
+    } ;
 
-    /// The headers to be included in the reply.
-    Dictionary headers_;
 
-    /// The content to be sent in the reply.
-    std::string content_;
+    Dictionary &headers() { return headers_ ; }
+    std::string &content() { return content_ ; }
+    Status getStatus() const { return status_ ; }
 
     /// Get a stock reply.
     void stockReply(Status status);
@@ -68,6 +67,9 @@ struct Response
     // This should be used for incrementally outputting text. Content type and length have to provided afterwards
     void append(const std::string &content) ;
 
+    // serve contents of file in filesystem under folder with given path. returns false if the file does not exist
+    bool serveStaticFile(const std::string &folder, const std::string &path) ;
+
     // helper for appending arbitrary streamable types
     template <class T>
     void append(const T &t) {
@@ -93,6 +95,25 @@ struct Response
 
     // set output status
     void setStatus(Status st) { status_ = st ; }
+
+    // check if the content may benefit from comression by checking length and mime type
+    bool contentBenefitsFromCompression() ;
+
+    // gzip content before sending
+    void compress();
+
+    // convert to one line string (status + content length) suitable for logging
+    std::string toString() const ;
+private:
+
+    /// The headers to be included in the reply.
+    Dictionary headers_;
+
+    /// The content to be sent in the reply.
+    std::string content_;
+
+    Status status_ = not_found ;
+
 };
 
 

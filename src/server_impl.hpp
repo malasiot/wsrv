@@ -6,7 +6,8 @@
 #include <string>
 #include <vector>
 
-#include <ws/filter_chain.hpp>
+#include <ws/request_handler.hpp>
+#include <ws/session_manager.hpp>
 
 #include "detail/connection.hpp"
 #include "detail/io_service_pool.hpp"
@@ -23,13 +24,12 @@ public:
     explicit ServerImpl(const std::string& address, const std::string& port,
                     std::size_t io_service_pool_size = 4);
 
-    // intercept filter/middleware to the service chain
-
-    void addFilter(Filter *filter);
 
     // set request handler for this service
 
     void setHandler(RequestHandler *handler);
+
+    void setSessionManager(SessionManager *mgr) ;
 
 
     /// Run the server's io_service loop.
@@ -65,7 +65,7 @@ private:
     asio::ip::tcp::socket socket_;
 
     std::unique_ptr<RequestHandler> handler_ ;
-    FilterChain filters_ ;
+    std::unique_ptr<SessionManager> session_manager_ ;
 
 };
 

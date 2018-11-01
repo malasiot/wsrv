@@ -13,15 +13,12 @@ SET ( SOURCES
 
     server_impl.hpp
 
-    ${INCLUDE_ROOT}/session_handler.hpp
-    ${INCLUDE_ROOT}/fs_session_handler.hpp
+    ${INCLUDE_ROOT}/session_manager.hpp
+    ${INCLUDE_ROOT}/fs_session_manager.hpp
     ${INCLUDE_ROOT}/session.hpp
     ${INCLUDE_ROOT}/route.hpp
-    ${INCLUDE_ROOT}/filter.hpp
+
     ${INCLUDE_ROOT}/exceptions.hpp
-    ${INCLUDE_ROOT}/filters/request_logger.hpp
-    ${INCLUDE_ROOT}/filters/static_file_handler.hpp
-    ${INCLUDE_ROOT}/filters/gzip_filter.hpp
 
     connection_manager.cpp
     io_service_pool.cpp
@@ -35,17 +32,13 @@ SET ( SOURCES
     request_parser.cpp
     server_impl.cpp
     http_parser.c
-    session_handler.cpp
-    fs_session_handler.cpp
+    session_manager.cpp
+    fs_session_manager.cpp
     session.cpp
     route.cpp
-    filter_chain.cpp
+
     exceptions.cpp
     dictionary.cpp
-
-    filters/request_logger.cpp
-    filters/static_file_handler.cpp
-    filters/gzip_filter.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

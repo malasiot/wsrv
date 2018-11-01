@@ -10,8 +10,8 @@ namespace ws {
 
 struct RouteElement {
 
-    RouteElement(const string &name, const string &pattern, bool optional):
-        name_(name), pattern_(pattern), optional_(optional) {}
+    RouteElement(const string &name, const string &pattern, bool optional, int idx = -1):
+        name_(name), pattern_(pattern), optional_(optional), idx_(idx) {}
 
     string name_ ;
     string pattern_ ;
@@ -45,6 +45,7 @@ bool RouteImpl::parse(const string &pattern) {
 
     string name, pat ;
     bool is_optional = false ;
+    uint idx = 0 ;
 
     if ( cursor != end && *cursor == '/' ) ++cursor ; // omit leading /
 
@@ -52,7 +53,11 @@ bool RouteImpl::parse(const string &pattern) {
         char c = *cursor++ ;
         if ( state == Token ) {
             if ( c == '/' || cursor == end ) {
-                elements_.emplace_back(RouteElement(name, pat, is_optional )) ;
+                if ( name.empty() )
+                    elements_.emplace_back(RouteElement(name, pat, is_optional )) ;
+                else
+                    elements_.emplace_back(RouteElement(name, pat, is_optional, ++idx )) ;
+
                 name.clear() ; pat.clear() ; is_optional = false ;
                 state = Element ;
             }

@@ -1,5 +1,5 @@
-#ifndef __WS_REQUEST_HPP__
-#define __WS_REQUEST_HPP__
+#ifndef WS_REQUEST_HPP
+#define WS_REQUEST_HPP
 
 #include <string>
 #include <vector>
@@ -9,6 +9,12 @@
 
 namespace ws {
 
+class Session ;
+class HttpConnection ;
+
+namespace detail {
+class RequestParser ;
+}
 /// A request received from a client.
 ///
 class Request
@@ -20,13 +26,7 @@ public:
     bool matches(const std::string &method, const std::string &pattern, Dictionary &attributes) const ;
     bool matches(const std::string &method, const std::string &pattern) const;
 
-    bool supportsGzip() ;
-
-public:
-    Dictionary SERVER_ ; // Server variables
-    Dictionary GET_ ;	 // Query variables for GET requests
-    Dictionary POST_ ;   // Post variables for POST requests
-    Dictionary COOKIE_ ; // Cookies
+    bool supportsGzip() const ;
 
     struct UploadedFile {
         std::string name_ ;	// The original filename
@@ -35,6 +35,33 @@ public:
         size_t size_ ;
         std::string data_ ; // This member variable contains the file contents for small files
     } ;
+
+    const Dictionary &getServerAttributes() const { return SERVER_ ; }
+    const Dictionary &getQueryAttributes() const { return GET_ ; }
+    const Dictionary &getPostAttributes() const { return POST_ ; }
+    const std::map<std::string, UploadedFile> &getUploadedFiles() const { return FILE_ ; }
+    const Dictionary &getCookies() const { return COOKIE_ ; }
+    Session &getSession() const;
+
+    const std::string &getContent() const { return content_ ; }
+    const std::string &getContentType() const { return content_type_ ; }
+    const std::string &getMethod() const { return method_ ; }
+    const std::string &getPath() const { return path_ ; }
+    const std::string &getQueryString() const { return query_ ; }
+    const std::string &getProtocol() const { return protocol_ ; }
+
+    // converts to single line string suitable for logging the request
+    std::string toString() const ;
+
+protected:
+
+    friend class detail::RequestParser ;
+    friend class Session ;
+
+    Dictionary SERVER_ ; // Server variables
+    Dictionary GET_ ;	 // Query variables for GET requests
+    Dictionary POST_ ;   // Post variables for POST requests
+    Dictionary COOKIE_ ; // Cookies
 
     std::map<std::string, UploadedFile> FILE_ ;	// Uploaded files
 
@@ -52,9 +79,15 @@ public:
 
 private:
 
+    friend class HttpConnection ;
+
+    Request(HttpConnection *ctx) ;
+
     bool matchesMethod(const std::string &method) const ;
 
     std::string getCleanPath(const std::string &path) const ;
+
+    HttpConnection *ctx_ ;
 };
 
 
