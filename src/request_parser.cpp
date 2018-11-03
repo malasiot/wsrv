@@ -515,9 +515,9 @@ bool RequestParser::parse_form_data(Request &session, istream &strm)
 {
     static std::regex brx("multipart/form-data;\\s*boundary=(.*)");
 
-    size_t content_length = session.SERVER_.value<int>("Content-Length", 0) ;
+    size_t content_length = stoi(session.getServerAttribute("Content-Length", "0")) ;
 
-    std::string content_type = session.SERVER_.get("Content-Type") ;
+    std::string content_type = session.getServerAttribute("Content-Type") ;
 
     if ( content_type.empty() && content_length > 0 )
         return false ;
@@ -563,7 +563,7 @@ bool RequestParser::parse_form_data(Request &session, istream &strm)
 bool RequestParser::decode_message(Request &req) const {
 
     for( auto hdr: headers_ )
-        req.SERVER_.add(hdr.first, hdr.second) ;
+        req.SERVER_.emplace(hdr.first, hdr.second) ;
 
     req.method_ = req.SERVER_["REQUEST_METHOD"] =	http_method_str(static_cast<http_method>(parser_.method)) ;
     req.protocol_ = protocol_ ;

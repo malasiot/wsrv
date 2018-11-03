@@ -24,7 +24,7 @@ Session &Request::getSession() const {
 string Request::toString() const
 {
    ostringstream strm ;
-    strm <<  SERVER_.get("REMOTE_ADDR", "127.0.0.1")
+    strm <<  getServerAttribute("REMOTE_ADDR", "127.0.0.1")
              << ": \"" << method_ << " " << path_
              << ((query_.empty()) ? "" : "?" + query_) << " "
              << protocol_ << "\"";
@@ -37,8 +37,28 @@ Request::Request(HttpConnection *ctx): ctx_(ctx) {
 }
 
 bool Request::supportsGzip() const {
-    string enc = SERVER_.get("Accept-Encoding") ;
+    string enc = getServerAttribute("Accept-Encoding") ;
     return !enc.empty() && enc.find("gzip") != string::npos ;
+}
+
+string Request::getServerAttribute(const string &key, const string &def) const {
+    auto it = SERVER_.find(key) ;
+    return ( it == SERVER_.end() ) ? def : it->second ;
+}
+
+string Request::getQueryAttribute(const string &key, const string &def) const {
+    auto it = GET_.find(key) ;
+    return ( it == GET_.end() ) ? def : it->second ;
+}
+
+string Request::getPostAttribute(const string &key, const string &def) const {
+    auto it = POST_.find(key) ;
+    return ( it == POST_.end() ) ? def : it->second ;
+}
+
+string Request::getCookie(const string &key, const string &def) const {
+    auto it = COOKIE_.find(key) ;
+    return ( it == COOKIE_.end() ) ? def : it->second ;
 }
 
 bool Request::matches(const string &method, const Route &pattern, Dictionary &attributes) const

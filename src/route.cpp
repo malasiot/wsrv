@@ -3,6 +3,8 @@
 #include <cassert>
 #include <mutex>
 #include <iostream>
+#include <vector>
+#include <regex>
 
 using namespace std ;
 
@@ -20,6 +22,7 @@ struct RouteElement {
 };
 
 struct RouteImpl {
+    using Dictionary = map<string, string>;
 public:
     RouteImpl(const std::string &pattern) {
         if ( pattern.back() == '/' ) pattern_ = pattern ;
@@ -97,6 +100,7 @@ bool RouteImpl::parse(const string &pattern) {
 
 
 class UriPatternMatcher {
+    using Dictionary = map<string, string>;
 public:
 
     bool matches(const string &pattern, RouteImpl &route, const string &uri, Dictionary &vars) ;

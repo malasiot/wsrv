@@ -2,13 +2,15 @@
 #define WS_ROUTE_HPP
 
 #include <string>
-#include <ws/dictionary.hpp>
+#include <map>
+#include <memory>
 
 namespace ws {
 
 struct RouteImpl ;
 
 class Route {
+    using Dictionary = std::map<std::string, std::string> ;
 public:
 
     // Create a uri path route from the given pattern.

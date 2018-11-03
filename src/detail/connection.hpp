@@ -84,7 +84,7 @@ private:
                         response_.stockReply(Response::bad_request);
                     }
                     else {
-                        request_.SERVER_.add("REMOTE_ADDR", socket_.remote_endpoint().address().to_string() ) ;
+                        request_.SERVER_.emplace("REMOTE_ADDR", socket_.remote_endpoint().address().to_string() ) ;
 
                          try {
                              handler_->handle(request_, response_) ;

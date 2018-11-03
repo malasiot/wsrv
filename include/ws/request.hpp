@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 
-#include <ws/dictionary.hpp>
 #include <ws/route.hpp>
 
 namespace ws {
@@ -19,6 +18,8 @@ class RequestParser ;
 ///
 class Request
 {
+    using Dictionary = std::map<std::string, std::string> ;
+
 public:
     // helper function to match a request with a Route pattern (see Route)
     bool matches(const std::string &method, const Route &pattern, Dictionary &attributes) const ;
@@ -37,10 +38,17 @@ public:
     } ;
 
     const Dictionary &getServerAttributes() const { return SERVER_ ; }
+    std::string getServerAttribute(const std::string &key, const std::string &def = std::string()) const ;
+
     const Dictionary &getQueryAttributes() const { return GET_ ; }
+    std::string getQueryAttribute(const std::string &key, const std::string &def = std::string()) const ;
+
     const Dictionary &getPostAttributes() const { return POST_ ; }
+    std::string getPostAttribute(const std::string &key, const std::string &def = std::string()) const ;
+
     const std::map<std::string, UploadedFile> &getUploadedFiles() const { return FILE_ ; }
     const Dictionary &getCookies() const { return COOKIE_ ; }
+    std::string getCookie(const std::string &key, const std::string &def = std::string()) const ;
     Session &getSession() const;
 
     const std::string &getContent() const { return content_ ; }

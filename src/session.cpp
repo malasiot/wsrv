@@ -12,9 +12,9 @@ Session::Session(SessionManager &handler, const Request &req, Response &resp, co
 
         string key_name = "WSX_SESSION_ID" + suffix ;
 
-        id_ = req.COOKIE_.get(key_name) ;
-        if ( id_.empty() ) id_ = req.GET_.get(key_name) ;
-        if ( id_.empty() ) id_ = req.POST_.get(key_name) ;
+        id_ = req.getCookie(key_name) ;
+        if ( id_.empty() ) id_ = req.getQueryAttribute(key_name) ;
+        if ( id_.empty() ) id_ = req.getPostAttribute(key_name) ;
 
         if ( id_.empty() ) { // new session
             id_ = handler_.uniqueSID() ;
