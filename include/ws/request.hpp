@@ -49,6 +49,7 @@ public:
     const std::map<std::string, UploadedFile> &getUploadedFiles() const { return FILE_ ; }
     const Dictionary &getCookies() const { return COOKIE_ ; }
     std::string getCookie(const std::string &key, const std::string &def = std::string()) const ;
+
     Session &getSession() const;
 
     const std::string &getContent() const { return content_ ; }

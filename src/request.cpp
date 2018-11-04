@@ -2,6 +2,8 @@
 #include <ws/route.hpp>
 #include "detail/connection.hpp"
 
+#include <regex>
+
 using namespace std ;
 
 namespace ws {

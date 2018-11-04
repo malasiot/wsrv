@@ -2,7 +2,6 @@
 #define WS_FS_SESSION_MANAGER_HPP
 
 #include <ws/session_manager.hpp>
-#include <ws/dictionary.hpp>
 
 #include <string>
 

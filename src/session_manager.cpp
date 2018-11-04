@@ -1,6 +1,8 @@
 #include <ws/session_manager.hpp>
 #include <ws/crypto.hpp>
 
+#include <algorithm>
+
 using namespace std ;
 
 namespace ws {

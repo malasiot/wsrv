@@ -3,15 +3,14 @@
 
 #include <string>
 #include <vector>
-
-#include <ws/dictionary.hpp>
-
+#include <map>
+#include <sstream>
 
 namespace ws {
 
-
 struct Response
 {
+    using Dictionary = std::map<std::string, std::string> ;
     /// The status of the reply.
     enum Status
     {
@@ -37,6 +36,8 @@ struct Response
     Dictionary &headers() { return headers_ ; }
     std::string &content() { return content_ ; }
     Status getStatus() const { return status_ ; }
+
+    std::string getHeaderAttribute(const std::string &key, const std::string &def = std::string()) const ;
 
     /// Get a stock reply.
     void stockReply(Status status);
@@ -88,6 +89,7 @@ struct Response
                    ) ;
 
 
+    void addHeader(const std::string &key, const std::string &val) ;
     // set header for content-type
     void setContentType(const std::string &mime);
     // set header for content-length based on the current length of the content_ string

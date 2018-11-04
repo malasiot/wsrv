@@ -251,6 +251,12 @@ std::string to_string(Response::Status status)
 
 } // namespace stock_replies
 
+string Response::getHeaderAttribute(const string &key, const string &def) const
+{
+    auto it = headers_.find(key) ;
+    return it == headers_.end() ? def : it->second ;
+}
+
 void Response::stockReply(Response::Status status)
 {
     status_ = status;
@@ -272,15 +278,15 @@ void Response::encodeFileData(const std::string &bytes, const std::string &encod
     if ( encoding.empty() ) // try gzip encoding
     {
         if ( bytes.size() > 2 && bytes[0] == 0x1f && bytes[1] == 0x8b )
-            headers_.add("Content-Encoding", "gzip") ;
+            addHeader("Content-Encoding", "gzip") ;
     }
     else
-        headers_.add("Content-Encoding", encoding) ;
+        addHeader("Content-Encoding", encoding) ;
 
     if ( !mime.empty() )
-        headers_.add("Content-Type", mime) ;
+        addHeader("Content-Type", mime) ;
 
-    headers_.add("Access-Control-Allow-Origin", "*") ;
+    addHeader("Access-Control-Allow-Origin", "*") ;
 
     char ctime_buf[64], mtime_buf[64] ;
     time_t curtime = time(nullptr) ;
@@ -288,12 +294,12 @@ void Response::encodeFileData(const std::string &bytes, const std::string &encod
     gmt_time_string(ctime_buf, sizeof(ctime_buf), &curtime);
     gmt_time_string(mtime_buf, sizeof(mtime_buf), &mod_time);
 
-    headers_.add("Date", ctime_buf) ;
-    headers_.add("Last-Modified", mtime_buf) ;
+    addHeader("Date", ctime_buf) ;
+    addHeader("Last-Modified", mtime_buf) ;
 
 
-    headers_.add("Etag", std::to_string(mod_time)) ;
-    headers_.add("Content-Length", std::to_string(bytes.size())) ;
+    addHeader("Etag", std::to_string(mod_time)) ;
+    addHeader("Content-Length", std::to_string(bytes.size())) ;
 
     content_.assign(bytes) ;
 }
@@ -366,11 +372,11 @@ void Response::write(const string &content, const string &mime)
 }
 
 void Response::setContentType(const string &mime) {
-    headers_.replace("Content-Type", mime) ;
+    addHeader("Content-Type", mime) ;
 }
 
 void Response::setContentLength() {
-    headers_.replace("Content-Length", to_string(content_.size())) ;
+    addHeader("Content-Length", to_string(content_.size())) ;
 }
 
 void Response::compress() {
@@ -383,14 +389,14 @@ void Response::compress() {
     }
 
     content_.assign(compressed.str()) ;
-    headers_.replace("Content-Encoding", "gzip") ;
+    addHeader("Content-Encoding", "gzip") ;
     setContentLength();
 }
 
 string Response::toString() const {
     ostringstream strm ;
     if ( status_ == Response::ok )
-        strm << status_ << " " << headers_.value<int>("Content-Length", 0) ;
+        strm << status_ << " " << getHeaderAttribute("Content-Length", "0") ;
      else
         strm << status_ ;
 
@@ -404,10 +410,10 @@ bool Response::contentBenefitsFromCompression() {
     size_t content_len = content_.size() ;
     if ( content_len < gzip_min_content_length ) return false ;
 
-    string encoding = headers_.get("Content-Encoding") ;
+    string encoding = getHeaderAttribute("Content-Encoding") ;
     if ( encoding == "gzip" ) return false ;
 
-    string mime = headers_.get("Content-Type") ;
+    string mime = getHeaderAttribute("Content-Type") ;
     if ( mime.empty() ) return false ;
 
     return  ( regex_match(mime,  gzip_include_mime_rx) ) ;
@@ -450,8 +456,12 @@ void Response::setCookie(const string &name, const string &value, time_t expires
     if ( http_only )
         cookie += "; HttpOnly" ;
 
-    headers_.add("Set-Cookie", cookie) ;
+    addHeader("Set-Cookie", cookie) ;
 
+}
+
+void Response::addHeader(const string &key, const string &val) {
+    headers_[key] = val ;
 }
 
 

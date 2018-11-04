@@ -47,6 +47,8 @@ public:
 class App: public RequestHandler {
 public:
 
+    using Dictionary = std::map<std::string, std::string> ;
+
     App(const std::string &root_dir):  root_(root_dir)
     {
 
@@ -63,9 +65,9 @@ public:
             Dictionary attrs ;
             if ( req.matches("GET", R"(/user/{id:\d+}/{action:show|hide}/)", attrs) ) {
 
-                resp.write("hello " + attrs.get("id")) ;
+                resp.write("hello " + attrs["id"]) ;
 
-                session.data().add("id", attrs.get("id")) ;
+                session.add("id", attrs["id"]) ;
                 return ;
             } else if ( resp.serveStaticFile(root_, req.getPath()) ) {
                 return ;

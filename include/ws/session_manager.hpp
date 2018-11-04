@@ -2,7 +2,7 @@
 #define WS_SESSION_MANAGER_HPP
 
 #include <string>
-#include <ws/dictionary.hpp>
+
 #include <ws/request.hpp>
 #include <ws/response.hpp>
 #include <ws/session.hpp>
@@ -12,6 +12,7 @@ namespace ws {
 class Session ;
 
 class SessionManager {
+
 public:
     SessionManager(): session_cookie_path_("/") {}
 
@@ -32,6 +33,8 @@ public:
     std::string cookieDomain() const { return session_cookie_domain_ ; }
 
 protected:
+
+     using Dictionary = std::map<std::string, std::string> ;
 
     static std::string generateSID() ;
     std::string session_cookie_path_, session_cookie_domain_ ;
