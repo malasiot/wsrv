@@ -28,6 +28,21 @@ void trim(std::string &str, const char *delim = " \t\n\r") ;
 bool startsWith(const std::string &src, const std::string &prefix) ;
 
 bool endsWith(const std::string &src, const std::string &suffix) ;
+
+
+inline bool tokenize(const std::string &s, const char *delim, std::function<bool (const std::string &)> cb) {
+
+    size_t begin = 0, end;
+    std::string token;
+    while ((end = s.find(delim, begin)) != std::string::npos) {
+        std::string str = s.substr(begin, end-begin) ;
+
+        if ( !cb(str) ) return false ;
+        begin = end + 1 ;
+    }
+    return cb(s.substr(begin)) ;
+}
+
 }
 
 

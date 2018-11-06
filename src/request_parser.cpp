@@ -433,19 +433,6 @@ bool RequestParser::parse_mime_data(Request &session, istream &strm, const strin
             file_info.name_ = file_name ;
             file_info.data_ = data ;
 
-/*
-            if ( dsize > file_upload_persist_file_size ) {
-                boost::filesystem::path server_path = get_temporary_path(string(), "up", "tmp") ;
-
-                ofstream strm(server_path.string(), ios::binary) ;
-                strm.write(&data[0], data.size()) ;
-
-                file_info.path_ = server_path.string() ;
-            } else {
-            */
-
-            /*}*/
-
             file_info.size_ = data.size() ;
             session.FILE_.insert({fld, file_info}) ;
         }
@@ -511,6 +498,7 @@ bool RequestParser::parse_multipart_data(Request &session, istream &strm, const 
 }
 
 
+
 bool RequestParser::parse_form_data(Request &session, istream &strm)
 {
     static std::regex brx("multipart/form-data;\\s*boundary=(.*)");
@@ -530,12 +518,7 @@ bool RequestParser::parse_form_data(Request &session, istream &strm)
 
         std::string s = get_next_line(strm, content_length) ;
 
-
-        size_t begin = 0, end;
-        std::string token;
-        while ((end = s.find('&', begin)) != std::string::npos) {
-            std::string str = s.substr(begin, end) ;
-
+        tokenize(s, "&", [&](const string &str){
             size_t pos = str.find('=') ;
             if ( pos == string::npos ) return false ;
 
@@ -543,8 +526,9 @@ bool RequestParser::parse_form_data(Request &session, istream &strm)
             key = str.substr(0, pos) ;
             val = str.substr(pos+1) ;
             session.POST_[url_decode(key.c_str())] = url_decode(val.c_str()) ;
-            end = begin + 1 ;
-        }
+            return true ;
+        });
+
     }
     else if ( std::regex_match(content_type, subm, brx )) {
         std::string boundary = subm[1] ;
