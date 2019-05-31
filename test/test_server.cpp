@@ -60,7 +60,7 @@ public:
         GZipFilter gzip(req, resp) ;
 
         try {
-            Session &session = req.getSession() ;
+            Session session(*session_manager_, req, resp) ;
 
             Dictionary attrs ;
             if ( req.matches("GET", R"(/user/{id:\d+}/{action:show|hide}/)", attrs) ) {
@@ -80,9 +80,13 @@ public:
         }
     }
 
+    void setSessionManager(SessionManager *sm) {
+        session_manager_ = sm ;
+    }
 private:
 
     string root_ ;
+    SessionManager *session_manager_ ;
 };
 
 
@@ -93,11 +97,9 @@ int main(int argc, char *argv[]) {
 
     const string root = "/home/malasiot/source/ws/data/routes/" ;
 
-    server.setHandler(new App(root)) ;
-    server.setSessionManager(new FileSystemSessionManager("/tmp/session.sqlite")) ;
-
-    //server.addFilter(new StaticFileHandler(root)) ;
-    //server.addFilter(new RequestLoggerFilter(logger.get())) ;
+    App *app = new App(root) ;
+    server.setHandler(app) ;
+    app->setSessionManager(new SQLite3SessionManager("/tmp/session.sqlite")) ;
 
     server.run() ;
 }

@@ -19,10 +19,6 @@ bool Request::matches(const string &method, const string &pattern) const
     return matchesMethod(method) && Route(pattern).matches(path_, attributes) ;
 }
 
-Session &Request::getSession() const {
-    return ctx_->getSession() ;
-}
-
 string Request::toString() const
 {
    ostringstream strm ;

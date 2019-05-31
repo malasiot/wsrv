@@ -32,8 +32,6 @@ public:
     /// Stop server loop
     void stop() ;
 
-    void setSessionManager(SessionManager *) ;
-
 private:
 
     std::unique_ptr<ServerImpl> impl_ ;

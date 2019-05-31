@@ -29,9 +29,6 @@ public:
 
     void setHandler(RequestHandler *handler);
 
-    void setSessionManager(SessionManager *mgr) ;
-
-
     /// Run the server's io_service loop.
     void run();
 
@@ -65,7 +62,6 @@ private:
     asio::ip::tcp::socket socket_;
 
     std::unique_ptr<RequestHandler> handler_ ;
-    std::unique_ptr<SessionManager> session_manager_ ;
 
 };
 

@@ -45,22 +45,13 @@ class HttpConnection:
 public:
     explicit HttpConnection(asio::ip::tcp::socket socket,
                         ConnectionManager& manager,
-                        RequestHandler *handler,
-                            SessionManager *sm) : socket_(std::move(socket)),
-        connection_manager_(manager), handler_(handler), request_(this), session_manager_(sm) {}
+                        RequestHandler *handler ) : socket_(std::move(socket)),
+        connection_manager_(manager), handler_(handler), request_(this) {}
 
-    Session &getSession() {
-        if ( !session_ )
-            session_.reset(new Session(*session_manager_, request_, response_)) ;
-
-        return *session_ ;
-    }
 private:
 
     friend class ServerImpl ;
     friend class ConnectionManager ;
-
-
 
     void start() {
         read() ;
@@ -68,7 +59,6 @@ private:
     void stop() {
         socket_.close();
     }
-
 
     void read() {
         auto self(this->shared_from_this());
@@ -143,8 +133,6 @@ private:
      /// The handler of incoming HttpRequest.
      RequestHandler *handler_;
 
-     SessionManager *session_manager_ ;
-
      /// Buffer for incoming data.
      std::array<char, 8192> buffer_;
 
@@ -155,8 +143,6 @@ private:
 
      Request request_ ;
      Response response_ ;
-
-     std::unique_ptr<Session> session_ ;
 };
 
 

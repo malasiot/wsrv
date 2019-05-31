@@ -39,10 +39,6 @@ void ServerImpl::setHandler(RequestHandler *handler) {
     handler_.reset(handler) ;
 }
 
-void ServerImpl::setSessionManager(SessionManager *mgr) {
-    session_manager_.reset(mgr) ;
-}
-
 
 void ServerImpl::run()
 {
@@ -66,7 +62,7 @@ void ServerImpl::start_accept()
              {
 
                connection_manager_.start(std::make_shared<HttpConnection>(
-                   std::move(socket_), connection_manager_, handler_.get(), session_manager_.get()));
+                   std::move(socket_), connection_manager_, handler_.get()));
              }
 
         //if (!e) new_connection_->start();

@@ -14,7 +14,7 @@ SET ( SOURCES
     server_impl.hpp
 
     ${INCLUDE_ROOT}/session_manager.hpp
-    ${INCLUDE_ROOT}/fs_session_manager.hpp
+    ${INCLUDE_ROOT}/sqlite3_session_manager.hpp
     ${INCLUDE_ROOT}/session.hpp
     ${INCLUDE_ROOT}/route.hpp
 
@@ -33,7 +33,7 @@ SET ( SOURCES
     server_impl.cpp
     http_parser.c
     session_manager.cpp
-    fs_session_manager.cpp
+    sqlite3_session_manager.cpp
     session.cpp
     route.cpp
 

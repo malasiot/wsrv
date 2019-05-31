@@ -1,4 +1,4 @@
-#include <ws/fs_session_manager.hpp>
+#include <ws/sqlite3_session_manager.hpp>
 
 #include <iostream>
 #include <chrono>
@@ -235,7 +235,7 @@ static string read_string(istream &strm) {
     return res ;
 }
 
-FileSystemSessionManager::~FileSystemSessionManager() = default ;
+SQLite3SessionManager::~SQLite3SessionManager() = default ;
 
 string SQLite3SessionManager::serializeData(const Dictionary &data)
 {

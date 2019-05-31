@@ -25,9 +25,4 @@ void HttpServer::stop() {
     impl_->stop() ;
 }
 
-void HttpServer::setSessionManager(SessionManager *sm) {
-    impl_->setSessionManager(sm) ;
-}
-
-
 } // namespace ws

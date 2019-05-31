@@ -65,7 +65,6 @@ public:
 protected:
 
     friend class detail::RequestParser ;
-    friend class Session ;
 
     Dictionary SERVER_ ; // Server variables
     Dictionary GET_ ;	 // Query variables for GET requests

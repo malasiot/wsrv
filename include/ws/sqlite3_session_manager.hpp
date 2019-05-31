@@ -1,5 +1,5 @@
-#ifndef WS_FS_SESSION_MANAGER_HPP
-#define WS_FS_SESSION_MANAGER_HPP
+#ifndef WS_SQLITE3_SESSION_MANAGER_HPP
+#define WS_SQLITE3_SESSION_MANAGER_HPP
 
 #include <ws/session_manager.hpp>
 
