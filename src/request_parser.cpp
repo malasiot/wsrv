@@ -135,7 +135,7 @@ int RequestParser::on_body(http_parser * parser, const char *data, size_t size)
 
 
 
-boost::tribool RequestParser::parse(const char *data, size_t size)
+int RequestParser::parse(const char *data, size_t size)
 {
     std::size_t used = http_parser_execute(&parser_, &settings_, data, size);
 
@@ -161,11 +161,11 @@ boost::tribool RequestParser::parse(const char *data, size_t size)
               used += http_parser_execute(&parser_, &settings_, data + used, size - used);
       }
       else {
-          return false ;
+          return HTTP_PARSER_ERROR ;
       }
   }
 
-  return ( is_complete_ ? boost::tribool(true) : boost::indeterminate ) ;
+  return ( is_complete_ ? HTTP_PARSER_OK : HTTP_PARSER_INDETERMINATE ) ;
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -34,7 +34,6 @@ namespace ws {
 class ConnectionManager ;
 class ServerImpl ;
 
-
 extern std::vector<asio::const_buffer> response_to_buffers(Response &rep, bool) ;
 
 /// Represents a single HttpConnection from a client.
@@ -65,10 +64,10 @@ private:
         socket_.async_read_some(asio::buffer(buffer_), [self, this] (std::error_code e, std::size_t bytes_transferred) {
             if (!e)
             {
-                boost::tribool result;
+                int result;
                 result = request_parser_.parse(buffer_.data(), bytes_transferred);
 
-                if ( result )
+                if ( result == detail::HTTP_PARSER_OK )
                 {
                     if ( !request_parser_.decode_message(request_) ) {
                         response_.stockReply(Response::bad_request);
@@ -89,7 +88,7 @@ private:
                     write(response_to_buffers(response_, request_.method_ == "HEAD")) ;
 
                 }
-                else if (!result)
+                else if ( result == detail::HTTP_PARSER_ERROR )
                 {
                     response_.stockReply(Response::bad_request);
 
