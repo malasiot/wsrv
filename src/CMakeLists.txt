@@ -19,6 +19,7 @@ SET ( SOURCES
     ${INCLUDE_ROOT}/route.hpp
 
     ${INCLUDE_ROOT}/exceptions.hpp
+    ${INCLUDE_ROOT}/mime.hpp
 
     connection_manager.cpp
     io_service_pool.cpp
@@ -43,6 +44,7 @@ SET ( SOURCES
     mailer.cpp
     smtp_socket.cpp
     base64.cpp
+    mime.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
