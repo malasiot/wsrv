@@ -6,6 +6,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMake/ ${CMAKE_MODULE_PATH} )
 find_package(Sqlite3 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(cryptopp REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 
 include_directories(

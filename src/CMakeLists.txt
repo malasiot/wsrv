@@ -39,12 +39,16 @@ SET ( SOURCES
 
     exceptions.cpp
     dictionary.cpp
+
+    mailer.cpp
+    smtp_socket.cpp
+    base64.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 ADD_LIBRARY(ws_http_server SHARED ${SOURCES})
-TARGET_LINK_LIBRARIES(ws_http_server ${CRYPTOPP_LIBRARIES} ${SQLITE3_LIBRARY} z )
+TARGET_LINK_LIBRARIES(ws_http_server ${CRYPTOPP_LIBRARIES} ${SQLITE3_LIBRARY} z ssl crypto )
 
 
 
