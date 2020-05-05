@@ -13,6 +13,7 @@ namespace detail {
 class Socket ;
 }
 
+// Contains email address and optional name
 class MailAddress {
 public:
 
@@ -27,6 +28,7 @@ private:
     std::string name_, address_ ;
 };
 
+// Container for the message to be send
 class SMTPMessage {
   public:
 
@@ -83,11 +85,14 @@ class SMTPMessage {
         return *this ;
     }
 
-    SMTPMessage &setContent(const MimePart *content) {
-        content_ = content ;
-        return *this ;
-    }
 
+    // set message body
+    void setBody(const std::string &txt, bool is_html = false) ;
+
+    // add attachment
+    void addAttachment(std::istream &strm,
+                       const std::string &file_name,
+                       const std::string &mime = "application/octet-stream") ;
 
     const MailAddress &sender() const { return sender_ ; }
     const MailAddress &from() const { return from_ ; }
@@ -96,8 +101,7 @@ class SMTPMessage {
     const std::vector<MailAddress> &cc_recipients() const { return cc_recipients_ ; }
     const std::vector<MailAddress> &bcc_recipients() const { return bcc_recipients_ ; }
 
-    void format(std::string &msg, bool) const ;
-
+    void format(std::string &msg) const ;
 
 private:
     std::string format_header() const;
@@ -109,9 +113,11 @@ private:
     MailAddress sender_, from_, reply_to_ ;
     std::vector<MailAddress> recipients_, cc_recipients_, bcc_recipients_ ;
 
-    const MimePart *content_ ;
-
+    std::unique_ptr<MimePart> body_ ;
+    std::vector<std::unique_ptr<MimePart>> attachments_ ;
 };
+
+// Basic SMTP mail client over SSL
 
 class SMTPMailer
 {
@@ -119,34 +125,26 @@ public:
 
     enum class auth_method_t {NONE, LOGIN, START_TLS};
 
+    // Create mailer with given mail server hostname and port
     SMTPMailer(const std::string& hostname, unsigned port);
     ~SMTPMailer() ;
 
+    // authenticate to the server
     void authenticate(const std::string& username, const std::string& password, auth_method_t method);
 
+    // submit message
     void submit(const SMTPMessage& msg) ;
 
+    // set name of the client hostname
     void setSourceHostname(const std::string str_hostname) ;
 
 protected:
     void connect();
-    /**
-    Switching to TLS layer.
-
-    @throw smtp_error Start TLS refused by server.
-    @throw *          `parse_line(const string&)`, `ehlo()`, `dialog::send(const string&)`, `dialog::receive()`, `switch_to_ssl()`.
-    **/
     void start_tls();
-
-    /**
-    Replaces TCP socket with SSL socket.
-    @throw * `dialog_ssl::dialog_ssl(dialog_ssl&&)`.
-    **/
     void switch_to_ssl();
 
     void ehlo();
     void auth_login(const std::string &username, const std::string &password);
-    std::tuple<int, bool, std::string> parse_line(const std::string &line);
 
     enum smtp_status_t {POSITIVE_COMPLETION = 2, POSITIVE_INTERMEDIATE = 3, TRANSIENT_NEGATIVE = 4, PERMANENT_NEGATIVE = 5};
 
@@ -173,6 +171,7 @@ private:
     std::string src_hostname_ = "mail.client.org" ;
 };
 
+// exception thrown on connection error or malformed email
 class SMTPError: public std::runtime_error {
 public:
 

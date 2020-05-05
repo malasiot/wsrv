@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "base64.hpp"
+#include "detail/crypto.hpp"
 
 using namespace std ;
 
@@ -24,7 +25,7 @@ string MimePart::format() const {
    if ( !charset_.empty() )
       res.append("; charset=").append(charset_);
 
-   if ( boundary_.empty() )
+   if ( !boundary_.empty() )
         res.append("; boundary=").append(boundary_);
 
     res.append("\r\n");
@@ -52,7 +53,7 @@ string MimePart::format() const {
     res.append(header_).append("\r\n");
 
     // Content
-    res.append(content_) ;
+    res.append(encode()) ;
 
     res.append("\r\n");
 
@@ -65,7 +66,7 @@ void MimePart::encodeRaw(const string &text) {
         content_ = text ;
         break ;
     case Base64:
-        content_ = base64_encode(text) ;
+        content_ = encodeBase64(text) ;
         break ;
     }
 }
@@ -97,8 +98,35 @@ MimeFileInline::MimeFileInline(istream &strm, const string &file_name, const str
     addHeaderLine("Content-Disposition: inline") ;
 }
 
+const string MULTI_PART_NAMES[] = {
+    "multipart/mixed",         //    Mixed
+    "multipart/digest",        //    Digest
+    "multipart/alternative",   //    Alternative
+    "multipart/related",       //    Related
+    "multipart/report",        //    Report
+    "multipart/signed",        //    Signed
+    "multipart/encrypted"      //    Encrypted
+};
+
+MimeMultiPart::MimeMultiPart(const MimeMultiPart::MultiPartType type): mp_type_(type) {
+    setContentType(MULTI_PART_NAMES[mp_type_]);
+    setEncoding(EightBit);
+
+    setBoundary(binToHex(randomBytes(16))) ;
 
 
+}
 
+string MimeMultiPart::encode() const
+{
+    string content ;
+    for ( const auto p: parts_ ) {
+           content += "--" + boundary() + "\r\n";
+           content += p->format() ;
+     };
+
+    content += "--" + boundary() + "--\r\n";
+    return content ;
+}
 
 }

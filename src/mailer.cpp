@@ -186,7 +186,7 @@ void SMTPMailer::submit(const SMTPMessage& msg)
         throw SMTPError("Mail message rejection.");
 
     string msg_str;
-    msg.format(msg_str, true);
+    msg.format(msg_str);
     socket_->send(msg_str + "\r\n.");
     r = waitForResponse() ;
 
@@ -217,7 +217,16 @@ string MailAddress::format() const
     return addr_name;
 }
 
-void SMTPMessage::format(string &msg, bool dot_escape) const
+void SMTPMessage::setBody(const string &txt, bool is_html) {
+    if ( is_html ) body_.reset(new MimeHtml(txt)) ;
+    else body_.reset(new MimePlainText(txt)) ;
+}
+
+void SMTPMessage::addAttachment(istream &strm, const string &file_name, const string &mime) {
+    attachments_.push_back(unique_ptr<MimePart>(new MimeFile(strm, file_name, mime))) ;
+}
+
+void SMTPMessage::format(string &msg) const
 {
     msg += format_header();
     msg += format_content() ;
@@ -274,7 +283,24 @@ string SMTPMessage::format_subject() const
 
 string SMTPMessage::format_content() const
 {
-    return content_->format() ;
+    if ( attachments_.empty() ) {
+        if ( body_ )
+            return body_->format() ;
+        else
+            return string() ;
+    } else {
+        MimeMultiPart mp ;
+
+        if ( body_ )
+            mp.addPart(body_.get()) ;
+
+        for( const auto &p: attachments_ ) {
+            mp.addPart(p.get()) ;
+        }
+
+        return mp.format() ;
+    }
+
 }
 
 
