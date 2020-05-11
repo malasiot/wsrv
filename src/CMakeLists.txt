@@ -45,6 +45,9 @@ SET ( SOURCES
     smtp_socket.cpp
     base64.cpp
     mime.cpp
+
+    client.cpp
+    url.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

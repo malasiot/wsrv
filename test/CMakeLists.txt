@@ -11,3 +11,6 @@ target_link_libraries(test_server ws_http_server)
 
 add_executable(test_mailer test_mailer.cpp )
 target_link_libraries(test_mailer ws_http_server)
+
+add_executable(test_client test_client.cpp )
+target_link_libraries(test_client ws_http_server)
