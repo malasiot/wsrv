@@ -27,6 +27,10 @@ private:
     std::unique_ptr<HttpClientImpl> impl_ ;
 };
 
+class HttpClientError: public std::runtime_error {
+public:
+    HttpClientError(const std::string &msg): std::runtime_error(msg) {}
+};
 
 }
 

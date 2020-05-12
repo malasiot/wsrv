@@ -53,17 +53,25 @@ public:
     Connection(): ConnectionBase() {};
 
     void connect(const string &host) override {
-        tcp::resolver resolver(ios_);
-        tcp::resolver::query query(host, "http");
-        tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+        try {
+            tcp::resolver resolver(ios_);
+            tcp::resolver::query query(host, "http");
+            tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
 
-        asio::connect(socket_, endpoint_iterator);
+            asio::connect(socket_, endpoint_iterator);
+        } catch ( exception &e ) {
+            throw HttpClientError(e.what()) ;
+        }
     }
 
     void write(asio::streambuf &request) override {
-        std::ostream request_stream(&request);
+        try {
+            std::ostream request_stream(&request);
 
-        asio::write(socket_, request);
+            asio::write(socket_, request);
+        } catch ( exception &e ) {
+            throw HttpClientError(e.what()) ;
+        }
     }
     size_t read(asio::streambuf &response, error_code &ec) override  {
         return asio::read(socket_, response, ec) ;
@@ -78,19 +86,28 @@ public:
     ConnectionSSL(): context_(asio::ssl::context::sslv23), ssl_socket_(socket_, context_) {}
 
     void connect(const string &host) override {
-        tcp::resolver resolver(ios_);
-        tcp::resolver::query query(host, "https");
-        tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+        try {
+            tcp::resolver resolver(ios_);
+            tcp::resolver::query query(host, "https");
+            tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
 
-        ssl_socket_.set_verify_mode(ssl::verify_none);
+            ssl_socket_.set_verify_mode(ssl::verify_none);
 
-        asio::connect(ssl_socket_.lowest_layer(), endpoint_iterator);
-        ssl_socket_.handshake(ssl::stream_base::client) ;
+            asio::connect(ssl_socket_.lowest_layer(), endpoint_iterator);
+            ssl_socket_.handshake(ssl::stream_base::client) ;
+        } catch ( exception &e ) {
+            throw HttpClientError(e.what()) ;
+        }
     }
 
     void write(asio::streambuf &request) override {
-        std::ostream request_stream(&request);
-        asio::write(ssl_socket_, request);
+        try {
+            std::ostream request_stream(&request);
+            asio::write(ssl_socket_, request);
+        } catch ( exception &e ) {
+            throw HttpClientError(e.what()) ;
+        }
+
     }
 
     size_t read(asio::streambuf &response, error_code &ec) override {
@@ -103,8 +120,9 @@ public:
         {
             socket_.close();
         }
-        catch (...)
+        catch ( exception &e )
         {
+            throw HttpClientError(e.what()) ;
         }
     }
 
@@ -154,12 +172,17 @@ Response HttpClientImpl::readResponse(ConnectionBase *con) {
 
     error_code ec;
 
+    static const size_t buf_sz = 1024 * 16 ;
+
     do {
-        asio::streambuf response(1024);
+        asio::streambuf response(buf_sz);
 
         sz = con->read(response, ec) ;
 
         parser_result = parser.parse(asio::buffer_cast<const char*>( response.data() ), response.size()) ;
+
+        if ( parser_result == detail::HTTP_PARSER_ERROR )
+            throw HttpClientError("Invalid response received") ;
 
     } while ( !ec && ec != asio::error::eof && parser_result != detail::HTTP_PARSER_OK ) ;
 
