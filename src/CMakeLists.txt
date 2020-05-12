@@ -48,6 +48,7 @@ SET ( SOURCES
 
     client.cpp
     url.cpp
+    response_parser.cpp
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

@@ -43,6 +43,10 @@ inline bool tokenize(const std::string &s, const char *delim, std::function<bool
     return cb(s.substr(begin)) ;
 }
 
+
+std::string url_encode(const std::string &s) ;
+
+
 }
 
 

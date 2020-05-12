@@ -6,6 +6,8 @@
 
 namespace ws {
 
+// simple Url parser class. Url parts should be properly encoded
+
 class Url {
 public:
 

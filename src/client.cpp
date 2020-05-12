@@ -7,8 +7,12 @@
 #include <asio/streambuf.hpp>
 #include <asio/ip/tcp.hpp>
 #include <asio/read.hpp>
+#include <asio/ssl.hpp>
 
 #include <iostream>
+#include <ws/response.hpp>
+
+#include "detail/response_parser.hpp"
 
 using namespace std ;
 using namespace asio ;
@@ -16,100 +20,207 @@ using namespace asio::ip ;
 
 namespace ws {
 
+class ConnectionBase {
+
+public:
+    ConnectionBase(): socket_(ios_) {}
+
+    virtual void connect(const string &host) = 0 ;
+    virtual void write(asio::streambuf &request) = 0;
+    virtual size_t read(asio::streambuf &response, error_code &ec) = 0;
+
+    virtual ~ConnectionBase()
+    {
+        try
+        {
+            socket_.close();
+        }
+        catch (...)
+        {
+        }
+    }
+
+protected:
+
+    asio::io_context ios_;
+    asio::ip::tcp::socket socket_;
+    asio::streambuf strmbuf_;
+};
+
+class Connection: public ConnectionBase {
+public:
+
+    Connection(): ConnectionBase() {};
+
+    void connect(const string &host) override {
+        tcp::resolver resolver(ios_);
+        tcp::resolver::query query(host, "http");
+        tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+
+        asio::connect(socket_, endpoint_iterator);
+    }
+
+    void write(asio::streambuf &request) override {
+        std::ostream request_stream(&request);
+
+        asio::write(socket_, request);
+    }
+    size_t read(asio::streambuf &response, error_code &ec) override  {
+        return asio::read(socket_, response, ec) ;
+    }
+
+
+};
+
+class ConnectionSSL: public ConnectionBase {
+public:
+
+    ConnectionSSL(): context_(asio::ssl::context::sslv23), ssl_socket_(socket_, context_) {}
+
+    void connect(const string &host) override {
+        tcp::resolver resolver(ios_);
+        tcp::resolver::query query(host, "https");
+        tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+
+        ssl_socket_.set_verify_mode(ssl::verify_none);
+
+        asio::connect(ssl_socket_.lowest_layer(), endpoint_iterator);
+        ssl_socket_.handshake(ssl::stream_base::client) ;
+    }
+
+    void write(asio::streambuf &request) override {
+        std::ostream request_stream(&request);
+        asio::write(ssl_socket_, request);
+    }
+
+    size_t read(asio::streambuf &response, error_code &ec) override {
+        return asio::read(ssl_socket_, response, ec) ;
+    }
+
+    virtual ~ConnectionSSL()
+    {
+        try
+        {
+            socket_.close();
+        }
+        catch (...)
+        {
+        }
+    }
+
+private:
+
+    asio::ssl::context context_;
+    asio::ssl::stream<asio::ip::tcp::socket&> ssl_socket_;
+};
+
 class HttpClientImpl {
 public:
     HttpClientImpl() = default ;
 
-    bool get(const Url &url) ;
+    Response get(const Url &url) ;
+    Response post(const Url &url, const std::map<std::string, std::string> &data);
 
 private:
 
     friend class HttpClient ;
 
-    asio::io_service io_service_ ;
-    string host_name_ ;
+    ConnectionBase *connect(const Url &url);
+    Response readResponse(ConnectionBase *con);
 
+    string host_name_ ;
 };
 
-bool HttpClientImpl::get(const Url &url) {
 
-    try {
-        // Get a list of endpoints corresponding to the server name.
-        tcp::resolver resolver(io_service_);
-        tcp::resolver::query query(url.host(), url.schema());
-        tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
 
-        // Try each endpoint until we successfully establish a connection.
-        tcp::socket socket(io_service_);
-        asio::connect(socket, endpoint_iterator);
+ConnectionBase *HttpClientImpl::connect(const Url &url) {
+    ConnectionBase *connection = nullptr;
+    if ( url.schema() == "http" )
+        connection = new Connection() ;
+    else if ( url.schema() == "https" )
+        connection = new ConnectionSSL() ;
 
-        // Form the request. We specify the "Connection: close" header so that the
-        // server will close the socket after transmitting the response. This will
-        // allow us to treat all data up until the EOF as the content.
-        asio::streambuf request;
-        std::ostream request_stream(&request);
-        request_stream << "GET " << url.file() << " HTTP/1.1\r\n";
-        request_stream << "Host: " << url.host() << "\r\n";
-        request_stream << "Accept: */*\r\n";
-        request_stream << "Connection: close\r\n\r\n";
-
-        // Send the request.
-        asio::write(socket, request);
-
-        // Read the response status line. The response streambuf will automatically
-        // grow to accommodate the entire line. The growth may be limited by passing
-        // a maximum size to the streambuf constructor.
-        asio::streambuf response;
-        asio::read_until(socket, response, "\r\n");
-
-        // Check that response is OK.
-        std::istream response_stream(&response);
-        std::string http_version;
-        response_stream >> http_version;
-        unsigned int status_code;
-        response_stream >> status_code;
-        std::string status_message;
-        std::getline(response_stream, status_message);
-
-        if (!response_stream || http_version.substr(0, 5) != "HTTP/")
-        {
-          std::cout << "Invalid response\n";
-          return 1;
-        }
-        if (status_code != 200)
-        {
-          std::cout << "Response returned with status code " << status_code << "\n";
-          return 1;
-        }
-
-        // Read the response headers, which are terminated by a blank line.
-        asio::read_until(socket, response, "\r\n\r\n");
-
-        // Process the response headers.
-        std::string header;
-        while (std::getline(response_stream, header) && header != "\r")
-          std::cout << header << "\n";
-        std::cout << "\n";
-
-        // Write whatever content we already have to output.
-        if (response.size() > 0)
-          std::cout << &response;
-
-        // Read until EOF, writing data to output as we go.
-        error_code error;
-        while (asio::read(socket, response,
-              asio::transfer_at_least(1), error))
-          std::cout << &response;
-        if (error != asio::error::eof)
-          throw system_error(error);
-      }
-      catch (std::exception& e)
-      {
-        std::cout << "Exception: " << e.what() << "\n";
-      }
-
-    return 0 ;
+    if ( connection ) connection->connect(url.host()) ;
+    return connection ;
 }
+
+
+Response HttpClientImpl::readResponse(ConnectionBase *con) {
+
+    detail::ResponseParser parser ;
+
+    size_t sz ;
+    int parser_result ;
+
+    error_code ec;
+
+    do {
+        asio::streambuf response(1024);
+
+        sz = con->read(response, ec) ;
+
+        parser_result = parser.parse(asio::buffer_cast<const char*>( response.data() ), response.size()) ;
+
+    } while ( !ec && ec != asio::error::eof && parser_result != detail::HTTP_PARSER_OK ) ;
+
+    Response resp ;
+    parser.decode_message(resp) ;
+
+    return resp ;
+
+}
+
+Response HttpClientImpl::get(const Url &url) {
+
+    std::unique_ptr<ConnectionBase> con(connect(url)) ;
+
+    // Form the request. We specify the "Connection: close" header so that the
+    // server will close the socket after transmitting the response. This will
+    // allow us to treat all data up until the EOF as the content.
+
+    asio::streambuf request;
+    std::ostream request_stream(&request);
+
+    request_stream << "GET " << url.file() << " HTTP/1.1\r\n";
+    request_stream << "Host: " << url.host() << "\r\n";
+    request_stream << "Accept: */*\r\n";
+    request_stream << "Connection: close\r\n\r\n";
+
+    con->write(request);
+
+    Response res = readResponse(con.get()) ;
+
+    return res ;
+}
+
+Response HttpClientImpl::post(const Url &url, const std::map<std::string, std::string> &data) {
+
+    std::unique_ptr<ConnectionBase> con(connect(url)) ;
+
+    string payload ;
+    for( const auto &lp: data ) {
+        if ( !payload.empty() ) payload += '&' ;
+        payload += lp.first + '=' + lp.second ;
+    }
+
+    asio::streambuf request;
+    std::ostream request_stream(&request);
+
+    request_stream << "POST " << url.file() << " HTTP/1.1\r\n";
+    request_stream << "Host: " << url.host() << "\r\n";
+    request_stream << "Content-Length:" << payload.length() << "\r\n" ;
+    request_stream << "Content-Type: application/x-www-form-urlencoded\r\n" ;
+    request_stream << "Accept: */*\r\n";
+    request_stream << "Connection: close\r\n\r\n";
+
+    request_stream << payload ;
+    con->write(request);
+
+    Response res = readResponse(con.get()) ;
+
+    return res ;
+}
+
 
 HttpClient::HttpClient(): impl_(new HttpClientImpl()) {
 
@@ -120,11 +231,16 @@ HttpClient::~HttpClient()
 
 }
 
-bool HttpClient::get(const string &url)
+Response HttpClient::get(const string &url)
 {
     assert(impl_) ;
     return impl_->get(url) ;
+}
 
+Response HttpClient::post(const string &url, const std::map<string, string> &data)
+{
+    assert(impl_) ;
+    return impl_->post(url, data) ;
 }
 
 void HttpClient::setHost(const string &hostname)

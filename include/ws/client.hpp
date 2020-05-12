@@ -4,17 +4,21 @@
 #include <memory>
 
 #include <ws/url.hpp>
+#include <ws/response.hpp>
 
 namespace ws {
 
 class HttpClientImpl ;
+
+// Class to make blocking http requests
 
 class HttpClient {
 public:
     HttpClient() ;
    ~HttpClient() ;
 
-    bool get(const std::string &url) ;
+    Response get(const std::string &url) ;
+    Response post(const std::string &url, const std::map<std::string, std::string> &data ) ;
 
     void setHost(const std::string &hostname) ;
 
