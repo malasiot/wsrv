@@ -17,7 +17,7 @@ class HttpServer {
 public:
     /// Construct the server to listen on the specified TCP address and port, and
     /// serve up files from the given directory.
-    explicit HttpServer(const std::string& address, const std::string& port,
+    explicit HttpServer(const std::string& address,
                     std::size_t io_service_pool_size = 4);
 
     ~HttpServer() ;

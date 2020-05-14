@@ -93,7 +93,7 @@ private:
 int main(int argc, char *argv[]) {
 
 
-    HttpServer server("127.0.0.1", "5000") ;
+    HttpServer server("127.0.0.1:5000") ;
 
     const string root = "/home/malasiot/source/ws/data/routes/" ;
 

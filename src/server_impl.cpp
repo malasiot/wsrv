@@ -1,10 +1,11 @@
 #include "server_impl.hpp"
 #include "detail/connection.hpp"
+#include "detail/util.hpp"
 
 namespace ws {
 
 ServerImpl::ServerImpl
-(const std::string& address, const std::string& port,
+(const std::string& address,
                std::size_t io_service_pool_size)
     : io_service_pool_(io_service_pool_size),
       signals_(io_service_pool_.get_io_service()),
@@ -22,9 +23,11 @@ ServerImpl::ServerImpl
 
     do_await_stop();
 
+    auto atokens = split(address, ":") ;
+
     // Open the acceptor with the option to reuse the address (i.e. SO_REUSEADDR).
     asio::ip::tcp::resolver resolver(acceptor_.get_io_service());
-    asio::ip::tcp::resolver::query query(address, port);
+    asio::ip::tcp::resolver::query query(atokens[0], atokens[1]);
     asio::ip::tcp::endpoint endpoint = *resolver.resolve(query);
 
     acceptor_.open(endpoint.protocol());
