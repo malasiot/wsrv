@@ -1,5 +1,5 @@
-#include <ws/request.hpp>
-#include <ws/route.hpp>
+#include <wsrv/request.hpp>
+#include <wsrv/route.hpp>
 #include "detail/connection.hpp"
 
 #include <regex>

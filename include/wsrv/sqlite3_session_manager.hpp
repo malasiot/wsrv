@@ -1,7 +1,7 @@
 #ifndef WS_SQLITE3_SESSION_MANAGER_HPP
 #define WS_SQLITE3_SESSION_MANAGER_HPP
 
-#include <ws/session_manager.hpp>
+#include <wsrv/session_manager.hpp>
 
 #include <string>
 

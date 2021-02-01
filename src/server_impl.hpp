@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-#include <ws/request_handler.hpp>
-#include <ws/session_manager.hpp>
+#include <wsrv/request_handler.hpp>
+#include <wsrv/session_manager.hpp>
 
 #include "detail/connection.hpp"
 #include "detail/io_service_pool.hpp"

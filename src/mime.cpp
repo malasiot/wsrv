@@ -1,4 +1,4 @@
-#include <ws/mime.hpp>
+#include <wsrv/mime.hpp>
 
 #include <iostream>
 #include <sstream>

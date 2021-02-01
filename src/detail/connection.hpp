@@ -12,13 +12,13 @@
 #define WS_CONNECTION_HPP
 
 
-#include <ws/response.hpp>
-#include <ws/request.hpp>
+#include <wsrv/response.hpp>
+#include <wsrv/request.hpp>
 //#include <ws/util/logger.hpp>
 
-#include <ws/request_handler.hpp>
-#include <ws/session_manager.hpp>
-#include <ws/exceptions.hpp>
+#include <wsrv/request_handler.hpp>
+#include <wsrv/session_manager.hpp>
+#include <wsrv/exceptions.hpp>
 
 #include "request_parser.hpp"
 #include "connection_manager.hpp"

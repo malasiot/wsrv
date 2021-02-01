@@ -51,27 +51,27 @@ SET ( SOURCES
     response_parser.cpp
 )
 
-ADD_LIBRARY(ws_http_server ${LIBRARY_TYPE} ${SOURCES})
+ADD_LIBRARY(wsrv ${LIBRARY_TYPE} ${SOURCES})
 
-target_include_directories(ws_http_server PRIVATE
+target_include_directories(wsrv PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   ${CMAKE_SOURCE_DIR}/src
   PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
 )
 
-target_include_directories(ws_http_server PUBLIC
+target_include_directories(wsrv PUBLIC
     ${SQLITE3_INCLUDE_DIR}
     ${ZLIB_INCLUDE_DIR}
 )
 
 
-target_link_libraries(ws_http_server PUBLIC
+target_link_libraries(wsrv PUBLIC
       ${CRYPTOPP_LIBRARIES} ${SQLITE3_LIBRARY} ${OPENSSL_LIBRARIES} z
 )
 
 # Install binaries
-install(TARGETS ws_http_server
+install(TARGETS wsrv
   EXPORT ${PROJECT_NAME}-export
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
@@ -79,6 +79,6 @@ install(TARGETS ws_http_server
   COMPONENT dev)
 
 # Install headers
-install(DIRECTORY "${LIBRARY_INCLUDE_DIR}" DESTINATION "${INSTALL_INCLUDE_DIR}/ws" )
+install(DIRECTORY "${LIBRARY_INCLUDE_DIR}" DESTINATION "${INSTALL_INCLUDE_DIR}/wsrv" )
 
 

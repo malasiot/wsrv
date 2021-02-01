@@ -5,7 +5,7 @@
 #include <memory>
 #include <vector>
 
-#include <ws/mime.hpp>
+#include <wsrv/mime.hpp>
 
 namespace ws {
 

@@ -1,7 +1,7 @@
 #ifndef WS_EXCEPTIONS_HPP
 #define WS_EXCEPTIONS_HPP
 
-#include <ws/response.hpp>
+#include <wsrv/response.hpp>
 
 namespace ws {
 

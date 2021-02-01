@@ -3,9 +3,9 @@
 
 #include <string>
 
-#include <ws/request.hpp>
-#include <ws/response.hpp>
-#include <ws/session.hpp>
+#include <wsrv/request.hpp>
+#include <wsrv/response.hpp>
+#include <wsrv/session.hpp>
 
 namespace ws {
 

@@ -1,5 +1,5 @@
-#include <ws/session_manager.hpp>
-#include <ws/crypto.hpp>
+#include <wsrv/session_manager.hpp>
+#include <wsrv/crypto.hpp>
 
 #include <algorithm>
 

@@ -7,6 +7,7 @@ install(EXPORT ${PROJECT_NAME}-export
   DESTINATION ${INSTALL_CMAKE_DIR}
   FILE ${PROJECT_NAME}Targets.cmake)
 
+message(${LIBRARY_NAME})
 # Create the <package>Config.cmake.in
 configure_file(${CMAKE_SOURCE_DIR}/CMake/Config.cmake.in
   "${PROJECT_CMAKE_FILES}/${PROJECT_NAME}Config.cmake" @ONLY)

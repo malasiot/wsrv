@@ -14,7 +14,7 @@
 #include "detail/request_parser.hpp"
 #include "detail/util.hpp"
 
-#include <ws/request.hpp>
+#include <wsrv/request.hpp>
 
 #include <algorithm>
 #include <cstring>

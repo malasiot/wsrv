@@ -1,4 +1,4 @@
-#include <ws/mailer.hpp>
+#include <wsrv/mailer.hpp>
 
 #include <fstream>
 

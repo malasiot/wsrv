@@ -5,8 +5,8 @@
 #include <vector>
 #include <memory>
 
-#include <ws/request_handler.hpp>
-#include <ws/session_manager.hpp>
+#include <wsrv/request_handler.hpp>
+#include <wsrv/session_manager.hpp>
 
 namespace ws {
 

@@ -1,10 +1,10 @@
-#ifndef __SERVER_REQUEST_HANDLER_HPP__
-#define __SERVER_REQUEST_HANDLER_HPP__
+#ifndef SERVER_REQUEST_HANDLER_HPP
+#define SERVER_REQUEST_HANDLER_HPP
 
 #include <string>
 
-#include <ws/request.hpp>
-#include <ws/response.hpp>
+#include <wsrv/request.hpp>
+#include <wsrv/response.hpp>
 
 namespace ws {
 

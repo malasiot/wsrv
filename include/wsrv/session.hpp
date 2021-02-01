@@ -3,8 +3,8 @@
 
 #include <string>
 
-#include <ws/request.hpp>
-#include <ws/response.hpp>
+#include <wsrv/request.hpp>
+#include <wsrv/response.hpp>
 
 namespace ws {
 

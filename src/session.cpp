@@ -1,5 +1,5 @@
-#include <ws/session.hpp>
-#include <ws/session_manager.hpp>
+#include <wsrv/session.hpp>
+#include <wsrv/session_manager.hpp>
 
 using namespace std ;
 

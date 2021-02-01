@@ -1,8 +1,8 @@
-#include <ws/server.hpp>
-#include <ws/request_handler.hpp>
-#include <ws/session.hpp>
-#include <ws/exceptions.hpp>
-#include <ws/fs_session_manager.hpp>
+#include <wsrv/server.hpp>
+#include <wsrv/request_handler.hpp>
+#include <wsrv/session.hpp>
+#include <wsrv/exceptions.hpp>
+#include <wsrv/fs_session_manager.hpp>
 
 #include <mutex>
 #include <iostream>

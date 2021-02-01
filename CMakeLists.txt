@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(ws)
+project(wsrv)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMake/ ${CMAKE_MODULE_PATH} )
 
@@ -15,7 +15,7 @@ ADD_DEFINITIONS( -std=c++11 )
 ADD_DEFINITIONS( -DASIO_STANDALONE )
 
 SET (SRC_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/src)
-SET (INCLUDE_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/include/ws)
+SET (INCLUDE_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/include/wsrv)
 
 add_subdirectory(src)
 add_subdirectory(test)

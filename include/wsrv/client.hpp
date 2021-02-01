@@ -3,8 +3,8 @@
 
 #include <memory>
 
-#include <ws/url.hpp>
-#include <ws/response.hpp>
+#include <wsrv/url.hpp>
+#include <wsrv/response.hpp>
 
 namespace ws {
 

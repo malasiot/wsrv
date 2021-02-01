@@ -1,8 +1,8 @@
 
-#include <ws/response.hpp>
-#include <ws/zstream.hpp>
+#include <wsrv/response.hpp>
+#include <wsrv/zstream.hpp>
 
-#include <ws/exceptions.hpp>
+#include <wsrv/exceptions.hpp>
 #include <asio/buffered_read_stream.hpp>
 
 #include <regex>

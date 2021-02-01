@@ -1,4 +1,4 @@
-#include <ws/dictionary.hpp>
+#include <wsrv/dictionary.hpp>
 
 #include <iostream>
 

@@ -1,4 +1,4 @@
-#include <ws/client.hpp>
+#include <wsrv/client.hpp>
 
 #include <iostream>
 

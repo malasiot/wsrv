@@ -1,4 +1,4 @@
-#include <ws/server.hpp>
+#include <wsrv/server.hpp>
 
 #include "server_impl.hpp"
 

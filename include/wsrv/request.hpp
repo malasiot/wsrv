@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include <ws/route.hpp>
+#include <wsrv/route.hpp>
 
 namespace ws {
 

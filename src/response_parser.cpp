@@ -1,7 +1,7 @@
 #include "detail/response_parser.hpp"
 #include "detail/util.hpp"
 
-#include <ws/response.hpp>
+#include <wsrv/response.hpp>
 
 #include <algorithm>
 #include <cstring>

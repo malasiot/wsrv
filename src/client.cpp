@@ -1,4 +1,4 @@
-#include <ws/client.hpp>
+#include <wsrv/client.hpp>
 
 #include <asio/io_service.hpp>
 #include <asio/connect.hpp>
@@ -10,7 +10,7 @@
 #include <asio/ssl.hpp>
 
 #include <iostream>
-#include <ws/response.hpp>
+#include <wsrv/response.hpp>
 
 #include "detail/response_parser.hpp"
 

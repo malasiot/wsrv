@@ -1,4 +1,4 @@
-#include <ws/mailer.hpp>
+#include <wsrv/mailer.hpp>
 
 #include "smtp_socket.hpp"
 #include "base64.hpp"
