@@ -11,8 +11,6 @@
 #ifndef WS_REQUEST_PARSER_HPP
 #define WS_REQUEST_PARSER_HPP
 
-#include <boost/logic/tribool.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <map>
 
 #include "http_parser.h"
@@ -23,6 +21,7 @@ struct Request;
 
 namespace detail {
 
+enum { HTTP_PARSER_OK = 0, HTTP_PARSER_ERROR = 1, HTTP_PARSER_INDETERMINATE = 2 } ;
 /// Parser for incoming requests.
 class RequestParser
 {
@@ -34,7 +33,7 @@ public:
     void reset();
 
     /// call the parser with chunk of data while it is in indeterminate state
-    boost::tribool parse(const char *data, size_t buf_len) ;
+    int parse(const char *data, size_t buf_len) ;
 
     // fill in the request structure
     bool decode_message(Request &req) const ;

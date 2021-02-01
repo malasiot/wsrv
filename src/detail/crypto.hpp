@@ -1,9 +1,9 @@
-#ifndef __WSPP_UTIL_RANDOM_HPP__
-#define __WSPP_UTIL_RANDOM_HPP__
+#ifndef WS_UTIL_RANDOM_HPP
+#define WS_UTIL_RANDOM_HPP
 
 #include <string>
 
-namespace wspp { namespace util {
+namespace ws {
 
 // generate random bytes string of specified length
 std::string randomBytes(size_t len = 32) ;
@@ -28,7 +28,9 @@ std::string hashSHA256(const std::string &src) ;
 
 bool hashCompare(const std::string &s1, const std::string &s2) ;
 
-} }
+
+
+}
 
 
 #endif

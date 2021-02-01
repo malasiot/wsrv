@@ -8,6 +8,10 @@
 
 namespace ws {
 
+namespace detail {
+class ResponseParser ;
+}
+
 struct Response
 {
     using Dictionary = std::map<std::string, std::string> ;
@@ -35,7 +39,7 @@ struct Response
 
     Dictionary &headers() { return headers_ ; }
     std::string &content() { return content_ ; }
-    Status getStatus() const { return status_ ; }
+    unsigned int getStatus() const { return status_ ; }
 
     std::string getHeaderAttribute(const std::string &key, const std::string &def = std::string()) const ;
 
@@ -108,13 +112,14 @@ struct Response
     std::string toString() const ;
 private:
 
+    friend class detail::ResponseParser ;
     /// The headers to be included in the reply.
     Dictionary headers_;
 
     /// The content to be sent in the reply.
     std::string content_;
 
-    Status status_ = not_found ;
+    unsigned int status_ = not_found ;
 
 };
 

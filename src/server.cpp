@@ -6,8 +6,8 @@ namespace ws {
 
 HttpServer::~HttpServer() = default ;
 
-HttpServer::HttpServer(const std::string& address, const std::string& port,
-               std::size_t io_service_pool_size): impl_(new ServerImpl(address, port, io_service_pool_size)) {
+HttpServer::HttpServer(const std::string& address,
+               std::size_t io_service_pool_size): impl_(new ServerImpl(address, io_service_pool_size)) {
 }
 
 

@@ -19,6 +19,7 @@ SET ( SOURCES
     ${INCLUDE_ROOT}/route.hpp
 
     ${INCLUDE_ROOT}/exceptions.hpp
+    ${INCLUDE_ROOT}/mime.hpp
 
     connection_manager.cpp
     io_service_pool.cpp
@@ -39,6 +40,15 @@ SET ( SOURCES
 
     exceptions.cpp
     dictionary.cpp
+
+    mailer.cpp
+    smtp_socket.cpp
+    base64.cpp
+    mime.cpp
+
+    client.cpp
+    url.cpp
+    response_parser.cpp
 )
 
 ADD_LIBRARY(ws_http_server ${LIBRARY_TYPE} ${SOURCES})
@@ -57,7 +67,7 @@ target_include_directories(ws_http_server PUBLIC
 
 
 target_link_libraries(ws_http_server PUBLIC
-      ${CRYPTOPP_LIBRARIES} ${SQLITE3_LIBRARY} z
+      ${CRYPTOPP_LIBRARIES} ${SQLITE3_LIBRARY} ${OPENSSL_LIBRARIES} z
 )
 
 # Install binaries
