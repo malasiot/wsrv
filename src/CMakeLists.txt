@@ -41,11 +41,34 @@ SET ( SOURCES
     dictionary.cpp
 )
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+ADD_LIBRARY(ws_http_server ${LIBRARY_TYPE} ${SOURCES})
 
-ADD_LIBRARY(ws_http_server SHARED ${SOURCES})
-TARGET_LINK_LIBRARIES(ws_http_server ${CRYPTOPP_LIBRARIES} ${SQLITE3_LIBRARY} z )
+target_include_directories(ws_http_server PRIVATE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+  ${CMAKE_SOURCE_DIR}/src
+  PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+)
+
+target_include_directories(ws_http_server PUBLIC
+    ${SQLITE3_INCLUDE_DIR}
+    ${ZLIB_INCLUDE_DIR}
+)
 
 
+target_link_libraries(ws_http_server PUBLIC
+      ${CRYPTOPP_LIBRARIES} ${SQLITE3_LIBRARY} z
+)
+
+# Install binaries
+install(TARGETS ws_http_server
+  EXPORT ${PROJECT_NAME}-export
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  COMPONENT dev)
+
+# Install headers
+install(DIRECTORY "${LIBRARY_INCLUDE_DIR}" DESTINATION "${INSTALL_INCLUDE_DIR}/ws" )
 
 
