@@ -8,18 +8,18 @@ using namespace std ;
 
 namespace ws {
 
-bool Request::matches(const string &method, const string &pattern, Dictionary &attributes) const
+bool HTTPRequest::matches(const string &method, const string &pattern, Dictionary &attributes) const
 {
     return matchesMethod(method) && Route(pattern).matches(path_, attributes) ;
 }
 
-bool Request::matches(const string &method, const string &pattern) const
+bool HTTPRequest::matches(const string &method, const string &pattern) const
 {
     Dictionary attributes ;
     return matchesMethod(method) && Route(pattern).matches(path_, attributes) ;
 }
 
-string Request::toString() const
+string HTTPRequest::toString() const
 {
    ostringstream strm ;
     strm <<  getServerAttribute("REMOTE_ADDR", "127.0.0.1")
@@ -30,47 +30,47 @@ string Request::toString() const
     return strm.str() ;
 }
 
-Request::Request(HttpConnection *ctx): ctx_(ctx) {
+HTTPRequest::HTTPRequest(HttpConnection *ctx): ctx_(ctx) {
 
 }
 
-bool Request::supportsGzip() const {
+bool HTTPRequest::supportsGzip() const {
     string enc = getServerAttribute("Accept-Encoding") ;
     return !enc.empty() && enc.find("gzip") != string::npos ;
 }
 
-string Request::getServerAttribute(const string &key, const string &def) const {
+string HTTPRequest::getServerAttribute(const string &key, const string &def) const {
     auto it = SERVER_.find(key) ;
     return ( it == SERVER_.end() ) ? def : it->second ;
 }
 
-string Request::getQueryAttribute(const string &key, const string &def) const {
+string HTTPRequest::getQueryAttribute(const string &key, const string &def) const {
     auto it = GET_.find(key) ;
     return ( it == GET_.end() ) ? def : it->second ;
 }
 
-string Request::getPostAttribute(const string &key, const string &def) const {
+string HTTPRequest::getPostAttribute(const string &key, const string &def) const {
     auto it = POST_.find(key) ;
     return ( it == POST_.end() ) ? def : it->second ;
 }
 
-string Request::getCookie(const string &key, const string &def) const {
+string HTTPRequest::getCookie(const string &key, const string &def) const {
     auto it = COOKIE_.find(key) ;
     return ( it == COOKIE_.end() ) ? def : it->second ;
 }
 
-bool Request::matches(const string &method, const Route &pattern, Dictionary &attributes) const
+bool HTTPRequest::matches(const string &method, const Route &pattern, Dictionary &attributes) const
 {
     return matchesMethod(method) && pattern.matches(path_, attributes) ;
 }
 
-bool Request::matches(const string &method, const Route &pattern) const
+bool HTTPRequest::matches(const string &method, const Route &pattern) const
 {
     Dictionary attributes ;
     return matchesMethod(method) && pattern.matches(path_, attributes) ;
 }
 
-bool Request::matchesMethod(const string &method) const {
+bool HTTPRequest::matchesMethod(const string &method) const {
     vector<string> methods ;
 
     static std::regex regex{R"([\s|]+)"}; // split on space and caret

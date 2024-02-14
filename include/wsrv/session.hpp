@@ -14,7 +14,7 @@ class Session {
     using Dictionary = std::map<std::string, std::string>;
 public:
     // start a new session
-    Session(SessionManager &handler, const Request &req, Response &resp, const std::string &suffix = std::string()) ;
+    Session(SessionManager &handler, const HTTPRequest &req, Response &resp, const std::string &suffix = std::string()) ;
 
     // closes the season
     ~Session() ;

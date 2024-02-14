@@ -21,6 +21,8 @@ SET ( SOURCES
     ${INCLUDE_ROOT}/exceptions.hpp
     ${INCLUDE_ROOT}/mime.hpp
 
+    ${INCLUDE_ROOT}/url.hpp
+
     connection_manager.cpp
     io_service_pool.cpp
     server.cpp

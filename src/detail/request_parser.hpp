@@ -17,7 +17,7 @@
 
 namespace ws {
 
-struct Request;
+struct HTTPRequest;
 
 namespace detail {
 
@@ -36,7 +36,7 @@ public:
     int parse(const char *data, size_t buf_len) ;
 
     // fill in the request structure
-    bool decode_message(Request &req) const ;
+    bool decode_message(HTTPRequest &req) const ;
 
 private:
 
@@ -48,13 +48,13 @@ private:
     static int on_url(http_parser * parser, const char *data, size_t size);
     static int on_body(http_parser * parser, const char *data, size_t size) ;
 
-    static bool parse_form_data(Request &session, std::istream &strm);
-    static bool parse_url(Request &req, const std::string &url);
-    static bool parse_cookie(Request &session, const std::string &data) ;
-    static bool parse_cookies(Request &session) ;
-    static bool parse_mime_data(Request &session, std::istream &strm, const std::string &fld, const std::string &file_name,
+    static bool parse_form_data(HTTPRequest &session, std::istream &strm);
+    static bool parse_url(HTTPRequest &req, const std::string &url);
+    static bool parse_cookie(HTTPRequest &session, const std::string &data) ;
+    static bool parse_cookies(HTTPRequest &session) ;
+    static bool parse_mime_data(HTTPRequest &session, std::istream &strm, const std::string &fld, const std::string &file_name,
                               const std::string &content_type, const std::string trans_encoding, const std::string &bnd);
-    static bool parse_multipart_data(Request &session, std::istream &strm, const std::string &bnd) ;
+    static bool parse_multipart_data(HTTPRequest &session, std::istream &strm, const std::string &bnd) ;
 
 
 protected:

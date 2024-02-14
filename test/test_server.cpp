@@ -15,7 +15,7 @@ using namespace std ;
 
 class RequestLogger {
 public:
-    RequestLogger(const Request &req, const Response &res): req_(req), res_(res) {}
+    RequestLogger(const HTTPRequest &req, const Response &res): req_(req), res_(res) {}
     ~RequestLogger() {
         unique_lock<mutex> lock(lock_) ;
 
@@ -26,20 +26,20 @@ public:
         }
     }
 
-    const Request &req_ ;
+    const HTTPRequest &req_ ;
     const Response &res_ ;
     mutex lock_ ;
 };
 
 class GZipFilter {
 public:
-    GZipFilter(const Request &req, Response &res): req_(req), res_(res) {}
+    GZipFilter(const HTTPRequest &req, Response &res): req_(req), res_(res) {}
     ~GZipFilter() {
         if ( req_.supportsGzip() && res_.contentBenefitsFromCompression() )
             res_.compress();
     }
 
-    const Request &req_ ;
+    const HTTPRequest &req_ ;
     Response &res_ ;
 
 };
@@ -54,7 +54,7 @@ public:
 
     }
 
-    void handle(const Request &req, Response &resp) override {
+    void handle(const HTTPRequest &req, Response &resp) override {
 
         RequestLogger logger(req, resp) ;
         GZipFilter gzip(req, resp) ;
@@ -93,7 +93,7 @@ private:
 int main(int argc, char *argv[]) {
 
 
-    HttpServer server("127.0.0.1:5000") ;
+    HttpServer server("127.0.0.1:5110") ;
 
     const string root = "/home/malasiot/source/ws/data/routes/" ;
 

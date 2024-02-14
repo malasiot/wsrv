@@ -170,37 +170,6 @@ int RequestParser::parse(const char *data, size_t size)
 
 /////////////////////////////////////////////////////////////////////////////
 
-static int hex_decode(char c)
-{
-    char ch = tolower(c) ;
-
-    if ( ch >= 'a' && ch <= 'f' ) return 10 + ch - 'a' ;
-    else if ( ch >= '0' && ch <= '9' ) return ch - '0' ;
-    else return 0 ;
-}
-
-std::string url_decode(const char *str)
-{
-    const char *p = str ;
-
-    std::string ret ;
-    while ( *p )
-    {
-        if( *p == '+' ) ret += ' ' ;
-        else if ( *p == '%' )
-        {
-            ++p ;
-            char tmp[4];
-            unsigned char val = 16 * ( hex_decode(*p++) )  ;
-            val += hex_decode(*p) ;
-            sprintf(tmp,"%c", val);
-            ret += tmp ;
-        } else ret += *p ;
-        ++p ;
-    }
-
-    return ret;
-}
 
 static bool has_url_field( http_parser_url &url, http_parser_url_fields field )
 {
@@ -242,7 +211,7 @@ static string normalize_path( const string &src ) {
     return res ;
 }
 
-bool RequestParser::parse_url(Request &req, const string &url)
+bool RequestParser::parse_url(HTTPRequest &req, const string &url)
 {
     http_parser_url u ;
 
@@ -282,7 +251,7 @@ bool RequestParser::parse_url(Request &req, const string &url)
 
 }
 
-bool RequestParser::parse_cookie(Request &session, const std::string &data)
+bool RequestParser::parse_cookie(HTTPRequest &session, const std::string &data)
 {
     int pos = data.find("=") ;
 
@@ -302,7 +271,7 @@ bool RequestParser::parse_cookie(Request &session, const std::string &data)
     return true ;
 }
 
-bool RequestParser::parse_cookies(Request &session)
+bool RequestParser::parse_cookies(HTTPRequest &session)
 {
     const char *ck = "Cookie" ;
 
@@ -389,7 +358,7 @@ fs::path get_temporary_path(const std::string &dir, const std::string &prefix, c
 }
 #endif
 
-bool RequestParser::parse_mime_data(Request &session, istream &strm, const string &fld, const string &file_name,
+bool RequestParser::parse_mime_data(HTTPRequest &session, istream &strm, const string &fld, const string &file_name,
                           const string &content_type,
                           const string trans_encoding,
                           const string &bnd)
@@ -427,7 +396,7 @@ bool RequestParser::parse_mime_data(Request &session, istream &strm, const strin
         size_t dsize = data.size() ;
 
         if ( dsize <= file_upload_max_size ) {
-            Request::UploadedFile file_info ;
+            HTTPRequest::UploadedFile file_info ;
 
             file_info.mime_ = content_type ;
             file_info.name_ = file_name ;
@@ -442,7 +411,7 @@ bool RequestParser::parse_mime_data(Request &session, istream &strm, const strin
 }
 
 
-bool RequestParser::parse_multipart_data(Request &session, istream &strm, const string &bnd)
+bool RequestParser::parse_multipart_data(HTTPRequest &session, istream &strm, const string &bnd)
 {
     static std::regex crx(R"#(form-data;\s*name="(.*?)(?=")"(?:\s*;\s*filename="(.*?)(?=")")?)#");
 
@@ -499,7 +468,7 @@ bool RequestParser::parse_multipart_data(Request &session, istream &strm, const 
 
 
 
-bool RequestParser::parse_form_data(Request &session, istream &strm)
+bool RequestParser::parse_form_data(HTTPRequest &session, istream &strm)
 {
     static std::regex brx("multipart/form-data;\\s*boundary=(.*)");
 
@@ -525,7 +494,7 @@ bool RequestParser::parse_form_data(Request &session, istream &strm)
             std::string key, val ;
             key = str.substr(0, pos) ;
             val = str.substr(pos+1) ;
-            session.POST_[url_decode(key.c_str())] = url_decode(val.c_str()) ;
+            session.POST_[url_encode(key.c_str())] = url_encode(val.c_str()) ;
             return true ;
         });
 
@@ -544,7 +513,7 @@ bool RequestParser::parse_form_data(Request &session, istream &strm)
 }
 
 
-bool RequestParser::decode_message(Request &req) const {
+bool RequestParser::decode_message(HTTPRequest &req) const {
 
     for( auto hdr: headers_ )
         req.SERVER_.emplace(hdr.first, hdr.second) ;

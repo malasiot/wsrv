@@ -5,7 +5,7 @@ using namespace std ;
 
 namespace ws {
 
-Session::Session(SessionManager &handler, const Request &req, Response &resp, const std::string &suffix): handler_(handler) {
+Session::Session(SessionManager &handler, const HTTPRequest &req, Response &resp, const std::string &suffix): handler_(handler) {
     if ( handler_.open() ) {
 
         // check cookies and request args if session present

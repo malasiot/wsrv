@@ -16,7 +16,7 @@ class RequestParser ;
 }
 /// A request received from a client.
 ///
-class Request
+class HTTPRequest
 {
     using Dictionary = std::map<std::string, std::string> ;
 
@@ -79,17 +79,16 @@ protected:
     std::string content_ ;
     std::string content_type_ ;
 
-    std::string method_;
-    std::string path_;
-    std::string query_ ;
-    std::string protocol_ ;
-
+    std::string method_;  // request method GET/POST etc
+    std::string path_;    // decoded request path
+    std::string query_ ;  // decoded query string
+    std::string protocol_ ; // HTTP protocol
 
 private:
 
     friend class HttpConnection ;
 
-    Request(HttpConnection *ctx) ;
+    HTTPRequest(HttpConnection *ctx) ;
 
     bool matchesMethod(const std::string &method) const ;
 

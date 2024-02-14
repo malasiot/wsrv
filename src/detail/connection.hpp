@@ -140,7 +140,7 @@ private:
       /// The parser for the incoming HttpRequest.
      detail::RequestParser request_parser_;
 
-     Request request_ ;
+     HTTPRequest request_ ;
      Response response_ ;
 };
 

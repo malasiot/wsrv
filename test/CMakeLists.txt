@@ -6,6 +6,9 @@ include_directories(
 
 add_definitions( -std=c++11 )
 
+add_executable(test_url test_url.cpp )
+target_link_libraries(test_url wsrv)
+
 add_executable(test_server test_server.cpp )
 target_link_libraries(test_server wsrv)
 

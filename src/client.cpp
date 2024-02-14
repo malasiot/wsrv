@@ -136,14 +136,14 @@ class HttpClientImpl {
 public:
     HttpClientImpl() = default ;
 
-    Response get(const Url &url) ;
-    Response post(const Url &url, const std::map<std::string, std::string> &data);
+    Response get(const URL &url) ;
+    Response post(const URL &url, const std::map<std::string, std::string> &data);
 
 private:
 
     friend class HttpClient ;
 
-    ConnectionBase *connect(const Url &url);
+    ConnectionBase *connect(const URL &url);
     Response readResponse(ConnectionBase *con);
 
     string host_name_ ;
@@ -151,11 +151,11 @@ private:
 
 
 
-ConnectionBase *HttpClientImpl::connect(const Url &url) {
+ConnectionBase *HttpClientImpl::connect(const URL &url) {
     ConnectionBase *connection = nullptr;
-    if ( url.schema() == "http" )
+    if ( url.protocol() == "http" )
         connection = new Connection() ;
-    else if ( url.schema() == "https" )
+    else if ( url.protocol() == "https" )
         connection = new ConnectionSSL() ;
 
     if ( connection ) connection->connect(url.host()) ;
@@ -193,7 +193,7 @@ Response HttpClientImpl::readResponse(ConnectionBase *con) {
 
 }
 
-Response HttpClientImpl::get(const Url &url) {
+Response HttpClientImpl::get(const URL &url) {
 
     std::unique_ptr<ConnectionBase> con(connect(url)) ;
 
@@ -216,7 +216,7 @@ Response HttpClientImpl::get(const Url &url) {
     return res ;
 }
 
-Response HttpClientImpl::post(const Url &url, const std::map<std::string, std::string> &data) {
+Response HttpClientImpl::post(const URL &url, const std::map<std::string, std::string> &data) {
 
     std::unique_ptr<ConnectionBase> con(connect(url)) ;
 

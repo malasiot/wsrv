@@ -203,4 +203,37 @@ std::string url_encode(const std::string &s) {
     return string(v.cbegin(), v.cend());
 }
 
+
+static int hex_decode(char c)
+{
+    char ch = tolower(c) ;
+
+    if ( ch >= 'a' && ch <= 'f' ) return 10 + ch - 'a' ;
+    else if ( ch >= '0' && ch <= '9' ) return ch - '0' ;
+    else return 0 ;
+}
+
+string url_decode(const string &src) {
+    const char *p = src.c_str() ;
+
+    std::string ret ;
+    while ( *p )
+    {
+        if( *p == '+' ) ret += ' ' ;
+        else if ( *p == '%' )
+        {
+            ++p ;
+            char tmp[4];
+            unsigned char val = 16 * ( hex_decode(*p++) )  ;
+            val += hex_decode(*p) ;
+            sprintf(tmp,"%c", val);
+            ret += tmp ;
+        } else ret += *p ;
+        ++p ;
+    }
+
+    return ret;
+}
+
+
 }
