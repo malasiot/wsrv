@@ -69,7 +69,7 @@ target_include_directories(wsrv PUBLIC
 
 
 target_link_libraries(wsrv PUBLIC
-      ${CRYPTOPP_LIBRARIES} ${SQLITE3_LIBRARY} ${OPENSSL_LIBRARIES} z
+      cryptopp ${CRYPTOPP_LIBRARIES} ${SQLITE3_LIBRARY} ${OPENSSL_LIBRARIES} z
 )
 
 # Install binaries

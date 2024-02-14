@@ -12,6 +12,7 @@
 #define WS_REQUEST_PARSER_HPP
 
 #include <map>
+#include <istream>
 
 #include "http_parser.h"
 

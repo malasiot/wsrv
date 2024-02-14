@@ -2,6 +2,7 @@
 #define WS_RESPONSE_PARSER_HPP
 
 #include <map>
+#include <string>
 
 #include "http_parser.h"
 

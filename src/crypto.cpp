@@ -1,5 +1,6 @@
 #include "detail/crypto.hpp"
 
+#include <crypto++/config.h>
 #include <crypto++/osrng.h>
 #include <crypto++/hex.h>
 #include <crypto++/pwdbased.h>
@@ -7,6 +8,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <cassert>
 
 #include <arpa/inet.h>
 
@@ -138,7 +140,7 @@ string hashSHA256(const string &src)
     std::string digest;
     CryptoPP::SHA256 hash;
 
-    CryptoPP::StringSource ss(reinterpret_cast<const byte *>(&src[0]), src.size(), true,
+    CryptoPP::StringSource ss(reinterpret_cast<const u_char *>(&src[0]), src.size(), true,
        new CryptoPP::HashFilter(hash, new CryptoPP::StringSink(digest)));
 
     return digest;
