@@ -30,10 +30,6 @@ string HTTPRequest::toString() const
     return strm.str() ;
 }
 
-HTTPRequest::HTTPRequest(HttpConnection *ctx): ctx_(ctx) {
-
-}
-
 bool HTTPRequest::supportsGzip() const {
     string enc = getServerAttribute("Accept-Encoding") ;
     return !enc.empty() && enc.find("gzip") != string::npos ;

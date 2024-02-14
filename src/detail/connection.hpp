@@ -45,7 +45,7 @@ public:
     explicit HttpConnection(asio::ip::tcp::socket socket,
                         ConnectionManager& manager,
                         RequestHandler *handler ) : socket_(std::move(socket)),
-        connection_manager_(manager), handler_(handler), request_(this) {}
+        connection_manager_(manager), handler_(handler) {}
 
 private:
 

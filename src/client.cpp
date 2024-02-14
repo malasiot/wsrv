@@ -60,7 +60,7 @@ public:
 
             asio::connect(socket_, endpoint_iterator);
         } catch ( exception &e ) {
-            throw HttpClientError(e.what()) ;
+            throw HTTPClientError(e.what()) ;
         }
     }
 
@@ -70,7 +70,7 @@ public:
 
             asio::write(socket_, request);
         } catch ( exception &e ) {
-            throw HttpClientError(e.what()) ;
+            throw HTTPClientError(e.what()) ;
         }
     }
     size_t read(asio::streambuf &response, error_code &ec) override  {
@@ -96,7 +96,7 @@ public:
             asio::connect(ssl_socket_.lowest_layer(), endpoint_iterator);
             ssl_socket_.handshake(ssl::stream_base::client) ;
         } catch ( exception &e ) {
-            throw HttpClientError(e.what()) ;
+            throw HTTPClientError(e.what()) ;
         }
     }
 
@@ -105,7 +105,7 @@ public:
             std::ostream request_stream(&request);
             asio::write(ssl_socket_, request);
         } catch ( exception &e ) {
-            throw HttpClientError(e.what()) ;
+            throw HTTPClientError(e.what()) ;
         }
 
     }
@@ -122,7 +122,7 @@ public:
         }
         catch ( exception &e )
         {
-            throw HttpClientError(e.what()) ;
+            throw HTTPClientError(e.what()) ;
         }
     }
 
@@ -132,16 +132,16 @@ private:
     asio::ssl::stream<asio::ip::tcp::socket&> ssl_socket_;
 };
 
-class HttpClientImpl {
+class HTTPClientImpl {
 public:
-    HttpClientImpl() = default ;
+    HTTPClientImpl() = default ;
 
     Response get(const URL &url) ;
     Response post(const URL &url, const std::map<std::string, std::string> &data);
 
 private:
 
-    friend class HttpClient ;
+    friend class HTTPClient ;
 
     ConnectionBase *connect(const URL &url);
     Response readResponse(ConnectionBase *con);
@@ -151,7 +151,7 @@ private:
 
 
 
-ConnectionBase *HttpClientImpl::connect(const URL &url) {
+ConnectionBase *HTTPClientImpl::connect(const URL &url) {
     ConnectionBase *connection = nullptr;
     if ( url.protocol() == "http" )
         connection = new Connection() ;
@@ -163,7 +163,7 @@ ConnectionBase *HttpClientImpl::connect(const URL &url) {
 }
 
 
-Response HttpClientImpl::readResponse(ConnectionBase *con) {
+Response HTTPClientImpl::readResponse(ConnectionBase *con) {
 
     detail::ResponseParser parser ;
 
@@ -182,7 +182,7 @@ Response HttpClientImpl::readResponse(ConnectionBase *con) {
         parser_result = parser.parse(asio::buffer_cast<const char*>( response.data() ), response.size()) ;
 
         if ( parser_result == detail::HTTP_PARSER_ERROR )
-            throw HttpClientError("Invalid response received") ;
+            throw HTTPClientError("Invalid response received") ;
 
     } while ( !ec && ec != asio::error::eof && parser_result != detail::HTTP_PARSER_OK ) ;
 
@@ -193,7 +193,7 @@ Response HttpClientImpl::readResponse(ConnectionBase *con) {
 
 }
 
-Response HttpClientImpl::get(const URL &url) {
+Response HTTPClientImpl::get(const URL &url) {
 
     std::unique_ptr<ConnectionBase> con(connect(url)) ;
 
@@ -216,7 +216,7 @@ Response HttpClientImpl::get(const URL &url) {
     return res ;
 }
 
-Response HttpClientImpl::post(const URL &url, const std::map<std::string, std::string> &data) {
+Response HTTPClientImpl::post(const URL &url, const std::map<std::string, std::string> &data) {
 
     std::unique_ptr<ConnectionBase> con(connect(url)) ;
 
@@ -245,28 +245,28 @@ Response HttpClientImpl::post(const URL &url, const std::map<std::string, std::s
 }
 
 
-HttpClient::HttpClient(): impl_(new HttpClientImpl()) {
+HTTPClient::HTTPClient(): impl_(new HTTPClientImpl()) {
 
 }
 
-HttpClient::~HttpClient()
+HTTPClient::~HTTPClient()
 {
 
 }
 
-Response HttpClient::get(const string &url)
+Response HTTPClient::get(const string &url)
 {
     assert(impl_) ;
     return impl_->get(url) ;
 }
 
-Response HttpClient::post(const string &url, const std::map<string, string> &data)
+Response HTTPClient::post(const string &url, const std::map<string, string> &data)
 {
     assert(impl_) ;
     return impl_->post(url, data) ;
 }
 
-void HttpClient::setHost(const string &hostname)
+void HTTPClient::setHost(const string &hostname)
 {
     assert(impl_) ;
     impl_->host_name_ = hostname ;

@@ -88,13 +88,11 @@ private:
 
     friend class HttpConnection ;
 
-    HTTPRequest(HttpConnection *ctx) ;
+    HTTPRequest() = default ;
 
     bool matchesMethod(const std::string &method) const ;
 
     std::string getCleanPath(const std::string &path) const ;
-
-    HttpConnection *ctx_ ;
 };
 
 

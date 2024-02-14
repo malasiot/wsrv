@@ -5,17 +5,22 @@
 
 #include <wsrv/url.hpp>
 #include <wsrv/response.hpp>
+#include <wsrv/http_client_request.hpp>
 
 namespace ws {
 
-class HttpClientImpl ;
+class HTTPClientImpl ;
 
 // Class to make blocking http requests
 
-class HttpClient {
+class HTTPClientRequest ;
+
+class HTTPClient {
 public:
-    HttpClient() ;
-   ~HttpClient() ;
+    HTTPClient() ;
+   ~HTTPClient() ;
+
+    Response execute(HTTPClientRequest &req) ;
 
     Response get(const std::string &url) ;
     Response post(const std::string &url, const std::map<std::string, std::string> &data ) ;
@@ -24,12 +29,12 @@ public:
 
 private:
 
-    std::unique_ptr<HttpClientImpl> impl_ ;
+    std::unique_ptr<HTTPClientImpl> impl_ ;
 };
 
-class HttpClientError: public std::runtime_error {
+class HTTPClientError: public std::runtime_error {
 public:
-    HttpClientError(const std::string &msg): std::runtime_error(msg) {}
+    HTTPClientError(const std::string &msg): std::runtime_error(msg) {}
 };
 
 }
