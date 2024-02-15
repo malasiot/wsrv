@@ -37,6 +37,7 @@ SET ( SOURCES
     http_parser.c
     session_manager.cpp
     sqlite3_session_manager.cpp
+    http_client_request.cpp
     session.cpp
     route.cpp
 

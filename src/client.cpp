@@ -50,7 +50,7 @@ protected:
 class Connection: public ConnectionBase {
 public:
 
-    Connection(): ConnectionBase() {};
+    Connection(): ConnectionBase() {}
 
     void connect(const string &host) override {
         try {

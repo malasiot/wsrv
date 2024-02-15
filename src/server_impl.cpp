@@ -26,7 +26,7 @@ ServerImpl::ServerImpl
     auto atokens = split(address, ":") ;
 
     // Open the acceptor with the option to reuse the address (i.e. SO_REUSEADDR).
-    asio::ip::tcp::resolver resolver(acceptor_.get_io_service());
+    asio::ip::tcp::resolver resolver(acceptor_.get_executor());
     asio::ip::tcp::resolver::query query(atokens[0], atokens[1]);
     asio::ip::tcp::endpoint endpoint = *resolver.resolve(query);
 
