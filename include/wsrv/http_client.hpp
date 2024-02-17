@@ -25,8 +25,7 @@ public:
     Response get(const std::string &url) ;
     Response post(const std::string &url, const std::map<std::string, std::string> &data ) ;
 
-    void setHost(const std::string &hostname) ;
-
+    void executeAsync(HTTPClientRequest &req);
 private:
 
     std::unique_ptr<HTTPClientImpl> impl_ ;

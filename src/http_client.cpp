@@ -1,4 +1,4 @@
-#include <wsrv/client.hpp>
+#include <wsrv/http_client.hpp>
 
 #include <asio/io_service.hpp>
 #include <asio/connect.hpp>
@@ -8,6 +8,7 @@
 #include <asio/ip/tcp.hpp>
 #include <asio/read.hpp>
 #include <asio/ssl.hpp>
+#include <asio/placeholders.hpp>
 
 #include <iostream>
 #include <wsrv/response.hpp>
@@ -23,11 +24,12 @@ namespace ws {
 class ConnectionBase {
 
 public:
-    ConnectionBase(): socket_(ios_) {}
+    ConnectionBase(asio::io_context &ios): socket_(ios), resolver_(ios) {}
 
     virtual void connect(const string &host) = 0 ;
     virtual void write(asio::streambuf &request) = 0;
     virtual size_t read(asio::streambuf &response, error_code &ec) = 0;
+
 
     virtual ~ConnectionBase()
     {
@@ -42,21 +44,19 @@ public:
 
 protected:
 
-    asio::io_context ios_;
+    tcp::resolver resolver_ ;
     asio::ip::tcp::socket socket_;
-    asio::streambuf strmbuf_;
 };
 
 class Connection: public ConnectionBase {
 public:
 
-    Connection(): ConnectionBase() {}
+    Connection(asio::io_context &ios): ConnectionBase(ios) {}
 
-    void connect(const string &host) override {
+    void connect(const std::string &host) override {
         try {
-            tcp::resolver resolver(ios_);
             tcp::resolver::query query(host, "http");
-            tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+            tcp::resolver::iterator endpoint_iterator = resolver_.resolve(query);
 
             asio::connect(socket_, endpoint_iterator);
         } catch ( exception &e ) {
@@ -64,10 +64,9 @@ public:
         }
     }
 
+
     void write(asio::streambuf &request) override {
         try {
-            std::ostream request_stream(&request);
-
             asio::write(socket_, request);
         } catch ( exception &e ) {
             throw HTTPClientError(e.what()) ;
@@ -83,13 +82,13 @@ public:
 class ConnectionSSL: public ConnectionBase {
 public:
 
-    ConnectionSSL(): context_(asio::ssl::context::sslv23), ssl_socket_(socket_, context_) {}
+    ConnectionSSL(asio::io_context &ios): ConnectionBase(ios), context_(asio::ssl::context::sslv23), ssl_socket_(socket_, context_) {}
 
     void connect(const string &host) override {
         try {
-            tcp::resolver resolver(ios_);
+
             tcp::resolver::query query(host, "https");
-            tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+            tcp::resolver::iterator endpoint_iterator = resolver_.resolve(query);
 
             ssl_socket_.set_verify_mode(ssl::verify_none);
 
@@ -100,9 +99,9 @@ public:
         }
     }
 
+
     void write(asio::streambuf &request) override {
         try {
-            std::ostream request_stream(&request);
             asio::write(ssl_socket_, request);
         } catch ( exception &e ) {
             throw HTTPClientError(e.what()) ;
@@ -113,6 +112,9 @@ public:
     size_t read(asio::streambuf &response, error_code &ec) override {
         return asio::read(ssl_socket_, response, ec) ;
     }
+
+private:
+
 
     virtual ~ConnectionSSL()
     {
@@ -138,15 +140,17 @@ public:
 
     Response get(const URL &url) ;
     Response post(const URL &url, const std::map<std::string, std::string> &data);
+    Response execute(const HTTPClientRequest &req) ;
 
 private:
 
     friend class HTTPClient ;
 
+    void writeHeaders(std::ostream &strm, const HTTPClientRequest &req);
     ConnectionBase *connect(const URL &url);
     Response readResponse(ConnectionBase *con);
 
-    string host_name_ ;
+    asio::io_context ios_;
 };
 
 
@@ -154,11 +158,10 @@ private:
 ConnectionBase *HTTPClientImpl::connect(const URL &url) {
     ConnectionBase *connection = nullptr;
     if ( url.protocol() == "http" )
-        connection = new Connection() ;
+        connection = new Connection(ios_) ;
     else if ( url.protocol() == "https" )
-        connection = new ConnectionSSL() ;
+        connection = new ConnectionSSL(ios_) ;
 
-    if ( connection ) connection->connect(url.host()) ;
     return connection ;
 }
 
@@ -194,49 +197,49 @@ Response HTTPClientImpl::readResponse(ConnectionBase *con) {
 }
 
 Response HTTPClientImpl::get(const URL &url) {
-
-    std::unique_ptr<ConnectionBase> con(connect(url)) ;
-
-    // Form the request. We specify the "Connection: close" header so that the
-    // server will close the socket after transmitting the response. This will
-    // allow us to treat all data up until the EOF as the content.
-
-    asio::streambuf request;
-    std::ostream request_stream(&request);
-
-    request_stream << "GET " << url.file() << " HTTP/1.1\r\n";
-    request_stream << "Host: " << url.host() << "\r\n";
-    request_stream << "Accept: */*\r\n";
-    request_stream << "Connection: close\r\n\r\n";
-
-    con->write(request);
-
-    Response res = readResponse(con.get()) ;
-
-    return res ;
+    HTTPClientRequest req(url) ;
+    req.setMethod(HTTPClientRequest::GET) ;
+    return execute(req) ;
 }
 
 Response HTTPClientImpl::post(const URL &url, const std::map<std::string, std::string> &data) {
 
+    HTTPClientRequest req(url) ;
+    req.setMethod(HTTPClientRequest::POST) ;
+    req.setBodyURLEncoded(data) ;
+    return execute(req) ;
+}
+
+void HTTPClientImpl::writeHeaders(std::ostream &strm, const HTTPClientRequest &req) {
+    for( const auto &kv: req.headers() ) {
+        strm << kv.first << ':' << kv.second << "\r\n" ;
+    }
+}
+
+Response HTTPClientImpl::execute(const HTTPClientRequest &req)
+{
+    const auto &url = req.url() ;
     std::unique_ptr<ConnectionBase> con(connect(url)) ;
 
-    string payload ;
-    for( const auto &lp: data ) {
-        if ( !payload.empty() ) payload += '&' ;
-        payload += lp.first + '=' + lp.second ;
-    }
+    if ( con ) con->connect(url.host()) ;
 
     asio::streambuf request;
     std::ostream request_stream(&request);
 
-    request_stream << "POST " << url.file() << " HTTP/1.1\r\n";
+    request_stream << req.methodString() << " /" << url.file() << " HTTP/1.1\r\n";
     request_stream << "Host: " << url.host() << "\r\n";
-    request_stream << "Content-Length:" << payload.length() << "\r\n" ;
-    request_stream << "Content-Type: application/x-www-form-urlencoded\r\n" ;
+
+    writeHeaders(request_stream, req) ;
+    if ( !req.body().empty() ) {
+        request_stream << "Content-Length:" << req.body().size() << "\r\n" ;
+        request_stream << "Content-Type: " << req.contentType() << "\r\n" ;
+    }
     request_stream << "Accept: */*\r\n";
     request_stream << "Connection: close\r\n\r\n";
 
-    request_stream << payload ;
+     if ( !req.body().empty() ) {
+         request_stream << req.body() ;
+     }
     con->write(request);
 
     Response res = readResponse(con.get()) ;
@@ -245,14 +248,21 @@ Response HTTPClientImpl::post(const URL &url, const std::map<std::string, std::s
 }
 
 
-HTTPClient::HTTPClient(): impl_(new HTTPClientImpl()) {
 
+HTTPClient::HTTPClient(): impl_(new HTTPClientImpl()) {
 }
 
 HTTPClient::~HTTPClient()
 {
 
 }
+
+Response HTTPClient::execute(HTTPClientRequest &req)
+{
+    assert(impl_) ;
+    return impl_->execute(req) ;
+}
+
 
 Response HTTPClient::get(const string &url)
 {
@@ -266,12 +276,7 @@ Response HTTPClient::post(const string &url, const std::map<string, string> &dat
     return impl_->post(url, data) ;
 }
 
-void HTTPClient::setHost(const string &hostname)
-{
-    assert(impl_) ;
-    impl_->host_name_ = hostname ;
 
-}
 
 
 }

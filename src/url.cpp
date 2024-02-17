@@ -124,7 +124,7 @@ string URL::makeQueryString(bool encoded) const {
         if ( !first )
             res << '&' ;
         string key = encoded ? url_encode(kv.first) : kv.first;
-        string val = encoded ? url_encode(kv.second) : kv.first ;
+        string val = encoded ? url_encode(kv.second) : kv.second ;
 
         res << key << '=' << val ;
         first = false ;
