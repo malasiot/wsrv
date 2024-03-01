@@ -138,9 +138,9 @@ class HTTPClientImpl {
 public:
     HTTPClientImpl() = default ;
 
-    Response get(const URL &url) ;
-    Response post(const URL &url, const std::map<std::string, std::string> &data);
-    Response execute(const HTTPClientRequest &req) ;
+    HTTPServerResponse get(const URL &url) ;
+    HTTPServerResponse post(const URL &url, const std::map<std::string, std::string> &data);
+    HTTPServerResponse execute(const HTTPClientRequest &req) ;
 
 private:
 
@@ -196,13 +196,13 @@ HTTPServerResponse HTTPClientImpl::readResponse(ConnectionBase *con) {
 
 }
 
-Response HTTPClientImpl::get(const URL &url) {
+HTTPServerResponse HTTPClientImpl::get(const URL &url) {
     HTTPClientRequest req(url) ;
     req.setMethod(HTTPClientRequest::GET) ;
     return execute(req) ;
 }
 
-Response HTTPClientImpl::post(const URL &url, const std::map<std::string, std::string> &data) {
+HTTPServerResponse HTTPClientImpl::post(const URL &url, const std::map<std::string, std::string> &data) {
     HTTPClientRequest req(url) ;
     req.setMethod(HTTPClientRequest::POST) ;
     req.setBodyURLEncoded(data) ;
@@ -215,7 +215,7 @@ void HTTPClientImpl::writeHeaders(std::ostream &strm, const HTTPClientRequest &r
     }
 }
 
-Response HTTPClientImpl::execute(const HTTPClientRequest &req)
+HTTPServerResponse HTTPClientImpl::execute(const HTTPClientRequest &req)
 {
     const auto &url = req.url() ;
     std::unique_ptr<ConnectionBase> con(connect(url)) ;
@@ -257,14 +257,14 @@ HTTPClient::~HTTPClient()
 }
 
 
-Response HTTPClient::execute(HTTPClientRequest &req)
+HTTPServerResponse HTTPClient::execute(HTTPClientRequest &req)
 {
     assert(impl_) ;
     return impl_->execute(req) ;
 }
 
 
-Response HTTPClient::get(const string &url)
+HTTPServerResponse HTTPClient::get(const string &url)
 {
     assert(impl_) ;
     return impl_->get(url) ;
