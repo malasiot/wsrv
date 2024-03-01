@@ -20,10 +20,10 @@ public:
     HTTPClient() ;
    ~HTTPClient() ;
 
-    Response execute(HTTPClientRequest &req) ;
+    HTTPServerResponse execute(HTTPClientRequest &req) ;
 
-    Response get(const std::string &url) ;
-    Response post(const std::string &url, const std::map<std::string, std::string> &data ) ;
+    HTTPServerResponse get(const std::string &url) ;
+    HTTPServerResponse post(const std::string &url, const std::map<std::string, std::string> &data ) ;
 
     void setHost(const std::string &hostname) ;
 

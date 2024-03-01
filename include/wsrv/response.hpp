@@ -12,7 +12,7 @@ namespace detail {
 class ResponseParser ;
 }
 
-struct Response
+struct HTTPServerResponse
 {
     using Dictionary = std::map<std::string, std::string> ;
     /// The status of the reply.

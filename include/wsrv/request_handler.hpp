@@ -18,7 +18,7 @@ public:
 
     /// Override to handle a request and produce a response.
 
-    virtual void handle(const HTTPRequest &req, Response &resp) = 0;
+    virtual void handle(const HTTPServerRequest &req, HTTPServerResponse &resp) = 0;
 };
 
 } // namespace ws

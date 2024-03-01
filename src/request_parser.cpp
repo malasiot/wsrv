@@ -211,7 +211,7 @@ static string normalize_path( const string &src ) {
     return res ;
 }
 
-bool RequestParser::parse_url(HTTPRequest &req, const string &url)
+bool RequestParser::parse_url(HTTPServerRequest &req, const string &url)
 {
     http_parser_url u ;
 
@@ -251,7 +251,7 @@ bool RequestParser::parse_url(HTTPRequest &req, const string &url)
 
 }
 
-bool RequestParser::parse_cookie(HTTPRequest &session, const std::string &data)
+bool RequestParser::parse_cookie(HTTPServerRequest &session, const std::string &data)
 {
     int pos = data.find("=") ;
 
@@ -271,7 +271,7 @@ bool RequestParser::parse_cookie(HTTPRequest &session, const std::string &data)
     return true ;
 }
 
-bool RequestParser::parse_cookies(HTTPRequest &session)
+bool RequestParser::parse_cookies(HTTPServerRequest &session)
 {
     const char *ck = "Cookie" ;
 
@@ -358,7 +358,7 @@ fs::path get_temporary_path(const std::string &dir, const std::string &prefix, c
 }
 #endif
 
-bool RequestParser::parse_mime_data(HTTPRequest &session, istream &strm, const string &fld, const string &file_name,
+bool RequestParser::parse_mime_data(HTTPServerRequest &session, istream &strm, const string &fld, const string &file_name,
                           const string &content_type,
                           const string trans_encoding,
                           const string &bnd)
@@ -396,7 +396,7 @@ bool RequestParser::parse_mime_data(HTTPRequest &session, istream &strm, const s
         size_t dsize = data.size() ;
 
         if ( dsize <= file_upload_max_size ) {
-            HTTPRequest::UploadedFile file_info ;
+            HTTPServerRequest::UploadedFile file_info ;
 
             file_info.mime_ = content_type ;
             file_info.name_ = file_name ;
@@ -411,7 +411,7 @@ bool RequestParser::parse_mime_data(HTTPRequest &session, istream &strm, const s
 }
 
 
-bool RequestParser::parse_multipart_data(HTTPRequest &session, istream &strm, const string &bnd)
+bool RequestParser::parse_multipart_data(HTTPServerRequest &session, istream &strm, const string &bnd)
 {
     static std::regex crx(R"#(form-data;\s*name="(.*?)(?=")"(?:\s*;\s*filename="(.*?)(?=")")?)#");
 
@@ -468,7 +468,7 @@ bool RequestParser::parse_multipart_data(HTTPRequest &session, istream &strm, co
 
 
 
-bool RequestParser::parse_form_data(HTTPRequest &session, istream &strm)
+bool RequestParser::parse_form_data(HTTPServerRequest &session, istream &strm)
 {
     static std::regex brx("multipart/form-data;\\s*boundary=(.*)");
 
@@ -513,7 +513,7 @@ bool RequestParser::parse_form_data(HTTPRequest &session, istream &strm)
 }
 
 
-bool RequestParser::decode_message(HTTPRequest &req) const {
+bool RequestParser::decode_message(HTTPServerRequest &req) const {
 
     for( auto hdr: headers_ )
         req.SERVER_.emplace(hdr.first, hdr.second) ;

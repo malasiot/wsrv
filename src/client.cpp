@@ -136,15 +136,15 @@ class HTTPClientImpl {
 public:
     HTTPClientImpl() = default ;
 
-    Response get(const URL &url) ;
-    Response post(const URL &url, const std::map<std::string, std::string> &data);
+    HTTPServerResponse get(const URL &url) ;
+    HTTPServerResponse post(const URL &url, const std::map<std::string, std::string> &data);
 
 private:
 
     friend class HTTPClient ;
 
     ConnectionBase *connect(const URL &url);
-    Response readResponse(ConnectionBase *con);
+    HTTPServerResponse readResponse(ConnectionBase *con);
 
     string host_name_ ;
 };
@@ -163,7 +163,7 @@ ConnectionBase *HTTPClientImpl::connect(const URL &url) {
 }
 
 
-Response HTTPClientImpl::readResponse(ConnectionBase *con) {
+HTTPServerResponse HTTPClientImpl::readResponse(ConnectionBase *con) {
 
     detail::ResponseParser parser ;
 
@@ -186,14 +186,14 @@ Response HTTPClientImpl::readResponse(ConnectionBase *con) {
 
     } while ( !ec && ec != asio::error::eof && parser_result != detail::HTTP_PARSER_OK ) ;
 
-    Response resp ;
+    HTTPServerResponse resp ;
     parser.decode_message(resp) ;
 
     return resp ;
 
 }
 
-Response HTTPClientImpl::get(const URL &url) {
+HTTPServerResponse HTTPClientImpl::get(const URL &url) {
 
     std::unique_ptr<ConnectionBase> con(connect(url)) ;
 
@@ -211,12 +211,12 @@ Response HTTPClientImpl::get(const URL &url) {
 
     con->write(request);
 
-    Response res = readResponse(con.get()) ;
+    HTTPServerResponse res = readResponse(con.get()) ;
 
     return res ;
 }
 
-Response HTTPClientImpl::post(const URL &url, const std::map<std::string, std::string> &data) {
+HTTPServerResponse HTTPClientImpl::post(const URL &url, const std::map<std::string, std::string> &data) {
 
     std::unique_ptr<ConnectionBase> con(connect(url)) ;
 
@@ -239,7 +239,7 @@ Response HTTPClientImpl::post(const URL &url, const std::map<std::string, std::s
     request_stream << payload ;
     con->write(request);
 
-    Response res = readResponse(con.get()) ;
+    HTTPServerResponse res = readResponse(con.get()) ;
 
     return res ;
 }
@@ -254,13 +254,13 @@ HTTPClient::~HTTPClient()
 
 }
 
-Response HTTPClient::get(const string &url)
+HTTPServerResponse HTTPClient::get(const string &url)
 {
     assert(impl_) ;
     return impl_->get(url) ;
 }
 
-Response HTTPClient::post(const string &url, const std::map<string, string> &data)
+HTTPServerResponse HTTPClient::post(const string &url, const std::map<string, string> &data)
 {
     assert(impl_) ;
     return impl_->post(url, data) ;

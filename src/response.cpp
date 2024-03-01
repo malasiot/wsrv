@@ -58,37 +58,37 @@ asio::const_buffer to_buffer(unsigned int status)
 {
     switch (status)
     {
-    case Response::ok:
+    case HTTPServerResponse::ok:
         return asio::buffer(ok);
-    case Response::created:
+    case HTTPServerResponse::created:
         return asio::buffer(created);
-    case Response::accepted:
+    case HTTPServerResponse::accepted:
         return asio::buffer(accepted);
-    case Response::no_content:
+    case HTTPServerResponse::no_content:
         return asio::buffer(no_content);
-    case Response::multiple_choices:
+    case HTTPServerResponse::multiple_choices:
         return asio::buffer(multiple_choices);
-    case Response::moved_permanently:
+    case HTTPServerResponse::moved_permanently:
         return asio::buffer(moved_permanently);
-    case Response::moved_temporarily:
+    case HTTPServerResponse::moved_temporarily:
         return asio::buffer(moved_temporarily);
-    case Response::not_modified:
+    case HTTPServerResponse::not_modified:
         return asio::buffer(not_modified);
-    case Response::bad_request:
+    case HTTPServerResponse::bad_request:
         return asio::buffer(bad_request);
-    case Response::unauthorized:
+    case HTTPServerResponse::unauthorized:
         return asio::buffer(unauthorized);
-    case Response::forbidden:
+    case HTTPServerResponse::forbidden:
         return asio::buffer(forbidden);
-    case Response::not_found:
+    case HTTPServerResponse::not_found:
         return asio::buffer(not_found);
-    case Response::internal_server_error:
+    case HTTPServerResponse::internal_server_error:
         return asio::buffer(internal_server_error);
-    case Response::not_implemented:
+    case HTTPServerResponse::not_implemented:
         return asio::buffer(not_implemented);
-    case Response::bad_gateway:
+    case HTTPServerResponse::bad_gateway:
         return asio::buffer(bad_gateway);
-    case Response::service_unavailable:
+    case HTTPServerResponse::service_unavailable:
         return asio::buffer(service_unavailable);
     default:
         return asio::buffer(internal_server_error);
@@ -110,7 +110,7 @@ const char crlf[] = { '\r', '\n' };
 /// not be changed until the write operation has completed.
 
 
-std::vector<asio::const_buffer> response_to_buffers(Response &rep, bool is_head)
+std::vector<asio::const_buffer> response_to_buffers(HTTPServerResponse &rep, bool is_head)
 {
     std::vector<asio::const_buffer> buffers;
     buffers.push_back(status_strings::to_buffer(rep.getStatus()));
@@ -208,41 +208,41 @@ const char service_unavailable[] =
         "<body><h1>503 Service Unavailable</h1></body>"
         "</html>";
 
-std::string to_string(Response::Status status)
+std::string to_string(HTTPServerResponse::Status status)
 {
     switch (status)
     {
-    case Response::ok:
+    case HTTPServerResponse::ok:
         return ok;
-    case Response::created:
+    case HTTPServerResponse::created:
         return created;
-    case Response::accepted:
+    case HTTPServerResponse::accepted:
         return accepted;
-    case Response::no_content:
+    case HTTPServerResponse::no_content:
         return no_content;
-    case Response::multiple_choices:
+    case HTTPServerResponse::multiple_choices:
         return multiple_choices;
-    case Response::moved_permanently:
+    case HTTPServerResponse::moved_permanently:
         return moved_permanently;
-    case Response::moved_temporarily:
+    case HTTPServerResponse::moved_temporarily:
         return moved_temporarily;
-    case Response::not_modified:
+    case HTTPServerResponse::not_modified:
         return not_modified;
-    case Response::bad_request:
+    case HTTPServerResponse::bad_request:
         return bad_request;
-    case Response::unauthorized:
+    case HTTPServerResponse::unauthorized:
         return unauthorized;
-    case Response::forbidden:
+    case HTTPServerResponse::forbidden:
         return forbidden;
-    case Response::not_found:
+    case HTTPServerResponse::not_found:
         return not_found;
-    case Response::internal_server_error:
+    case HTTPServerResponse::internal_server_error:
         return internal_server_error;
-    case Response::not_implemented:
+    case HTTPServerResponse::not_implemented:
         return not_implemented;
-    case Response::bad_gateway:
+    case HTTPServerResponse::bad_gateway:
         return bad_gateway;
-    case Response::service_unavailable:
+    case HTTPServerResponse::service_unavailable:
         return service_unavailable;
     default:
         return internal_server_error;
@@ -251,13 +251,13 @@ std::string to_string(Response::Status status)
 
 } // namespace stock_replies
 
-string Response::getHeaderAttribute(const string &key, const string &def) const
+string HTTPServerResponse::getHeaderAttribute(const string &key, const string &def) const
 {
     auto it = headers_.find(key) ;
     return it == headers_.end() ? def : it->second ;
 }
 
-void Response::stockReply(Response::Status status)
+void HTTPServerResponse::stockReply(HTTPServerResponse::Status status)
 {
     status_ = status;
     content_.assign(stock_replies::to_string(status));
@@ -269,7 +269,7 @@ static void gmt_time_string(char *buf, size_t buf_len, time_t *t) {
     strftime(buf, buf_len, "%a, %d %b %Y %H:%M:%S GMT", gmtime(t));
 }
 
-void Response::encodeFileData(const std::string &bytes, const std::string &encoding, const std::string &mime, time_t mod_time)
+void HTTPServerResponse::encodeFileData(const std::string &bytes, const std::string &encoding, const std::string &mime, time_t mod_time)
 {
     status_ = ok ;
 
@@ -341,10 +341,10 @@ static string get_file_mime(const string &mime,  const std::string &p)
 
 
 
-void Response::encodeFile(const std::string &file_path, const std::string &encoding, const std::string &mime )
+void HTTPServerResponse::encodeFile(const std::string &file_path, const std::string &encoding, const std::string &mime )
 {
     if ( !fileExists(file_path) ) {
-        throw HttpResponseException(Response::not_found) ;
+        throw HttpResponseException(HTTPServerResponse::not_found) ;
         return ;
     }
 
@@ -358,12 +358,12 @@ void Response::encodeFile(const std::string &file_path, const std::string &encod
 
 }
 
-void Response::writeJSON(const string &obj)
+void HTTPServerResponse::writeJSON(const string &obj)
 {
     write(obj, "application/json") ;
 }
 
-void Response::write(const string &content, const string &mime)
+void HTTPServerResponse::write(const string &content, const string &mime)
 {
     content_.assign(content) ;
     setContentType(mime) ;
@@ -371,15 +371,15 @@ void Response::write(const string &content, const string &mime)
     setStatus(ok) ;
 }
 
-void Response::setContentType(const string &mime) {
+void HTTPServerResponse::setContentType(const string &mime) {
     addHeader("Content-Type", mime) ;
 }
 
-void Response::setContentLength() {
+void HTTPServerResponse::setContentLength() {
     addHeader("Content-Length", to_string(content_.size())) ;
 }
 
-void Response::compress() {
+void HTTPServerResponse::compress() {
 
     ostringstream compressed(ios::binary) ;
 
@@ -393,9 +393,9 @@ void Response::compress() {
     setContentLength();
 }
 
-string Response::toString() const {
+string HTTPServerResponse::toString() const {
     ostringstream strm ;
-    if ( status_ == Response::ok )
+    if ( status_ == HTTPServerResponse::ok )
         strm << status_ << " " << getHeaderAttribute("Content-Length", "0") ;
      else
         strm << status_ ;
@@ -406,7 +406,7 @@ string Response::toString() const {
 static regex gzip_include_mime_rx("(text/.*)|(application/x-javascript.*)|(application/javascript)|(application/xhtml+xml)|(application/xml)") ;
 static const size_t gzip_min_content_length = 200 ;
 
-bool Response::contentBenefitsFromCompression() {
+bool HTTPServerResponse::contentBenefitsFromCompression() {
     size_t content_len = content_.size() ;
     if ( content_len < gzip_min_content_length ) return false ;
 
@@ -420,11 +420,11 @@ bool Response::contentBenefitsFromCompression() {
 }
 
 
-void Response::append(const string &content) {
+void HTTPServerResponse::append(const string &content) {
     content_.append(content) ;
 }
 
-bool Response::serveStaticFile(const string &folder, const string &path) {
+bool HTTPServerResponse::serveStaticFile(const string &folder, const string &path) {
     string p(folder + '/' + path) ;
 
     if ( fileExists(p) ) {
@@ -435,7 +435,7 @@ bool Response::serveStaticFile(const string &folder, const string &path) {
     return false ;
 }
 
-void Response::setCookie(const string &name, const string &value, time_t expires, const string &path, const string &domain, bool secure, bool http_only)
+void HTTPServerResponse::setCookie(const string &name, const string &value, time_t expires, const string &path, const string &domain, bool secure, bool http_only)
 {
     string cookie = name + '=' + value ;
     if ( expires > 0 ) {
@@ -460,7 +460,7 @@ void Response::setCookie(const string &name, const string &value, time_t expires
 
 }
 
-void Response::addHeader(const string &key, const string &val) {
+void HTTPServerResponse::addHeader(const string &key, const string &val) {
     headers_[key] = val ;
 }
 

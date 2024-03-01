@@ -16,7 +16,7 @@ class RequestParser ;
 }
 /// A request received from a client.
 ///
-class HTTPRequest
+class HTTPServerRequest
 {
     using Dictionary = std::map<std::string, std::string> ;
 
@@ -88,7 +88,7 @@ private:
 
     friend class HttpConnection ;
 
-    HTTPRequest() = default ;
+    HTTPServerRequest() = default ;
 
     bool matchesMethod(const std::string &method) const ;
 

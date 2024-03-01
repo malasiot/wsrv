@@ -7,10 +7,10 @@ namespace ws {
 
 class HttpResponseException {
 public:
-    HttpResponseException(Response::Status code, const std::string &reason = std::string()):
+    HttpResponseException(HTTPServerResponse::Status code, const std::string &reason = std::string()):
         code_(code), reason_(reason) {}
 
-    Response::Status code_ ;
+    HTTPServerResponse::Status code_ ;
     std::string reason_ ;
 };
 

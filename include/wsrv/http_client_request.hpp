@@ -53,7 +53,7 @@ public:
     HTTPClientRequest() = default ;
 
     HTTPClientRequest &setURL(const std::string &url) { url_ = url ; return *this ; }
-    HTTPClientRequest &setURL(const URL &url) { url_ = url.str() ; }
+    HTTPClientRequest &setURL(const URL &url) { url_ = url.str() ; return *this ; }
 
     HTTPClientRequest &setHeader(const std::string &key, const std::string &val) {
         headers_.emplace(key, val) ;

@@ -8,7 +8,7 @@
 
 namespace ws {
 
-struct Response;
+struct HTTPServerResponse;
 
 namespace detail {
 
@@ -25,7 +25,7 @@ public:
     int parse(const char *data, size_t buf_len) ;
 
     // fill in the request structure
-    bool decode_message(Response &resp) const ;
+    bool decode_message(HTTPServerResponse &resp) const ;
 
 private:
 

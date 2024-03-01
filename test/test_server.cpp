@@ -15,32 +15,32 @@ using namespace std ;
 
 class RequestLogger {
 public:
-    RequestLogger(const HTTPRequest &req, const Response &res): req_(req), res_(res) {}
+    RequestLogger(const HTTPServerRequest &req, const HTTPServerResponse &res): req_(req), res_(res) {}
     ~RequestLogger() {
         unique_lock<mutex> lock(lock_) ;
 
-        if ( res_.getStatus() == Response::ok ) {
+        if ( res_.getStatus() == HTTPServerResponse::ok ) {
             cout << req_.toString() << " " << res_.toString() << endl ;
         } else {
             cerr << req_.toString() << " " << res_.toString() << endl ;
         }
     }
 
-    const HTTPRequest &req_ ;
-    const Response &res_ ;
+    const HTTPServerRequest &req_ ;
+    const HTTPServerResponse &res_ ;
     mutex lock_ ;
 };
 
 class GZipFilter {
 public:
-    GZipFilter(const HTTPRequest &req, Response &res): req_(req), res_(res) {}
+    GZipFilter(const HTTPServerRequest &req, HTTPServerResponse &res): req_(req), res_(res) {}
     ~GZipFilter() {
         if ( req_.supportsGzip() && res_.contentBenefitsFromCompression() )
             res_.compress();
     }
 
-    const HTTPRequest &req_ ;
-    Response &res_ ;
+    const HTTPServerRequest &req_ ;
+    HTTPServerResponse &res_ ;
 
 };
 
@@ -54,7 +54,7 @@ public:
 
     }
 
-    void handle(const HTTPRequest &req, Response &resp) override {
+    void handle(const HTTPServerRequest &req, HTTPServerResponse &resp) override {
 
         RequestLogger logger(req, resp) ;
         GZipFilter gzip(req, resp) ;
@@ -72,11 +72,11 @@ public:
             } else if ( resp.serveStaticFile(root_, req.getPath()) ) {
                 return ;
             } else {
-                resp.stockReply(Response::not_found) ;
+                resp.stockReply(HTTPServerResponse::not_found) ;
             }
         }
         catch ( std::runtime_error &e ) {
-            resp.stockReply(Response::internal_server_error) ;
+            resp.stockReply(HTTPServerResponse::internal_server_error) ;
         }
     }
 

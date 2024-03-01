@@ -34,7 +34,7 @@ namespace ws {
 class ConnectionManager ;
 class ServerImpl ;
 
-extern std::vector<asio::const_buffer> response_to_buffers(Response &rep, bool) ;
+extern std::vector<asio::const_buffer> response_to_buffers(HTTPServerResponse &rep, bool) ;
 
 /// Represents a single HttpConnection from a client.
 
@@ -70,7 +70,7 @@ private:
                 if ( result == detail::HTTP_PARSER_OK )
                 {
                     if ( !request_parser_.decode_message(request_) ) {
-                        response_.stockReply(Response::bad_request);
+                        response_.stockReply(HTTPServerResponse::bad_request);
                     }
                     else {
                         request_.SERVER_.emplace("REMOTE_ADDR", socket_.remote_endpoint().address().to_string() ) ;
@@ -81,7 +81,7 @@ private:
                          }
 
                         catch ( std::runtime_error &e ) {
-                            response_.stockReply(Response::internal_server_error) ;
+                            response_.stockReply(HTTPServerResponse::internal_server_error) ;
                         }
                     }
 
@@ -90,7 +90,7 @@ private:
                 }
                 else if ( result == detail::HTTP_PARSER_ERROR )
                 {
-                    response_.stockReply(Response::bad_request);
+                    response_.stockReply(HTTPServerResponse::bad_request);
 
                     write(response_to_buffers(response_, request_.method_ == "HEAD")) ;
 
@@ -140,8 +140,8 @@ private:
       /// The parser for the incoming HttpRequest.
      detail::RequestParser request_parser_;
 
-     HTTPRequest request_ ;
-     Response response_ ;
+     HTTPServerRequest request_ ;
+     HTTPServerResponse response_ ;
 };
 
 

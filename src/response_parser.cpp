@@ -156,7 +156,7 @@ int ResponseParser::parse(const char *data, size_t size)
 }
 
 
-bool ResponseParser::decode_message(Response &resp) const {
+bool ResponseParser::decode_message(HTTPServerResponse &resp) const {
 
     for( auto hdr: headers_ )
         resp.headers_.emplace(hdr.first, hdr.second) ;
