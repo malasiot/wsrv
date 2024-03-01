@@ -15,6 +15,7 @@ class URL {
 public:
 
     URL(const std::string &url) { parse(url) ; }
+    URL() = default ;
 
     const std::string &host() const { return host_ ; }
     int port() const { return port_ ; }
@@ -37,7 +38,7 @@ public:
     URL & normalizePath() ;
 
 protected:
-    URL() = default ;
+
 
     friend class URLBuilder ;
     friend class HTTPRequest ;

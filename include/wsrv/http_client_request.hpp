@@ -5,41 +5,6 @@
 
 namespace ws {
 
-class HTTPClientRequestBody {
-public:
-
-    virtual size_t contentLength() const = 0 ;
-    virtual std::string contentType() const = 0 ;
-
-protected:
-    virtual void write(std::ostream &strm) const = 0 ;
-
-    HTTPClientRequestBody() = default ;
-};
-
-class URLEncodedRequestBody: public HTTPClientRequestBody {
-public:
-    URLEncodedRequestBody() = default ;
-    URLEncodedRequestBody(const std::map<std::string, std::string> &params): HTTPClientRequestBody() {
-        addToContent(params) ;
-    }
-
-    URLEncodedRequestBody &addParam(const std::string &key, const std::string &val) { addToContent(key, val); return *this ;}
-
-    size_t contentLength() const override { return content_.length() ; }
-    std::string contentType() const override { return "application/x-www-form-urlencoded" ; }
-
-protected:
-    void write(std::ostream &strm) ;
-
-private:
-
-    void addToContent(const std::map<std::string, std::string> &params) ;
-    void addToContent(const std::string &key, const std::string &val) ;
-
-    std::string content_ ;
-};
-
 class HTTPClientRequest {
 public:
 
@@ -49,11 +14,12 @@ public:
 
 
     HTTPClientRequest(const std::string &url): url_(url) {}
-    HTTPClientRequest(const URL &url): url_(url.str()) {}
-    HTTPClientRequest() = default ;
+    HTTPClientRequest(const URL &url): url_(url) {}
+    HTTPClientRequest() = delete ;
 
-    HTTPClientRequest &setURL(const std::string &url) { url_ = url ; return *this ; }
-    HTTPClientRequest &setURL(const URL &url) { url_ = url.str() ; return *this ; }
+
+    HTTPClientRequest &setURL(const std::string &url) { url_ = URL(url) ; return *this ; }
+    HTTPClientRequest &setURL(const URL &url) { url_ = url ; return *this ; }
 
     HTTPClientRequest &setHeader(const std::string &key, const std::string &val) {
         headers_.emplace(key, val) ;
@@ -64,21 +30,30 @@ public:
         method_ = m ; return *this ;
     }
 
-    HTTPClientRequest &setBody(HTTPClientRequestBody *b) {
-        body_.reset(b) ; return *this ;
+    HTTPClientRequest &setBodyURLEncoded(const std::map<std::string, std::string> &params) ;
+    HTTPClientRequest &setBody(const std::string &contentType, const std::string &content) {
+        body_ = content ;
+        mime_ = contentType ;
+        return *this ;
     }
 
 
-    const std::string &url() const { return url_; }
+    const URL &url() const { return url_; }
     std::string header(const std::string &key) ;
+    const std::map<std::string, std::string> &headers() const { return headers_ ; }
     Method method() const { return method_ ; }
+    std::string methodString() const ;
+    const std::string &body() const { return body_ ; }
+    const std::string &contentType() const { return mime_ ; }
 
 private:
 
-    std::string url_ ;
+
+    URL url_ ;
     std::map<std::string, std::string> headers_ ;
-    Method method_ ;
-    std::unique_ptr<HTTPClientRequestBody> body_ ;
+    Method method_ = GET ;
+    std::string body_ ;
+    std::string mime_ ;
 };
 
 

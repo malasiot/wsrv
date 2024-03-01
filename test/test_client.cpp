@@ -1,4 +1,4 @@
-#include <wsrv/client.hpp>
+#include <wsrv/http_client.hpp>
 
 #include <iostream>
 
@@ -9,7 +9,14 @@ using namespace ws ;
 int main(int argc, char *argv[]) {
 
     HTTPClient client ;
-    client.setHost("vision.iti.gr") ;
-    HTTPServerResponse res = client.post("https://postman-echo.com/post", {{"name", "ok"}, {"data", "hello"}});
+
+
+    HTTPClientRequest req("https://postman-echo.com/post?key=tt") ;
+    req
+            .setMethod(HTTPClientRequest::POST)
+            .setBodyURLEncoded({{"name", "sotiris"}, {"data", "test"}}) ;
+
+    auto res = client.execute(req) ;
+
     cout << res.content() << endl ;
 }

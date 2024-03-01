@@ -49,7 +49,7 @@ SET ( SOURCES
     base64.cpp
     mime.cpp
 
-    client.cpp
+    http_client.cpp
     url.cpp
     response_parser.cpp
 )
