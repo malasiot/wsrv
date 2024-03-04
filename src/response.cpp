@@ -460,6 +460,11 @@ void HTTPServerResponse::setCookie(const string &name, const string &value, time
 
 }
 
+void HTTPServerResponse::deleteCookie(const string &name, const string &path, const string &domain, bool secure, bool http_only) {
+    std::time_t expires = std::time(nullptr) - 3600;
+    setCookie(name, "", expires, path, domain, secure, http_only) ;
+}
+
 void HTTPServerResponse::addHeader(const string &key, const string &val) {
     headers_[key] = val ;
 }

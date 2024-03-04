@@ -32,6 +32,8 @@ public:
 
     virtual bool isValidId(const std::string &id) const = 0 ;
 
+    virtual bool remove(const std::string &id) = 0 ;
+
     std::string cookiePath() const { return session_cookie_path_ ; }
     std::string cookieDomain() const { return session_cookie_domain_ ; }
     long int cookieExpiration() const { return session_cookie_expiration_ ; }

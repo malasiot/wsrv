@@ -24,10 +24,12 @@ public:
 
     std::string id() const { return id_ ; }
 
+    // if modifying the data should call setModified(true) ;
     Dictionary &data() { return data_ ; }
     const Dictionary &data() const { return data_ ; }
 
     void add(const std::string &key, const std::string &val) {
+        modified_ = true ;
         data_.emplace(key, val) ;
     }
 
@@ -41,13 +43,21 @@ public:
     }
 
     void remove(const std::string &key) {
+        modified_ = true;
         data_.erase(key) ;
     }
 
     void invalidate() ;
 
     // clearing the data will delete them from the server
-    void clear() { data_.clear() ; }
+    void clear() {
+        modified_ = true ;
+        data_.clear() ;
+    }
+
+    void setModified(bool m) {
+        modified_ = m ;
+    }
 
 private:
 
@@ -59,6 +69,7 @@ private:
     Status status_ = STATUS_NONE ;
     bool set_cookie_ = false ;
     std::string key_name_ ;
+    bool modified_ = false ;
 };
 
 }

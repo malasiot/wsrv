@@ -2,7 +2,7 @@
 #include <wsrv/request_handler.hpp>
 #include <wsrv/session.hpp>
 #include <wsrv/exceptions.hpp>
-#include <wsrv/fs_session_manager.hpp>
+#include <wsrv/sqlite3_session_manager.hpp>
 
 #include <mutex>
 #include <iostream>
@@ -60,14 +60,18 @@ public:
         GZipFilter gzip(req, resp) ;
 
         try {
-            Session session(*session_manager_, req, resp) ;
+
 
             Dictionary attrs ;
-            if ( req.matches("GET", R"(/user/{id:\d+}/{action:show|hide}/)", attrs) ) {
+            if ( req.matches("GET", R"(/user/{id:\d+}/{action:show|hide})", attrs) ) {
+
+                Session session(*session_manager_, req, resp) ;
 
                 resp.write("hello " + attrs["id"]) ;
 
-                session.add("id", attrs["id"]) ;
+               // session.add("id", attrs["id"]) ;
+
+                session.clear();
                 return ;
             } else if ( resp.serveStaticFile(root_, req.getPath()) ) {
                 return ;

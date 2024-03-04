@@ -22,15 +22,27 @@ Session::Session(SessionManager &handler, const HTTPServerRequest &req, HTTPServ
         }
         else // we have a valid id
             handler_.read(*this) ;
+
+        status_ = STATUS_ACTIVE;
     }
 }
 
 Session::~Session() {
     if ( status_ == STATUS_ACTIVE ) {
-        if ( set_cookie_ )
-            resp_.setCookie(key_name_, id_, handler_.cookieExpiration(), handler_.cookiePath(), handler_.cookieDomain(),
-                handler_.cookieSecure(), handler_.cookieHttpOnly() ) ;
-        handler_.write(*this) ;
+        if ( data_.empty() ) { // we have an invalid session
+            if ( !set_cookie_ ) { // this is not a new session id, we should delete it
+                resp_.deleteCookie(key_name_, handler_.cookiePath(), handler_.cookieDomain(),
+                                   handler_.cookieSecure(), handler_.cookieHttpOnly()) ;
+                handler_.remove(id_) ;
+            }
+        } else {
+            if ( set_cookie_ )
+                resp_.setCookie(key_name_, id_, handler_.cookieExpiration(), handler_.cookiePath(), handler_.cookieDomain(),
+                    handler_.cookieSecure(), handler_.cookieHttpOnly() ) ;
+            if ( modified_ )
+                handler_.write(*this) ;
+        }
+
         handler_.close() ;
     }
 }

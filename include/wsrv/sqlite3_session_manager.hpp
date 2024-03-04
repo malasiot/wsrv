@@ -23,6 +23,7 @@ private:
     virtual bool read(Session &session) override ;
     std::string uniqueSID() override ;
     bool isValidId(const std::string &id) const override ;
+    bool remove(const std::string &id) override ;
 
 private:
 
@@ -31,8 +32,6 @@ private:
 
     bool writeSessionData(const std::string &id, const std::string &data) ;
     bool readSessionData(const std::string &id, std::string &data) ;
-
-    bool deleteSessionData(const std::string &id) ;
 
     bool contains(const std::string &id) const ;
 

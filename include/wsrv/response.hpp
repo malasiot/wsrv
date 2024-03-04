@@ -92,6 +92,7 @@ struct HTTPServerResponse
                    bool http_only = false
                    ) ;
 
+    void deleteCookie(const std::string &name, const std::string &path = std::string(), const std::string &domain = std::string(), bool secure = false, bool http_only = false );
 
     void addHeader(const std::string &key, const std::string &val) ;
     // set header for content-type
@@ -110,6 +111,9 @@ struct HTTPServerResponse
 
     // convert to one line string (status + content length) suitable for logging
     std::string toString() const ;
+
+
+
 private:
 
     friend class detail::ResponseParser ;

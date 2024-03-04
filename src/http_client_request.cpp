@@ -34,7 +34,7 @@ string HTTPClientRequest::methodString() const
         return "HEAD";
     case OPTIONS:
         return "OPTIONS" ;
-    case TRACE:
+    default:
         return "TRACE" ;
 
     }
