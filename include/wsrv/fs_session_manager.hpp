@@ -22,6 +22,7 @@ private:
     virtual bool write(const Session &session) override ;
     virtual bool read(Session &session) override ;
     std::string uniqueSID() override ;
+    bool isValidId(const std::string &id) const override ;
 
 private:
 

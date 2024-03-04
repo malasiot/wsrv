@@ -24,7 +24,8 @@ public:
     void writeSessionData(const std::string &id, const string &data);
     void readSessionData(const std::string &id, string &data);
     void deleteSessions(uint64_t t);
-    bool contains(const string &id);
+    void deleteSessionData(const std::string &id) ;
+    bool contains(const string &id, uint64_t expires);
 
 private:
     sqlite3 *handle_ = nullptr ;
@@ -86,6 +87,25 @@ void SQLite3SessionStorage::writeSessionData(const std::string &id, const string
     sqlite3_finalize(stmt);
 }
 
+void SQLite3SessionStorage::deleteSessionData(const std::string &id) {
+
+    sqlite3_stmt *stmt = nullptr ;
+
+    if ( sqlite3_prepare_v2(handle_, "DELETE FROM sessions WHERE sid = ?", -1, &stmt, nullptr) != SQLITE_OK ) {
+        throw SQLite3SessionStorageException("Error executing sql command", handle_) ;
+    }
+
+    if ( sqlite3_bind_text(stmt, 1, id.c_str(), id.length(), nullptr) != SQLITE_OK ) {
+        throw SQLite3SessionStorageException("Error executing sql prepared statement bind command", handle_) ;
+    }
+
+    if ( sqlite3_step(stmt) != SQLITE_DONE )
+        throw SQLite3SessionStorageException("Error writing session data", handle_) ;
+
+
+    sqlite3_finalize(stmt);
+}
+
 void SQLite3SessionStorage::readSessionData(const std::string &id, string &data) {
 
     sqlite3_stmt *stmt = nullptr ;
@@ -128,14 +148,18 @@ void SQLite3SessionStorage::deleteSessions(uint64_t t) {
     sqlite3_finalize(stmt);
 }
 
-bool SQLite3SessionStorage::contains(const string &id) {
+bool SQLite3SessionStorage::contains(const string &id, uint64_t session_expiration) {
     sqlite3_stmt *stmt = nullptr ;
 
-    if ( sqlite3_prepare_v2(handle_, "SELECT sid FROM sessions WHERE sid = ? LIMIT 1", -1, &stmt, nullptr) != SQLITE_OK ) {
+    if ( sqlite3_prepare_v2(handle_, "SELECT sid FROM sessions WHERE sid = ? AND ts < ? LIMIT 1", -1, &stmt, nullptr) != SQLITE_OK ) {
         throw SQLite3SessionStorageException("Error executing sql command", handle_) ;
     }
 
     if ( sqlite3_bind_text(stmt, 1, id.c_str(), id.length(), nullptr) != SQLITE_OK ) {
+        throw SQLite3SessionStorageException("Error executing sql prepared statement bind command", handle_) ;
+    }
+
+    if ( sqlite3_bind_int64(stmt, 2, session_expiration) != SQLITE_OK ) {
         throw SQLite3SessionStorageException("Error executing sql prepared statement bind command", handle_) ;
     }
 
@@ -173,6 +197,11 @@ string SQLite3SessionManager::uniqueSID() {
         else max_tries -- ;
     }
     return string() ;
+}
+
+bool SQLite3SessionManager::isValidId(const std::string &id) const
+{
+    return contains(id) ;
 }
 
 enum
@@ -290,15 +319,35 @@ bool SQLite3SessionManager::readSessionData(const string &id, string &data)
     }
 }
 
-bool SQLite3SessionManager::contains(const string &id) {
-    return storage_->contains(id) ;
+bool SQLite3SessionManager::deleteSessionData(const std::string &id)
+{
+    try {
+       storage_->deleteSessionData(id) ;
+       return true ;
+    }
+    catch ( SQLite3SessionStorageException &e ) {
+       cerr << e.what() << endl ;
+       return false ;
+    }
+}
+
+bool SQLite3SessionManager::contains(const string &id) const {
+    static const auto session_entry_max_lifetime = std::chrono::minutes(session_id_max_lifetime_) ;
+    auto t = std::chrono::system_clock::now() - session_entry_max_lifetime ;
+
+    uint64_t expires = t.time_since_epoch().count() ;
+
+    return storage_->contains(id, expires) ;
 
 }
 
 bool SQLite3SessionManager::write(const Session &session) {
     string id = session.id() ;
     string data = serializeData(session.data()) ;
-    return writeSessionData(id, data) ;
+    if ( !data.empty() )
+       return writeSessionData(id, data) ;
+    else
+       return deleteSessionData(id) ;
 }
 
 

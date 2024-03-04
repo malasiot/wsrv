@@ -13,6 +13,9 @@ class SessionManager ;
 class Session {
     using Dictionary = std::map<std::string, std::string>;
 public:
+
+    enum Status { STATUS_NONE, STATUS_ACTIVE } ;
+
     // start a new session
     Session(SessionManager &handler, const HTTPServerRequest &req, HTTPServerResponse &resp, const std::string &suffix = std::string()) ;
 
@@ -41,12 +44,21 @@ public:
         data_.erase(key) ;
     }
 
+    void invalidate() ;
+
+    // clearing the data will delete them from the server
+    void clear() { data_.clear() ; }
+
 private:
 
     std::string id_ ;
     Dictionary data_ ;
     uint64_t lifetime_ ;
     SessionManager &handler_ ;
+    HTTPServerResponse &resp_ ;
+    Status status_ = STATUS_NONE ;
+    bool set_cookie_ = false ;
+    std::string key_name_ ;
 };
 
 }
