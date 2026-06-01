@@ -16,6 +16,7 @@ class RequestParser ;
 }
 /// A request received from a client.
 ///
+class SessionManager ;
 class HTTPServerRequest
 {
     using Dictionary = std::map<std::string, std::string> ;
@@ -62,6 +63,7 @@ public:
     // converts to single line string suitable for logging the request
     std::string toString() const ;
 
+
 protected:
 
     friend class detail::RequestParser ;
@@ -70,7 +72,7 @@ protected:
     Dictionary GET_ ;	 // Query variables for GET requests
     Dictionary POST_ ;   // Post variables for POST requests
     Dictionary COOKIE_ ; // Cookies
-
+   
     std::map<std::string, UploadedFile> FILE_ ;	// Uploaded files
 
     // This is content sent using POST with Content-Type other than
@@ -84,9 +86,14 @@ protected:
     std::string query_ ;  // decoded query string
     std::string protocol_ ; // HTTP protocol
 
+    
+
 private:
 
     friend class HttpConnection ;
+
+    bool session_is_valid_ = false ;
+    std::string session_id_ ;
 
     HTTPServerRequest() = default ;
 

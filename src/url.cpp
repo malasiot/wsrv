@@ -1,6 +1,7 @@
 #include <wsrv/url.hpp>
 #include "detail/util.hpp"
 #include <algorithm>
+#include <sstream>
 
 using namespace std ;
 

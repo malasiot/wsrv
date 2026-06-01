@@ -11,13 +11,13 @@ namespace ws {
 class SessionManager ;
 
 class Session {
-    using Dictionary = std::map<std::string, std::string>;
+    using dictionary_t = std::map<std::string, std::string>;
 public:
 
     enum Status { STATUS_NONE, STATUS_ACTIVE } ;
 
     // start a new session
-    Session(SessionManager &handler, const HTTPServerRequest &req, HTTPServerResponse &resp, const std::string &suffix = std::string()) ;
+    Session(SessionManager &handler, const HTTPServerRequest &req, const std::string &suffix = std::string()) ;
 
     // closes the season
     ~Session() ;
@@ -25,8 +25,8 @@ public:
     std::string id() const { return id_ ; }
 
     // if modifying the data should call setModified(true) ;
-    Dictionary &data() { return data_ ; }
-    const Dictionary &data() const { return data_ ; }
+    dictionary_t &data() { return data_ ; }
+    const dictionary_t &data() const { return data_ ; }
 
     void add(const std::string &key, const std::string &val) {
         modified_ = true ;
@@ -59,13 +59,15 @@ public:
         modified_ = m ;
     }
 
+    void writeCookie(HTTPServerResponse &resp) const;
+
 private:
 
     std::string id_ ;
-    Dictionary data_ ;
+    dictionary_t data_ ;
     uint64_t lifetime_ ;
     SessionManager &handler_ ;
-    HTTPServerResponse &resp_ ;
+  
     Status status_ = STATUS_NONE ;
     bool set_cookie_ = false ;
     std::string key_name_ ;

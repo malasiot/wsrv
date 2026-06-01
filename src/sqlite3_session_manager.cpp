@@ -21,7 +21,7 @@ public:
     }
 
     void execute(const std::string &cmd) ;
-    void writeSessionData(const std::string &id, const string &data);
+    void writeSessionData(const std::string &id, const string &data, int64_t session_expiration);
     void readSessionData(const std::string &id, string &data);
     void deleteSessions(uint64_t t);
     void remove(const std::string &id) ;
@@ -66,7 +66,7 @@ void SQLite3SessionStorage::execute(const string &cmd)
     }
 }
 
-void SQLite3SessionStorage::writeSessionData(const std::string &id, const string &data) {
+void SQLite3SessionStorage::writeSessionData(const std::string &id, const string &data, int64_t session_expiration) {
 
     sqlite3_stmt *stmt = nullptr ;
 
@@ -74,9 +74,14 @@ void SQLite3SessionStorage::writeSessionData(const std::string &id, const string
         throw SQLite3SessionStorageException("Error executing sql command", handle_) ;
     }
 
+    int64_t expires = std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::system_clock::now().time_since_epoch()
+        ).count();
+    expires += session_expiration ;
+
     if ( sqlite3_bind_text(stmt, 1, id.c_str(), id.length(), nullptr) != SQLITE_OK  ||
          sqlite3_bind_blob(stmt, 2, data.data(), data.size(), nullptr) != SQLITE_OK ||
-         sqlite3_bind_int64(stmt, 3, std::chrono::system_clock::now().time_since_epoch().count()) != SQLITE_OK ) {
+         sqlite3_bind_int64(stmt, 3, expires) != SQLITE_OK ) {
         throw SQLite3SessionStorageException("Error executing sql prepared statement bind command", handle_) ;
     }
 
@@ -151,9 +156,7 @@ void SQLite3SessionStorage::deleteSessions(uint64_t t) {
 bool SQLite3SessionStorage::contains(const string &id, uint64_t session_expiration) {
     sqlite3_stmt *stmt = nullptr ;
 
-    uint64_t now = std::chrono::system_clock::now().time_since_epoch().count() ;
-
-    if ( sqlite3_prepare_v2(handle_, "SELECT sid FROM sessions WHERE sid = ? AND ts + ? < ? LIMIT 1", -1, &stmt, nullptr) != SQLITE_OK ) {
+    if ( sqlite3_prepare_v2(handle_, "SELECT sid FROM sessions WHERE sid = ? AND ts < ? LIMIT 1", -1, &stmt, nullptr) != SQLITE_OK ) {
         throw SQLite3SessionStorageException("Error executing sql command", handle_) ;
     }
 
@@ -164,11 +167,6 @@ bool SQLite3SessionStorage::contains(const string &id, uint64_t session_expirati
     if ( sqlite3_bind_int64(stmt, 2, session_expiration) != SQLITE_OK ) {
         throw SQLite3SessionStorageException("Error executing sql prepared statement bind command", handle_) ;
     }
-
-    if ( sqlite3_bind_int64(stmt, 3, now) != SQLITE_OK ) {
-        throw SQLite3SessionStorageException("Error executing sql prepared statement bind command", handle_) ;
-    }
-
 
     int rc = sqlite3_step(stmt) ;
 
@@ -273,7 +271,7 @@ static string read_string(istream &strm) {
 
 SQLite3SessionManager::~SQLite3SessionManager() = default ;
 
-string SQLite3SessionManager::serializeData(const Dictionary &data)
+string SQLite3SessionManager::serializeData(const dictionary_t &data)
 {
     ostringstream strm(ios::out | ios::binary) ;
 
@@ -287,7 +285,7 @@ string SQLite3SessionManager::serializeData(const Dictionary &data)
     return strm.str() ;
 }
 
-void SQLite3SessionManager::deserializeData(const string &data, Dictionary &dict)
+void SQLite3SessionManager::deserializeData(const string &data, dictionary_t &dict)
 {
     istringstream strm(data, ios::in | ios::binary) ;
 
@@ -300,12 +298,9 @@ void SQLite3SessionManager::deserializeData(const string &data, Dictionary &dict
     }
 }
 
-bool SQLite3SessionManager::writeSessionData(const string &id, const string &data)
-{
+bool SQLite3SessionManager::writeSessionData(const string &id, const string &data) {
     try {
-
-        storage_->writeSessionData(id, data) ;
-
+        storage_->writeSessionData(id, data, this->sessionIdLifetime()) ;
         return true ;
     }
     catch ( SQLite3SessionStorageException & ) {
@@ -339,26 +334,25 @@ bool SQLite3SessionManager::remove(const std::string &id)
 }
 
 bool SQLite3SessionManager::contains(const string &id) const {
-    static const auto session_entry_max_lifetime = std::chrono::minutes(session_id_max_lifetime_) ;
-    auto t = std::chrono::system_clock::now() - session_entry_max_lifetime ;
+   
+     int64_t now = std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::system_clock::now().time_since_epoch()
+        ).count();
 
-    uint64_t expires = t.time_since_epoch().count() ;
-
-    return storage_->contains(id, session_id_max_lifetime_) ;
+    return storage_->contains(id, now) ;
 
 }
 
-bool SQLite3SessionManager::write(const Session &session) {
-    string id = session.id() ;
-    string data = serializeData(session.data()) ;
+bool SQLite3SessionManager::write(const std::string &id, const dictionary_t &session_data) {
+    string data = serializeData(session_data) ;
     return writeSessionData(id, data) ;
 }
 
 
-bool SQLite3SessionManager::read(Session &session) {
-    string id = session.id(), data ;
+bool SQLite3SessionManager::read(const std::string &id, dictionary_t &session_data) {
+    std::string data ;
     if ( !readSessionData(id, data) ) return false ;
-    deserializeData(data, session.data()) ;
+    deserializeData(data, session_data) ;
     gc() ;
     return true ;
 }
@@ -379,7 +373,7 @@ void SQLite3SessionManager::gc() {
 
         // delete old records
 
-        auto t = std::chrono::system_clock::now() - session_entry_max_lifetime ;
+        auto t = std::chrono::system_clock::now() ;
 
         storage_->deleteSessions((uint64_t)t.time_since_epoch().count()) ;
     }

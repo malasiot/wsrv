@@ -15,6 +15,8 @@ class Session ;
 class SessionManager {
 
 public:
+    using Dictionary = std::map<std::string, std::string> ;
+    
     SessionManager(): session_cookie_path_("/") {}
 
     // initialize any resources
@@ -24,9 +26,9 @@ public:
     virtual bool close() = 0 ;
 
     // write session data (should invalidate session when session data is empty)
-    virtual bool write(const Session &session) = 0 ;
+    virtual bool write(const std::string &session_id, const Dictionary &session) = 0 ;
     // read season data
-    virtual bool read(Session &session) = 0 ;
+    virtual bool read(const std::string &id, Dictionary &session_data) = 0 ;
     // generate a unique SID
     virtual std::string uniqueSID() { return generateSID() ; }
 
@@ -50,12 +52,12 @@ public:
 
 protected:
 
-     using Dictionary = std::map<std::string, std::string> ;
+     using dictionary_t = std::map<std::string, std::string> ;
 
     static std::string generateSID() ;
     std::string session_cookie_path_, session_cookie_domain_ ;
-    long int session_cookie_expiration_ = 0 ;
-    long int session_id_max_lifetime_ = 60*24 ; // minutes
+    long int session_cookie_expiration_ = 24 * 60 * 60 ;
+    long int session_id_max_lifetime_ = 24 * 60 * 60 ; // 1 day
     bool session_cookie_http_only_ = false ;
     bool session_cookie_secure_ = false ;
 };

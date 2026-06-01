@@ -1,5 +1,7 @@
 #include <wsrv/request.hpp>
 #include <wsrv/route.hpp>
+
+#include <wsrv/session.hpp>
 #include "detail/connection.hpp"
 
 #include <regex>
@@ -75,5 +77,7 @@ bool HTTPServerRequest::matchesMethod(const string &method) const {
 
     return std::find(methods.begin(), methods.end(), method_) != methods.end() ;
 }
+
+    
 
 } // namespace ws

@@ -12,9 +12,11 @@ namespace detail {
 class ResponseParser ;
 }
 
+class Session ;
+
 struct HTTPServerResponse
 {
-    using Dictionary = std::map<std::string, std::string> ;
+    using dictionary_t = std::map<std::string, std::string> ;
     /// The status of the reply.
     enum Status
     {
@@ -37,14 +39,14 @@ struct HTTPServerResponse
     } ;
 
 
-    Dictionary &headers() { return headers_ ; }
+    dictionary_t &headers() { return headers_ ; }
     std::string &content() { return content_ ; }
     unsigned int getStatus() const { return status_ ; }
 
     std::string getHeaderAttribute(const std::string &key, const std::string &def = std::string()) const ;
 
     /// Get a stock reply.
-    void stockReply(Status status);
+    static HTTPServerResponse stockReply(Status status);
 
     // This will correctly fill in the reply headers for sending over a file payload. It will also set status to OK.
     // If encoding is empty it will try to guess from the payload (gzip only supported)
@@ -63,8 +65,14 @@ struct HTTPServerResponse
                      const std::string &mime = std::string()
                      ) ;
 
+    static HTTPServerResponse file(const std::string &path_name,
+                     const std::string &encoding = std::string(),
+                     const std::string &mime = std::string()
+                     ) ;
+
     // Calls write() appropriately setting the content type
-    void writeJSON(const std::string &json) ;
+    static HTTPServerResponse json(const std::string &json) ;
+    static HTTPServerResponse html(const std::string &html) ;
 
     // Will write a string and set content type and content length. It will also set status to OK.
     void write(const std::string &content, const std::string &mime = "text/html") ;
@@ -112,13 +120,15 @@ struct HTTPServerResponse
     // convert to one line string (status + content length) suitable for logging
     std::string toString() const ;
 
+    void writeSessionCookie(const Session &session) ; 
 
+    HTTPServerResponse withSession(const Session &session) ;
 
 private:
 
     friend class detail::ResponseParser ;
     /// The headers to be included in the reply.
-    Dictionary headers_;
+    dictionary_t headers_;
 
     /// The content to be sent in the reply.
     std::string content_;

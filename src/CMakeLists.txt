@@ -68,9 +68,8 @@ target_include_directories(wsrv PUBLIC
     ${ZLIB_INCLUDE_DIR}
 )
 
-
 target_link_libraries(wsrv PUBLIC
-      cryptopp ${CRYPTOPP_LIBRARIES} ${SQLITE3_LIBRARY} ${OPENSSL_LIBRARIES} z
+       ${CryptoPP_LIBRARY} ${SQLITE3_LIBRARY} ${OPENSSL_LIBRARIES} z
 )
 
 # Install binaries

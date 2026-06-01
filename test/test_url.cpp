@@ -5,7 +5,7 @@
 using namespace ws ;
 using namespace std ;
 
-int main(int argc, char *argv) {
+int main(int argc, const char *argv[]) {
     cout << URL("https://djjd//Καλ/../jjdd/./index.html").normalizePath().str() << endl ;
 
     cout << URLBuilder("https://vision.iti.gr")

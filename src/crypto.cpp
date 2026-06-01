@@ -1,10 +1,10 @@
 #include "detail/crypto.hpp"
 
-#include <crypto++/config.h>
-#include <crypto++/osrng.h>
-#include <crypto++/hex.h>
-#include <crypto++/pwdbased.h>
-#include <crypto++/base64.h>
+#include <cryptopp/config.h>
+#include <cryptopp/osrng.h>
+#include <cryptopp/hex.h>
+#include <cryptopp/pwdbased.h>
+#include <cryptopp/base64.h>
 
 #include <iostream>
 #include <iomanip>
@@ -23,7 +23,7 @@ string randomBytes(size_t len) {
 
     bytes.resize(len, 0) ;
 
-    pool.GenerateBlock(reinterpret_cast<byte *>(&bytes[0]), len);
+    pool.GenerateBlock(reinterpret_cast<CryptoPP::byte *>(&bytes[0]), len);
 
     return bytes ;
 }
@@ -34,7 +34,7 @@ string binToHex(const string &src) {
     string res ;
     HexEncoder hex(new StringSink(res));
 
-    hex.Put(reinterpret_cast<const byte *>(&src[0]), src.size());
+    hex.Put(reinterpret_cast<const CryptoPP::byte *>(&src[0]), src.size());
     hex.MessageEnd();
     return res ;
 }
@@ -45,9 +45,9 @@ string encodeBase64(const string &src)
 
     string encoded ;
 
-    StringSource ss(reinterpret_cast<const byte *>(&src[0]), src.size(), true,
-        new Base64Encoder(
-            new StringSink(encoded)
+    CryptoPP::StringSource ss(reinterpret_cast<const CryptoPP::byte *>(&src[0]), src.size(), true,
+        new CryptoPP::Base64Encoder(
+            new CryptoPP::StringSink(encoded)
         )
     );
 
@@ -62,9 +62,9 @@ string decodeBase64(const string &src)
 
     string decoded ;
 
-    StringSource ss(reinterpret_cast<const byte *>(&src[0]), src.size(), true,
-        new Base64Decoder(
-            new StringSink(decoded)
+    CryptoPP::StringSource ss(reinterpret_cast<const CryptoPP::byte *>(&src[0]), src.size(), true,
+        new CryptoPP::Base64Decoder(
+            new CryptoPP::StringSink(decoded)
         )
     );
 
@@ -88,10 +88,10 @@ string passwordHash(const string &password, size_t iterations) {
     PKCS5_PBKDF2_HMAC<SHA256> pbkdf;
 
     pbkdf.DeriveKey(
-        (byte *)buffer.data() + salt_length, SHA256::DIGESTSIZE,
+        ( CryptoPP::byte *)buffer.data() + salt_length, SHA256::DIGESTSIZE,
         0x00,
-        (byte *) password.data(), password.size(),
-        (byte *) buffer.data(), salt_length,
+        ( CryptoPP::byte *) password.data(), password.size(),
+        ( CryptoPP::byte *) buffer.data(), salt_length,
         iterations
     );
 
@@ -119,10 +119,10 @@ bool passwordVerify(const string &password, const string &hash) {
     PKCS5_PBKDF2_HMAC<SHA256> pbkdf;
 
     pbkdf.DeriveKey(
-        (byte *)key, SHA256::DIGESTSIZE,
+        ( CryptoPP::byte *)key, SHA256::DIGESTSIZE,
         0x00,
-        (byte *) password.data(), password.size(),
-        (byte *) hash.data(), salt_length,
+        ( CryptoPP::byte *) password.data(), password.size(),
+        ( CryptoPP::byte *) hash.data(), salt_length,
         iterations
     );
 
@@ -140,7 +140,7 @@ string hashSHA256(const string &src)
     std::string digest;
     CryptoPP::SHA256 hash;
 
-    CryptoPP::StringSource ss(reinterpret_cast<const u_char *>(&src[0]), src.size(), true,
+    CryptoPP::StringSource ss(reinterpret_cast<const CryptoPP::byte *>(&src[0]), src.size(), true,
        new CryptoPP::HashFilter(hash, new CryptoPP::StringSink(digest)));
 
     return digest;

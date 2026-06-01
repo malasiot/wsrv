@@ -5,8 +5,8 @@ using namespace std ;
 
 namespace ws {
 
-Session::Session(SessionManager &handler, const HTTPServerRequest &req, HTTPServerResponse &resp, const std::string &suffix):
-    handler_(handler), resp_(resp) {
+Session::Session(SessionManager &handler, const HTTPServerRequest &req, const std::string &suffix):
+    handler_(handler) {
     if ( handler_.open() ) {
 
         // check cookies and request args if session present
@@ -21,30 +21,34 @@ Session::Session(SessionManager &handler, const HTTPServerRequest &req, HTTPServ
             set_cookie_ = true ;
         }
         else // we have a valid id
-            handler_.read(*this) ;
+            handler_.read(id_, data_) ;
 
         status_ = STATUS_ACTIVE;
     }
 }
 
-Session::~Session() {
-    if ( status_ == STATUS_ACTIVE ) {
+void Session::writeCookie(HTTPServerResponse &resp) const{
+     if ( status_ == STATUS_ACTIVE ) {
         if ( data_.empty() ) { // we have an invalid session
             if ( !set_cookie_ ) { // this is not a new session id, we should delete it
-                resp_.deleteCookie(key_name_, handler_.cookiePath(), handler_.cookieDomain(),
+                resp.deleteCookie(key_name_, handler_.cookiePath(), handler_.cookieDomain(),
                                    handler_.cookieSecure(), handler_.cookieHttpOnly()) ;
                 handler_.remove(id_) ;
             }
         } else {
             if ( set_cookie_ )
-                resp_.setCookie(key_name_, id_, handler_.cookieExpiration(), handler_.cookiePath(), handler_.cookieDomain(),
+                resp.setCookie(key_name_, id_, handler_.cookieExpiration(), handler_.cookiePath(), handler_.cookieDomain(),
                     handler_.cookieSecure(), handler_.cookieHttpOnly() ) ;
             if ( modified_ )
-                handler_.write(*this) ;
+                handler_.write(id_, data_) ;
         }
 
         handler_.close() ;
     }
+}
+
+Session::~Session() {
+ 
 }
 
 void Session::invalidate() {

@@ -3,6 +3,7 @@
 #include <wsrv/zstream.hpp>
 
 #include <wsrv/exceptions.hpp>
+#include <wsrv/session.hpp>
 #include <asio/buffered_read_stream.hpp>
 
 #include <regex>
@@ -257,12 +258,14 @@ string HTTPServerResponse::getHeaderAttribute(const string &key, const string &d
     return it == headers_.end() ? def : it->second ;
 }
 
-void HTTPServerResponse::stockReply(HTTPServerResponse::Status status)
+HTTPServerResponse HTTPServerResponse::stockReply(HTTPServerResponse::Status status)
 {
-    status_ = status;
-    content_.assign(stock_replies::to_string(status));
-    setContentType("text/html");
-    setContentLength() ;
+    HTTPServerResponse response;
+    response.status_ = status;
+    response.content_.assign(stock_replies::to_string(status));
+    response.setContentType("text/html");
+    response.setContentLength() ;
+    return response;
 }
 
 static void gmt_time_string(char *buf, size_t buf_len, time_t *t) {
@@ -344,7 +347,7 @@ static string get_file_mime(const string &mime,  const std::string &p)
 void HTTPServerResponse::encodeFile(const std::string &file_path, const std::string &encoding, const std::string &mime )
 {
     if ( !fileExists(file_path) ) {
-        throw HttpResponseException(HTTPServerResponse::not_found) ;
+        setStatus(HTTPServerResponse::not_found) ;
         return ;
     }
 
@@ -358,9 +361,24 @@ void HTTPServerResponse::encodeFile(const std::string &file_path, const std::str
 
 }
 
-void HTTPServerResponse::writeJSON(const string &obj)
+HTTPServerResponse HTTPServerResponse::file(const std::string &path_name, const std::string &encoding, const std::string &mime) {
+    HTTPServerResponse response ;
+    response.encodeFile(path_name, encoding, mime) ;
+    return response ;
+}
+
+HTTPServerResponse HTTPServerResponse::json(const string &obj)
 {
-    write(obj, "application/json") ;
+    HTTPServerResponse response ;
+    response.write(obj, "application/json") ;
+    return response ;
+}
+
+HTTPServerResponse HTTPServerResponse::html(const string &html)
+{
+    HTTPServerResponse response ;
+    response.write(html, "text/html") ;
+    return response ;
 }
 
 void HTTPServerResponse::write(const string &content, const string &mime)
@@ -422,6 +440,7 @@ bool HTTPServerResponse::contentBenefitsFromCompression() {
 
 void HTTPServerResponse::append(const string &content) {
     content_.append(content) ;
+    setContentLength() ;
 }
 
 bool HTTPServerResponse::serveStaticFile(const string &folder, const string &path) {
@@ -458,6 +477,15 @@ void HTTPServerResponse::setCookie(const string &name, const string &value, time
 
     addHeader("Set-Cookie", cookie) ;
 
+}
+
+ void HTTPServerResponse::writeSessionCookie(const Session &session) {
+    session.writeCookie(*this) ;
+}
+
+HTTPServerResponse HTTPServerResponse::withSession(const Session &session) {
+    writeSessionCookie(session) ;
+    return *this ;
 }
 
 void HTTPServerResponse::deleteCookie(const string &name, const string &path, const string &domain, bool secure, bool http_only) {

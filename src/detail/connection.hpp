@@ -67,32 +67,36 @@ private:
                 int result;
                 result = request_parser_.parse(buffer_.data(), bytes_transferred);
 
+                HTTPServerResponse response ;
+
                 if ( result == detail::HTTP_PARSER_OK )
                 {
                     if ( !request_parser_.decode_message(request_) ) {
-                        response_.stockReply(HTTPServerResponse::bad_request);
+                        response = HTTPServerResponse::stockReply(HTTPServerResponse::bad_request);
                     }
                     else {
                         request_.SERVER_.emplace("REMOTE_ADDR", socket_.remote_endpoint().address().to_string() ) ;
 
                          try {
-                             handler_->handle(request_, response_) ;
+                        
+
+                             response = handler_->handle(request_) ;
 
                          }
 
                         catch ( std::runtime_error &e ) {
-                            response_.stockReply(HTTPServerResponse::internal_server_error) ;
+                            response = HTTPServerResponse::stockReply(HTTPServerResponse::internal_server_error) ;
                         }
                     }
 
-                    write(response_to_buffers(response_, request_.method_ == "HEAD")) ;
+                    write(response_to_buffers(response, request_.method_ == "HEAD")) ;
 
                 }
                 else if ( result == detail::HTTP_PARSER_ERROR )
                 {
-                    response_.stockReply(HTTPServerResponse::bad_request);
+                    response = HTTPServerResponse::stockReply(HTTPServerResponse::bad_request);
 
-                    write(response_to_buffers(response_, request_.method_ == "HEAD")) ;
+                    write(response_to_buffers(response, request_.method_ == "HEAD")) ;
 
                 }
                 else
@@ -141,7 +145,7 @@ private:
      detail::RequestParser request_parser_;
 
      HTTPServerRequest request_ ;
-     HTTPServerResponse response_ ;
+
 };
 
 

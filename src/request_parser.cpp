@@ -22,6 +22,7 @@
 #include <fstream>
 
 #include <algorithm>
+#include <sstream>
 #include <regex>
 
 using namespace std ;
