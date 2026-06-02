@@ -3,6 +3,10 @@
 #include <wsrv/session.hpp>
 #include <wsrv/exceptions.hpp>
 #include <wsrv/sqlite3_session_manager.hpp>
+#include <wsrv/middleware.hpp>
+
+
+#include <wsrv/application.hpp>
 
 #include <mutex>
 #include <iostream>
@@ -10,92 +14,27 @@
 using namespace ws ;
 using namespace std ;
 
-// You may implement a filter like handler like this. Here we put the task in the destructor so that it is performed after the app
-// has the chance to fill the response
 
-class RequestLogger {
+class RequestLogger: public IMiddleware {
 public:
-    RequestLogger(const HTTPServerRequest &req, const HTTPServerResponse &res): req_(req), res_(res) {}
-    ~RequestLogger() {
-        unique_lock<mutex> lock(lock_) ;
-
-        if ( res_.getStatus() == HTTPServerResponse::ok ) {
-            cout << req_.toString() << " " << res_.toString() << endl ;
-        } else {
-            cerr << req_.toString() << " " << res_.toString() << endl ;
-        }
+    void handle(HTTPServerRequest& req, HTTPServerResponse& res, PipelineContext& ctx) {
+        std::cout << "[Log] " << req.toString() << " -> " ;
+        ctx.next(req, res); // Move to next layer
+        std::cout <<  res.toString() << "\n";
     }
-
-    const HTTPServerRequest &req_ ;
-    const HTTPServerResponse &res_ ;
-    mutex lock_ ;
 };
 
-class GZipFilter {
-public:
-    GZipFilter(const HTTPServerRequest &req, HTTPServerResponse &res): req_(req), res_(res) {}
-    ~GZipFilter() {
-        if ( req_.supportsGzip() && res_.contentBenefitsFromCompression() )
-            res_.compress();
-    }
-
-    const HTTPServerRequest &req_ ;
-    HTTPServerResponse &res_ ;
-
-};
-
-class App: public RequestHandler {
+class GZipFilter: public IMiddleware {
 public:
 
-    using Dictionary = std::map<std::string, std::string> ;
+    void handle(HTTPServerRequest& req, HTTPServerResponse& res, PipelineContext& ctx) {
+        ctx.next(req, res); // Move to next layer
 
-    App(const std::string &root_dir):  root_(root_dir)
-    {
-
+        if ( req.supportsGzip() && res.contentBenefitsFromCompression() )
+            res.compress();
     }
-
-    void handle(const HTTPServerRequest &req, HTTPServerResponse &resp) override {
-
-        RequestLogger logger(req, resp) ;
-        GZipFilter gzip(req, resp) ;
-        
-        try {
-            
-           
-            Dictionary attrs ;
-            if ( req.matches("GET", R"(/user/{id:\d+}/{action:show|hide})", attrs) ) {
-               
-                Session session(*session_manager_, req, resp) ;
-                
-
-                resp.write("hello " + attrs["id"]) ;
-
-                if ( session.contains("id") )
-                    resp.append(", your session id is " + session.get("id")) ;
-                else
-                    session.add("id", attrs["id"]) ;
-               // session.add("id", attrs["id"]) ;
-
-               // session.clear();
-             //  resp.writeSessionCookie(session) ;
-
-            } else {
-                resp = HTTPServerResponse::file(root_ + '/' + req.getPath()) ;
-            }
-        }
-        catch ( std::runtime_error &e ) {
-            resp = HTTPServerResponse::stockReply(HTTPServerResponse::internal_server_error) ;
-        }
-    }
-
-    void setSessionManager(SessionManager *sm) {
-        session_manager_ = sm ;
-    }
-private:
-
-    string root_ ;
-    SessionManager *session_manager_ ;
 };
+
 
 
 int main(int argc, char *argv[]) {
@@ -105,9 +44,24 @@ int main(int argc, char *argv[]) {
 
     const string root = "/home/malasiot/source/ws/data/routes/" ;
 
-    App *app = new App(root) ;
+    Application *app = new Application() ;
+    
     server.setHandler(app) ;
-    app->setSessionManager(new SQLite3SessionManager("/tmp/session.sqlite")) ;
+
+    SessionManager *session_manager = new SQLite3SessionManager("/tmp/session.sqlite");
+  
+    app->useGlobal(std::make_shared<RequestLogger>()) ;
+    app->useGlobal(std::make_shared<GZipFilter>()) ;
+    app->addRoute("GET", "/user/{id:\\d+}/{action:show|hide}", [session_manager](HTTPServerRequest& req, HTTPServerResponse& resp) {
+         Session session(*session_manager, req, resp) ;
+  
+         resp.write("hello " + req.getRouteAttribute("id")) ;
+
+         if ( session.contains("id") )
+            resp.append(", your session id is " + session.get("id")) ;
+         else
+            session.add("id", req.getRouteAttribute("id")) ;
+    }) ;
 
     server.run() ;
 }

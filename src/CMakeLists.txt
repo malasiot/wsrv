@@ -30,6 +30,7 @@ SET ( SOURCES
     crypto.cpp
     util.cpp
 
+    application.cpp
     response.cpp
     request.cpp
     request_parser.cpp

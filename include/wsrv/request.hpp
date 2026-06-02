@@ -47,11 +47,12 @@ public:
     const Dictionary &getPostAttributes() const { return POST_ ; }
     std::string getPostAttribute(const std::string &key, const std::string &def = std::string()) const ;
 
+    Dictionary &getRouteAttributes() { return ROUTE_ ; }
+    std::string getRouteAttribute(const std::string &key, const std::string &def = std::string()) const ;
+
     const std::map<std::string, UploadedFile> &getUploadedFiles() const { return FILE_ ; }
     const Dictionary &getCookies() const { return COOKIE_ ; }
     std::string getCookie(const std::string &key, const std::string &def = std::string()) const ;
-
-    Session &getSession() const;
 
     const std::string &getContent() const { return content_ ; }
     const std::string &getContentType() const { return content_type_ ; }
@@ -63,6 +64,7 @@ public:
     // converts to single line string suitable for logging the request
     std::string toString() const ;
 
+    bool matchesMethod(const std::string &method) const ;
 
 protected:
 
@@ -72,6 +74,7 @@ protected:
     Dictionary GET_ ;	 // Query variables for GET requests
     Dictionary POST_ ;   // Post variables for POST requests
     Dictionary COOKIE_ ; // Cookies
+    Dictionary ROUTE_ ;  // Attributes extracted from the request path (e.g. id in /user/{id})
    
     std::map<std::string, UploadedFile> FILE_ ;	// Uploaded files
 
@@ -85,9 +88,7 @@ protected:
     std::string path_;    // decoded request path
     std::string query_ ;  // decoded query string
     std::string protocol_ ; // HTTP protocol
-
     
-
 private:
 
     friend class HttpConnection ;
@@ -96,8 +97,6 @@ private:
     std::string session_id_ ;
 
     HTTPServerRequest() = default ;
-
-    bool matchesMethod(const std::string &method) const ;
 
     std::string getCleanPath(const std::string &path) const ;
 };

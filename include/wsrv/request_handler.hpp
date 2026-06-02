@@ -20,8 +20,8 @@ public:
 
     /// Override to handle a request and produce a response.
 
-    virtual void handle(const HTTPServerRequest &req, HTTPServerResponse &resp) = 0;
-
+    virtual void handle(HTTPServerRequest &req, HTTPServerResponse &resp) = 0;
+#if 0
     void setSessionManager(SessionManager *session_manager) {
         session_manager_.reset(session_manager) ;
     }
@@ -30,6 +30,7 @@ public:
 
     protected:
     std::unique_ptr<SessionManager> session_manager_ ;
+    #endif
 };
 
 } // namespace ws

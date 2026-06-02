@@ -52,6 +52,11 @@ string HTTPServerRequest::getPostAttribute(const string &key, const string &def)
     return ( it == POST_.end() ) ? def : it->second ;
 }
 
+string HTTPServerRequest::getRouteAttribute(const string &key, const string &def) const {
+    auto it = ROUTE_.find(key) ;
+    return ( it == ROUTE_.end() ) ? def : it->second ;
+}
+
 string HTTPServerRequest::getCookie(const string &key, const string &def) const {
     auto it = COOKIE_.find(key) ;
     return ( it == COOKIE_.end() ) ? def : it->second ;
