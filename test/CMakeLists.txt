@@ -11,6 +11,9 @@ target_link_libraries(test_url wsrv)
 add_executable(test_server test_server.cpp )
 target_link_libraries(test_server wsrv twig)
 
+add_executable(test_file_upload test_file_upload.cpp )
+target_link_libraries(test_file_upload wsrv twig)
+
 add_executable(test_mailer test_mailer.cpp )
 target_link_libraries(test_mailer wsrv)
 
@@ -19,5 +22,6 @@ target_link_libraries(test_client wsrv)
 
 add_executable(test_route test_route.cpp )
 target_link_libraries(test_route wsrv gtest gtest_main)
+
 add_test(NAME RouteTests COMMAND test_route)
 target_link_libraries(test_client wsrv)

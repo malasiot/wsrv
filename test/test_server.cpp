@@ -20,9 +20,25 @@ using namespace std ;
 class RequestLogger: public IMiddleware {
 public:
     void handle(HTTPServerRequest& req, HTTPServerResponse& res, PipelineContext& ctx) {
-        std::cout << "[Log] " << req.toString() << " -> " ;
-        ctx.next(req, res); // Move to next layer
-        std::cout <<  res.toString() << "\n";
+        ctx.next(req, res); 
+        std::lock_guard<std::mutex> lock(log_mutex_);
+       
+        cout << "[" << current_time_str() << "] "
+                  << req.toString() << " -> " ;
+
+        cout <<  res.toString() << endl ;
+    }
+private:
+     std::mutex log_mutex_;
+
+    // Helper to get the current timestamp string
+     std::string current_time_str() {
+        auto now = std::chrono::system_clock::now();
+        auto in_time_t = std::chrono::system_clock::to_time_t(now);
+        
+        std::stringstream ss;
+        ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %H:%M:%S");
+        return ss.str();
     }
 };
 
@@ -54,7 +70,7 @@ int main(int argc, char *argv[]) {
     twig::TemplateRenderer rdr(nullptr) ;
   
     app->useGlobal(std::make_shared<RequestLogger>()) ;
-    app->useGlobal(std::make_shared<GZipFilter>()) ;
+  //  app->useGlobal(std::make_shared<GZipFilter>()) ;
     app->addRoute("GET", "/user/{id:\\d+}/{action:show|hide}", [session_manager, &rdr](HTTPServerRequest& req, HTTPServerResponse& resp) {
          Session session(*session_manager, req, resp) ;
   
@@ -66,9 +82,11 @@ int main(int argc, char *argv[]) {
             session.add("id", req.getRouteAttribute("id")) ;
     }) ;
     app->addRoute("GET", "/static/{file:.*}", [session_manager, &rdr](HTTPServerRequest& req, HTTPServerResponse& resp) {
-         if ( !resp.serveStaticFile("/home/malasiot/source/wsrv/", req.getRouteAttribute("file")) ) {
+     //   resp.write(rdr.renderString("Requested file: {{file}}", { {"file", req.getRouteAttribute("file")} })) ;
+      
+        if ( !resp.serveStaticFile("/Users/malasiot/source/wsrv", req.getRouteAttribute("file")) ) {
              resp = HTTPServerResponse::stockReply(HTTPServerResponse::not_found) ;
-         }
+        }
     }) ;
     
     server.run() ;

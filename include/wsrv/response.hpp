@@ -117,6 +117,11 @@ struct HTTPServerResponse
     // gzip content before sending
     void compress();
 
+    void redirect(const std::string &url, Status code = moved_temporarily) {
+        setStatus(code) ;
+        addHeader("Location", url) ;
+    }
+
     // convert to one line string (status + content length) suitable for logging
     std::string toString() const ;
 

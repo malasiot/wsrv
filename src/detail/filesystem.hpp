@@ -2,6 +2,7 @@
 #define WS_FILESYSTEM_HPP
 
 #include <string>
+#include <filesystem>
 
 namespace ws {
 
@@ -10,7 +11,7 @@ std::string readFileToString(const std::string &fileName) ;
 
 bool fileExists(const std::string &p) ;
 
-time_t fileLastWriteTime(const std::string &p) ;
+std::filesystem::file_time_type fileLastWriteTime(const std::string &p) ;
 }
 
 

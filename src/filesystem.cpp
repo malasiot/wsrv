@@ -1,10 +1,12 @@
 #include "detail/filesystem.hpp"
 
 #include <fstream>
+#include <filesystem>
 #include <sys/types.h>
 #include <sys/stat.h>
 
 using namespace std ;
+namespace fs = std::filesystem ;
 
 namespace ws {
 
@@ -25,15 +27,11 @@ string readFileToString(const string &fileName)
 }
 
 bool fileExists(const string &p) {
-    struct stat buffer;
-    return ::stat(p.c_str(), &buffer) == 0 &&  S_ISREG(buffer.st_mode);
+    return fs::exists(p) && fs::is_regular_file(p);
 }
 
-time_t fileLastWriteTime(const std::string &p) {
-    struct stat result;
-    if ( ::stat(p.c_str(), &result) == 0 )
-        return result.st_mtime;
-    return 0 ;
+fs::file_time_type fileLastWriteTime(const std::string &p) {
+    return fs::last_write_time(p);
 }
 
 

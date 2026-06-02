@@ -11,6 +11,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <filesystem>
 #include <string>
 #include <time.h>
 
@@ -278,6 +279,8 @@ void HTTPServerResponse::encodeFileData(const std::string &bytes, const std::str
 
     if ( bytes.empty() ) return ;
 
+     addHeader("Content-Length", std::to_string(bytes.size())) ;
+
     if ( encoding.empty() ) // try gzip encoding
     {
         if ( bytes.size() > 2 && bytes[0] == 0x1f && bytes[1] == 0x8b )
@@ -300,9 +303,8 @@ void HTTPServerResponse::encodeFileData(const std::string &bytes, const std::str
     addHeader("Date", ctime_buf) ;
     addHeader("Last-Modified", mtime_buf) ;
 
-
+   
     addHeader("Etag", std::to_string(mod_time)) ;
-    addHeader("Content-Length", std::to_string(bytes.size())) ;
 
     content_.assign(bytes) ;
 }
@@ -351,14 +353,13 @@ void HTTPServerResponse::encodeFile(const std::string &file_path, const std::str
         return ;
     }
 
-    time_t mod_time = fileLastWriteTime(file_path);
+    auto mod_time = fileLastWriteTime(file_path);
 
     string bytes = readFileToString(file_path) ;
 
     string omime = mime.empty() ? get_file_mime(mime, file_path) : mime ;
 
-    encodeFileData(bytes, encoding, omime, mod_time) ;
-
+    encodeFileData(bytes, encoding, omime, std::chrono::duration_cast<std::chrono::seconds>(mod_time.time_since_epoch()).count()) ;
 }
 
 HTTPServerResponse HTTPServerResponse::file(const std::string &path_name, const std::string &encoding, const std::string &mime) {
@@ -414,7 +415,7 @@ void HTTPServerResponse::compress() {
 string HTTPServerResponse::toString() const {
     ostringstream strm ;
     if ( status_ == HTTPServerResponse::ok )
-        strm << status_ << " " << getHeaderAttribute("Content-Length", "0") ;
+        strm << status_ << " (" << getHeaderAttribute("Content-Length", "0") << " bytes)" ;
      else
         strm << status_ ;
 
@@ -443,10 +444,26 @@ void HTTPServerResponse::append(const string &content) {
     setContentLength() ;
 }
 
+namespace fs = std::filesystem;
+
+bool is_path_safe(const fs::path& root_dir, const std::string& user_request_path) {
+    try {
+        // Formulate the full path relative to the root folder
+        fs::path target_path = fs::weakly_canonical(root_dir / user_request_path);
+        fs::path canonical_root = fs::canonical(root_dir);
+
+        // Check if the resolved path starts with the root folder's path
+        auto [root_end, target_end] = std::mismatch(canonical_root.begin(), canonical_root.end(), target_path.begin());
+        return root_end == canonical_root.end() && fs::is_regular_file(target_path);
+    } catch (...) {
+        return false; // Safely reject path resolution failures
+    }
+}
+
 bool HTTPServerResponse::serveStaticFile(const string &folder, const string &path) {
     string p(folder + '/' + path) ;
 
-    if ( fileExists(p) ) {
+    if ( is_path_safe(folder, path) && fileExists(p) ) {
         encodeFile(p);
         return true ;
     }
