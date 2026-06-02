@@ -479,15 +479,6 @@ void HTTPServerResponse::setCookie(const string &name, const string &value, time
 
 }
 
- void HTTPServerResponse::writeSessionCookie(const Session &session) {
-    session.writeCookie(*this) ;
-}
-
-HTTPServerResponse HTTPServerResponse::withSession(const Session &session) {
-    writeSessionCookie(session) ;
-    return *this ;
-}
-
 void HTTPServerResponse::deleteCookie(const string &name, const string &path, const string &domain, bool secure, bool http_only) {
     std::time_t expires = std::time(nullptr) - 3600;
     setCookie(name, "", expires, path, domain, secure, http_only) ;

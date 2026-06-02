@@ -78,10 +78,7 @@ private:
                         request_.SERVER_.emplace("REMOTE_ADDR", socket_.remote_endpoint().address().to_string() ) ;
 
                          try {
-                        
-
-                             response = handler_->handle(request_) ;
-
+                             handler_->handle(request_, response) ;
                          }
 
                         catch ( std::runtime_error &e ) {

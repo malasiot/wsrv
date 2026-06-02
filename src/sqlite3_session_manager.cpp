@@ -51,6 +51,7 @@ bool SQLite3SessionStorage::open(const std::string &db_path) {
         execute("PRAGMA synchronous = NORMAL") ;
         execute("CREATE TABLE IF NOT EXISTS sessions ( sid TEXT PRIMARY KEY NOT NULL, data BLOB DEFAULT NULL, ts INTEGER NOT NULL );") ;
         execute("CREATE UNIQUE INDEX IF NOT EXISTS sessions_index ON sessions (sid);") ;
+        
         return true ;
     }
     catch ( SQLite3SessionStorageException & ) {
@@ -156,7 +157,7 @@ void SQLite3SessionStorage::deleteSessions(uint64_t t) {
 bool SQLite3SessionStorage::contains(const string &id, uint64_t session_expiration) {
     sqlite3_stmt *stmt = nullptr ;
 
-    if ( sqlite3_prepare_v2(handle_, "SELECT sid FROM sessions WHERE sid = ? AND ts < ? LIMIT 1", -1, &stmt, nullptr) != SQLITE_OK ) {
+    if ( sqlite3_prepare_v2(handle_, "SELECT sid FROM sessions WHERE sid = ? AND ts > ? LIMIT 1", -1, &stmt, nullptr) != SQLITE_OK ) {
         throw SQLite3SessionStorageException("Error executing sql command", handle_) ;
     }
 
@@ -187,6 +188,7 @@ SQLite3SessionManager::SQLite3SessionManager(const std::string &db_path)  {
 }
 
 bool SQLite3SessionManager::open() {
+    gc() ;
     return true ;
 }
 
@@ -204,8 +206,7 @@ string SQLite3SessionManager::uniqueSID() {
     return string() ;
 }
 
-bool SQLite3SessionManager::isValidId(const std::string &id) const
-{
+bool SQLite3SessionManager::isValidId(const std::string &id) const {
     return contains(id) ;
 }
 
@@ -374,8 +375,7 @@ void SQLite3SessionManager::gc() {
         // delete old records
 
         auto t = std::chrono::system_clock::now() ;
-
-        storage_->deleteSessions((uint64_t)t.time_since_epoch().count()) ;
+        storage_->deleteSessions(std::chrono::duration_cast<std::chrono::seconds>(t.time_since_epoch()).count()) ;
     }
 
 }

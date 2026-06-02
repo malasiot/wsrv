@@ -120,10 +120,6 @@ struct HTTPServerResponse
     // convert to one line string (status + content length) suitable for logging
     std::string toString() const ;
 
-    void writeSessionCookie(const Session &session) ; 
-
-    HTTPServerResponse withSession(const Session &session) ;
-
 private:
 
     friend class detail::ResponseParser ;

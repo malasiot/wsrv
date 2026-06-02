@@ -5,8 +5,8 @@ using namespace std ;
 
 namespace ws {
 
-Session::Session(SessionManager &handler, const HTTPServerRequest &req, const std::string &suffix):
-    handler_(handler) {
+Session::Session(SessionManager &handler, const HTTPServerRequest &req, HTTPServerResponse &resp, const std::string &suffix):
+    handler_(handler), resp_(resp) {
     if ( handler_.open() ) {
 
         // check cookies and request args if session present
@@ -15,46 +15,42 @@ Session::Session(SessionManager &handler, const HTTPServerRequest &req, const st
 
         id_ = req.getCookie(key_name_) ;
 
-        if ( id_.empty() || !handler_.isValidId(id_)) { // new session
+        if ( id_.empty() || !handler_.isValidId(id_)) { // new session ID needed
             id_ = handler_.uniqueSID() ;
-            if ( id_.empty() ) invalidate() ;
-            set_cookie_ = true ;
+            if ( id_.empty() ) { 
+                session_started_ = false ;
+                return ;
+            }
+            else
+                set_cookie_ = true ; // we will need to set the cookie with the new session id
         }
-        else // we have a valid id
+        else // we have a valid id, we should read the data
             handler_.read(id_, data_) ;
 
-        status_ = STATUS_ACTIVE;
+        session_started_ = true ;
     }
 }
 
-void Session::writeCookie(HTTPServerResponse &resp) const{
-     if ( status_ == STATUS_ACTIVE ) {
+Session::~Session() {
+     if ( session_started_ ) {
         if ( data_.empty() ) { // we have an invalid session
             if ( !set_cookie_ ) { // this is not a new session id, we should delete it
-                resp.deleteCookie(key_name_, handler_.cookiePath(), handler_.cookieDomain(),
+                resp_.deleteCookie(key_name_, handler_.cookiePath(), handler_.cookieDomain(),
                                    handler_.cookieSecure(), handler_.cookieHttpOnly()) ;
                 handler_.remove(id_) ;
             }
         } else {
-            if ( set_cookie_ )
-                resp.setCookie(key_name_, id_, handler_.cookieExpiration(), handler_.cookiePath(), handler_.cookieDomain(),
+            if ( set_cookie_ ) {
+                int64_t expiration = std::chrono::duration_cast<std::chrono::seconds>(
+                   std::chrono::system_clock::now().time_since_epoch()).count() + handler_.cookieExpiration() ;
+                resp_.setCookie(key_name_, id_, expiration, handler_.cookiePath(), handler_.cookieDomain(),
                     handler_.cookieSecure(), handler_.cookieHttpOnly() ) ;
+            }
             if ( modified_ )
                 handler_.write(id_, data_) ;
         }
 
         handler_.close() ;
-    }
-}
-
-Session::~Session() {
- 
-}
-
-void Session::invalidate() {
-    if ( status_ == STATUS_ACTIVE ) {
-        data_.clear() ;
-        status_ = STATUS_NONE ;
     }
 }
 

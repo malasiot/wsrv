@@ -54,19 +54,19 @@ public:
 
     }
 
-    HTTPServerResponse handle(const HTTPServerRequest &req) override {
+    void handle(const HTTPServerRequest &req, HTTPServerResponse &resp) override {
 
-     //   RequestLogger logger(req, resp) ;
-      //  GZipFilter gzip(req, resp) ;
+        RequestLogger logger(req, resp) ;
+        GZipFilter gzip(req, resp) ;
         
         try {
-            Session session(*session_manager_, req) ;
+            
            
             Dictionary attrs ;
             if ( req.matches("GET", R"(/user/{id:\d+}/{action:show|hide})", attrs) ) {
-
-                HTTPServerResponse resp ;
                
+                Session session(*session_manager_, req, resp) ;
+                
 
                 resp.write("hello " + attrs["id"]) ;
 
@@ -77,13 +77,14 @@ public:
                // session.add("id", attrs["id"]) ;
 
                // session.clear();
-               resp.writeSessionCookie(session) ;
+             //  resp.writeSessionCookie(session) ;
 
-                return resp ;
-            } else return HTTPServerResponse::file(root_ + '/' + req.getPath()) ;
+            } else {
+                resp = HTTPServerResponse::file(root_ + '/' + req.getPath()) ;
+            }
         }
         catch ( std::runtime_error &e ) {
-            return HTTPServerResponse::stockReply(HTTPServerResponse::internal_server_error) ;
+            resp = HTTPServerResponse::stockReply(HTTPServerResponse::internal_server_error) ;
         }
     }
 

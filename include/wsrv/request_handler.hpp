@@ -20,7 +20,7 @@ public:
 
     /// Override to handle a request and produce a response.
 
-    virtual HTTPServerResponse handle(const HTTPServerRequest &req) = 0;
+    virtual void handle(const HTTPServerRequest &req, HTTPServerResponse &resp) = 0;
 
     void setSessionManager(SessionManager *session_manager) {
         session_manager_.reset(session_manager) ;

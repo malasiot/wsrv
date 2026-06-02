@@ -17,7 +17,7 @@ public:
     enum Status { STATUS_NONE, STATUS_ACTIVE } ;
 
     // start a new session
-    Session(SessionManager &handler, const HTTPServerRequest &req, const std::string &suffix = std::string()) ;
+    Session(SessionManager &handler, const HTTPServerRequest &req, HTTPServerResponse &resp, const std::string &suffix = std::string()) ;
 
     // closes the season
     ~Session() ;
@@ -47,8 +47,6 @@ public:
         data_.erase(key) ;
     }
 
-    void invalidate() ;
-
     // clearing the data will delete them from the server
     void clear() {
         modified_ = true ;
@@ -59,16 +57,14 @@ public:
         modified_ = m ;
     }
 
-    void writeCookie(HTTPServerResponse &resp) const;
-
 private:
 
     std::string id_ ;
     dictionary_t data_ ;
     uint64_t lifetime_ ;
     SessionManager &handler_ ;
-  
-    Status status_ = STATUS_NONE ;
+    HTTPServerResponse &resp_ ;
+    bool session_started_ = false ;
     bool set_cookie_ = false ;
     std::string key_name_ ;
     bool modified_ = false ;
