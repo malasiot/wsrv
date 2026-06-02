@@ -11,6 +11,8 @@
 #include <mutex>
 #include <iostream>
 
+#include <twig/renderer.hpp>
+
 using namespace ws ;
 using namespace std ;
 
@@ -49,19 +51,25 @@ int main(int argc, char *argv[]) {
     server.setHandler(app) ;
 
     SessionManager *session_manager = new SQLite3SessionManager("/tmp/session.sqlite");
+    twig::TemplateRenderer rdr(nullptr) ;
   
     app->useGlobal(std::make_shared<RequestLogger>()) ;
     app->useGlobal(std::make_shared<GZipFilter>()) ;
-    app->addRoute("GET", "/user/{id:\\d+}/{action:show|hide}", [session_manager](HTTPServerRequest& req, HTTPServerResponse& resp) {
+    app->addRoute("GET", "/user/{id:\\d+}/{action:show|hide}", [session_manager, &rdr](HTTPServerRequest& req, HTTPServerResponse& resp) {
          Session session(*session_manager, req, resp) ;
   
-         resp.write("hello " + req.getRouteAttribute("id")) ;
+         resp.write(rdr.renderString("hello {{id}}", { {"id", req.getRouteAttribute("id")} })) ;
 
          if ( session.contains("id") )
-            resp.append(", your session id is " + session.get("id")) ;
+            resp.append(rdr.renderString(", your session id is: {{id}}", { {"id", session.get("id")} })) ;
          else
             session.add("id", req.getRouteAttribute("id")) ;
     }) ;
-
+    app->addRoute("GET", "/static/{file:.*}", [session_manager, &rdr](HTTPServerRequest& req, HTTPServerResponse& resp) {
+         if ( !resp.serveStaticFile("/home/malasiot/source/wsrv/", req.getRouteAttribute("file")) ) {
+             resp = HTTPServerResponse::stockReply(HTTPServerResponse::not_found) ;
+         }
+    }) ;
+    
     server.run() ;
 }

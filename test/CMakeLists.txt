@@ -7,8 +7,9 @@ include_directories(
 add_executable(test_url test_url.cpp )
 target_link_libraries(test_url wsrv)
 
+
 add_executable(test_server test_server.cpp )
-target_link_libraries(test_server wsrv)
+target_link_libraries(test_server wsrv twig)
 
 add_executable(test_mailer test_mailer.cpp )
 target_link_libraries(test_mailer wsrv)

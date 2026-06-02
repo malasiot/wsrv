@@ -10,7 +10,7 @@ find_package(ZLIB REQUIRED)
 find_package(CryptoPP REQUIRED)
 find_package(OpenSSL REQUIRED)
 
-INCLUDE_DIRECTORIES(${SQLITE3_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR} ${CryptoPP_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR})
+INCLUDE_DIRECTORIES(twig/include ${SQLITE3_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR} ${CryptoPP_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR})
 
 add_definitions( -DASIO_STANDALONE )
 
@@ -26,6 +26,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 enable_testing()
 
+add_subdirectory(twig)
 add_subdirectory(src)
 add_subdirectory(test)
 
