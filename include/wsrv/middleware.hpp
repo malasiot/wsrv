@@ -3,20 +3,22 @@
 #include <wsrv/request.hpp>
 #include <wsrv/response.hpp>
 #include <wsrv/request_handler.hpp>
+#include <typeindex>
+#include <any>
 
 namespace ws {
 
-class PipelineContext ;
+class MiddlewareContext ;
 
 class IMiddleware {
 public:
     virtual ~IMiddleware() = default;
-    virtual void handle(HTTPServerRequest& req, HTTPServerResponse& res, PipelineContext& ctx) = 0;
+    virtual void handle(HTTPServerRequest& req, HTTPServerResponse& res, MiddlewareContext& ctx) = 0;
 };
 
-class PipelineContext {
+class MiddlewareContext {
 public:
-    PipelineContext(const std::vector<std::shared_ptr<IMiddleware>>& mw, RequestHandler *h)
+    MiddlewareContext(const std::vector<std::shared_ptr<IMiddleware>>& mw, RequestHandler *h)
         : middlewares_(mw), handler_(h) {}
 
    
@@ -46,7 +48,7 @@ public:
     }
 
     void run(HTTPServerRequest& req, HTTPServerResponse& res) {
-        PipelineContext ctx(middlewares_, handler_);
+        MiddlewareContext ctx(middlewares_, handler_);
         ctx.next(req, res); // Start the chain
     }
 
@@ -54,4 +56,7 @@ private:
     std::vector<std::shared_ptr<IMiddleware>> middlewares_;
     RequestHandler *handler_ = nullptr;
 };
+#if 0
+ 
+#endif
 }

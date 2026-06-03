@@ -9,10 +9,14 @@ target_link_libraries(test_url wsrv)
 
 
 add_executable(test_server test_server.cpp )
-target_link_libraries(test_server wsrv twig)
+target_link_libraries(test_server wsrv)
 
 add_executable(test_file_upload test_file_upload.cpp )
-target_link_libraries(test_file_upload wsrv twig)
+target_link_libraries(test_file_upload wsrv)
+
+add_executable(test_auth test_auth.cpp )
+target_link_libraries(test_auth wsrv)
+
 
 add_executable(test_mailer test_mailer.cpp )
 target_link_libraries(test_mailer wsrv)

@@ -42,8 +42,6 @@ SET ( SOURCES
     session.cpp
     route.cpp
 
-    exceptions.cpp
-    dictionary.cpp
 
     mailer.cpp
     smtp_socket.cpp
@@ -53,6 +51,9 @@ SET ( SOURCES
     http_client.cpp
     url.cpp
     response_parser.cpp
+
+    auth/authenticator.cpp
+    auth/jwt_service.cpp
 )
 
 ADD_LIBRARY(wsrv ${LIBRARY_TYPE} ${SOURCES})
@@ -70,7 +71,9 @@ target_include_directories(wsrv PUBLIC
 )
 
 target_link_libraries(wsrv PUBLIC
-       ${CryptoPP_LIBRARY} ${SQLITE3_LIBRARY} ${OPENSSL_LIBRARIES} z
+       ${CryptoPP_LIBRARY} ${SQLITE3_LIBRARY} ${OPENSSL_LIBRARIES} z jwt-cpp::jwt-cpp
+    OpenSSL::Crypto
+    OpenSSL::SSL
 )
 
 # Install binaries

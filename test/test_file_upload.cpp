@@ -10,8 +10,8 @@
 
 #include <mutex>
 #include <iostream>
+#include <regex>
 
-#include <twig/renderer.hpp>
 
 using namespace ws ;
 using namespace std ;
@@ -37,9 +37,8 @@ int main(int argc, char *argv[]) {
     server.setHandler(app) ;
 
     SessionManager *session_manager = new SQLite3SessionManager("/tmp/session.sqlite");
-    twig::TemplateRenderer rdr(nullptr) ;
   
-    app->addRoute("GET|POST", "/upload", [session_manager, &rdr](HTTPServerRequest& req, HTTPServerResponse& resp) {
+    app->addRoute("GET|POST", "/upload", [session_manager](HTTPServerRequest& req, HTTPServerResponse& resp) {
          Session session(*session_manager, req, resp) ;
   
          if ( req.getMethod() == "POST"  ) {
@@ -47,7 +46,7 @@ int main(int argc, char *argv[]) {
              if ( files.empty() 
                   || files.find("file") == files.end() 
                   || files["file"].size_ == 0 ) {
-                        resp.write(rdr.renderString(UPLOAD_FORM, { {"error", "No file uploaded"} })) ;
+                        resp.write(std::regex_replace(UPLOAD_FORM, std::regex("{{error}}"), "No file uploaded")) ;
                  return ;
              } else {
                 auto &file = files["file"] ;
@@ -58,7 +57,7 @@ int main(int argc, char *argv[]) {
             
          }
          else {
-             resp.write(rdr.renderString(UPLOAD_FORM, { {"error", ""} })) ;
+             resp.write(std::regex_replace(UPLOAD_FORM, std::regex("{{error}}"), "")) ;
          }
          
     }) ;

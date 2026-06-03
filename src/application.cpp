@@ -14,7 +14,7 @@ void Application::handle(HTTPServerRequest& req, HTTPServerResponse& res) {
     RoutingEngineHandler router_destination(routes_);
 
     // Fire the pipeline! This ensures global middleware runs immediately.
-    PipelineContext pipeline(global_pipeline, &router_destination);
+    MiddlewareContext pipeline(global_pipeline, &router_destination);
     pipeline.next(req, res);
 }
 
@@ -43,7 +43,7 @@ void Application::RoutingEngineHandler::handle(HTTPServerRequest &req, HTTPServe
             route_pipeline.push_back(mw);
         }
         // Inner context execution for localized layers
-        PipelineContext inner_pipeline(route_pipeline, matched->handler_.get());
+        MiddlewareContext inner_pipeline(route_pipeline, matched->handler_.get());
         inner_pipeline.next(req, res);
     } else {
         // Execute the route handler directly if no specific middleware

@@ -10,6 +10,12 @@ find_package(ZLIB REQUIRED)
 find_package(CryptoPP REQUIRED)
 find_package(OpenSSL REQUIRED)
 
+set(JWT_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(JWT_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(3rdparty/jwt-cpp)
+
 INCLUDE_DIRECTORIES(twig/include ${SQLITE3_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR} ${CryptoPP_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR})
 
 add_definitions( -DASIO_STANDALONE )
@@ -26,7 +32,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 enable_testing()
 
-add_subdirectory(twig)
+
 add_subdirectory(src)
 add_subdirectory(test)
 

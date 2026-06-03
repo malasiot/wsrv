@@ -19,7 +19,7 @@ using namespace std ;
 
 class RequestLogger: public IMiddleware {
 public:
-    void handle(HTTPServerRequest& req, HTTPServerResponse& res, PipelineContext& ctx) {
+    void handle(HTTPServerRequest& req, HTTPServerResponse& res, MiddlewareContext& ctx) {
         ctx.next(req, res); 
         std::lock_guard<std::mutex> lock(log_mutex_);
        
@@ -45,7 +45,7 @@ private:
 class GZipFilter: public IMiddleware {
 public:
 
-    void handle(HTTPServerRequest& req, HTTPServerResponse& res, PipelineContext& ctx) {
+    void handle(HTTPServerRequest& req, HTTPServerResponse& res, MiddlewareContext& ctx) {
         ctx.next(req, res); // Move to next layer
 
         if ( req.supportsGzip() && res.contentBenefitsFromCompression() )
@@ -74,10 +74,10 @@ int main(int argc, char *argv[]) {
     app->addRoute("GET", "/user/{id:\\d+}/{action:show|hide}", [session_manager, &rdr](HTTPServerRequest& req, HTTPServerResponse& resp) {
          Session session(*session_manager, req, resp) ;
   
-         resp.write(rdr.renderString("hello {{id}}", { {"id", req.getRouteAttribute("id")} })) ;
+         resp.write("hello " +  req.getRouteAttribute("id") ) ;
 
          if ( session.contains("id") )
-            resp.append(rdr.renderString(", your session id is: {{id}}", { {"id", session.get("id")} })) ;
+            resp.append(", your session id is: " + session.get("id")) ;
          else
             session.add("id", req.getRouteAttribute("id")) ;
     }) ;

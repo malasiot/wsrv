@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <wsrv/route.hpp>
+#include <wsrv/middleware_data.hpp>
 
 namespace ws {
 
@@ -50,6 +51,8 @@ public:
     Dictionary &getRouteAttributes() { return ROUTE_ ; }
     std::string getRouteAttribute(const std::string &key, const std::string &def = std::string()) const ;
 
+    MiddlwareDataStorage &data() { return mw_data_ ; }
+
     const std::map<std::string, UploadedFile> &getUploadedFiles() const { return FILE_ ; }
     const Dictionary &getCookies() const { return COOKIE_ ; }
     std::string getCookie(const std::string &key, const std::string &def = std::string()) const ;
@@ -77,6 +80,8 @@ protected:
     Dictionary ROUTE_ ;  // Attributes extracted from the request path (e.g. id in /user/{id})
    
     std::map<std::string, UploadedFile> FILE_ ;	// Uploaded files
+
+    MiddlwareDataStorage mw_data_ ;
 
     // This is content sent using POST with Content-Type other than
     // x-www-form-urlencoded or multipart-form-data e.g. text/xml
