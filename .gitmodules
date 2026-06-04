@@ -1,3 +1,6 @@
 [submodule "3rdparty/jwt-cpp"]
 	path = 3rdparty/jwt-cpp
 	url = https://github.com/Thalhammer/jwt-cpp.git
+[submodule "libs/twig"]
+	path = libs/twig
+	url = git@github.com:malasiot/twig.git

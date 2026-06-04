@@ -3,11 +3,17 @@
 # Path of the CMake files generated
 set(PROJECT_CMAKE_FILES ${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY})
 
-install(EXPORT ${PROJECT_NAME}-export
-  DESTINATION ${INSTALL_CMAKE_DIR}
-  FILE ${PROJECT_NAME}Targets.cmake)
+install(TARGETS wsrv twig
+  EXPORT ${PROJECT_NAME}-export
+  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
 
-message(${LIBRARY_NAME})
+#install(EXPORT ${PROJECT_NAME}-export
+#    FILE ${PROJECT_NAME}Targets.cmake
+#    NAMESPACE wsrv::
+#    DESTINATION ${CMAKE_INSTALL_DATADIR}/cmake/wsrv
+#)
+
 # Create the <package>Config.cmake.in
 configure_file(${CMAKE_SOURCE_DIR}/CMake/Config.cmake.in
   "${PROJECT_CMAKE_FILES}/${PROJECT_NAME}Config.cmake" @ONLY)

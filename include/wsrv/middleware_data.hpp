@@ -2,6 +2,7 @@
 
 #include <typeindex>
 #include <any>
+#include <unordered_map>
 
 namespace ws {
 class MiddlwareDataStorage {

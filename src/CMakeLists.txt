@@ -54,6 +54,10 @@ SET ( SOURCES
 
     auth/authenticator.cpp
     auth/jwt_service.cpp
+
+    forms/form_builder.cpp
+    forms/normalizers.cpp
+    forms/validators.cpp
 )
 
 ADD_LIBRARY(wsrv ${LIBRARY_TYPE} ${SOURCES})
@@ -74,6 +78,8 @@ target_link_libraries(wsrv PUBLIC
        ${CryptoPP_LIBRARY} ${SQLITE3_LIBRARY} ${OPENSSL_LIBRARIES} z jwt-cpp::jwt-cpp
     OpenSSL::Crypto
     OpenSSL::SSL
+    twig
+    variant
 )
 
 # Install binaries
