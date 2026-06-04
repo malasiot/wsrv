@@ -7,7 +7,7 @@
 
 #include <wsrv/forms/form_builder.hpp>
 
-namespace wsrv {
+namespace ws {
 
 class FormFieldValidators {
 public:

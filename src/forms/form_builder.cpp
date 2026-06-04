@@ -2,7 +2,7 @@
 
 using namespace std ;
 
-namespace wsrv {
+namespace ws {
 
 Variant FormField::normalize(const std::string &src) {
     Variant norm_value = src ;

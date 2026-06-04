@@ -2,7 +2,7 @@
 
 using namespace std ;
 
-namespace wsrv {
+namespace ws {
 
 Variant FormFieldNormalizers::toBoolean(const Variant &val) {
     if ( val.isBoolean() )

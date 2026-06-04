@@ -3,7 +3,7 @@
 
 #include <iostream>
 using namespace std;
-namespace wsrv {
+namespace ws {
 
 
 template<typename Predicate>

@@ -11,7 +11,7 @@
 
 using dictionary_t = std::map<std::string, std::string> ;
 
-namespace wsrv {
+namespace ws {
 
  // Form helper class. The aim of the class is:
 // 1) declare form in a view agnostic way
