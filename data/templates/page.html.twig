@@ -1,0 +1,64 @@
+{% import 'forms.twig' as forms %}
+<!DOCTYPE html>
+<html lang="{{ app.request.locale|default('en') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ page_title|default('Welcome') }}{% endblock %}</title>
+    
+    {# Bootstrap 5 CSS CDN #}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    {% block stylesheets %}{% endblock %}
+</head>
+<body class="d-flex flex-column min-vh-100 bg-light">
+
+    {# Navigation Bar #}
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">Brand</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Contact</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    {# Main Content Area #}
+    <main class="container my-5 flex-grow-1">
+        {% block content %}
+            <div class="row">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h1 class="display-4 fw-bold mb-4">{{ heading|default('Hello, World!') }}</h1>
+                    <p class="lead text-muted mb-4">
+                        {{ description|default('This is a basic page template combining the power of Twig blocks and Bootstrap v5 layout utilities.') }}
+                    </p>
+                    <button class="btn btn-primary btn-lg px-4" type="button">Get Started</button>
+                </div>
+            </div>
+        {% endblock %}
+    </main>
+
+    {# Footer #}
+    <footer class="bg-white border-top py-4 mt-auto">
+        <div class="container text-center text-muted">
+            <small>&copy; {{ "now"|date("Y") }} Your Company. All rights reserved.</small>
+        </div>
+    </footer>
+
+    {# Bootstrap 5 JS Bundle CDN (Includes Popper) #}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    {% block javascripts %}{% endblock %}
+</body>
+</html>

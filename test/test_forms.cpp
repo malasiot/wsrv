@@ -4,6 +4,7 @@
 #include <wsrv/application.hpp>
 #include <wsrv/forms/form_builder.hpp>
 #include <wsrv/forms/validators.hpp>
+#include <twig/loader.hpp>
 
 #include <mutex>
 #include <iostream>
@@ -13,7 +14,7 @@
 using namespace ws ;
 using namespace std ;
 
-string FORM_TEMPLATE = R"(
+string FORM_TEMPLATE2 = R"(
       <form action="{{ form.action }}" method="{{ form.method }}">
         {% for k,field in form.fields %}
         <div class="form-group {% if field.error is not empty %}has-error{% endif %}">
@@ -62,6 +63,16 @@ string FORM_TEMPLATE = R"(
 </form>
 )";
 
+string FORM_TEMPLATE = R"(
+
+    {% extends "page.html.twig" %}
+
+   
+    {% block content %}
+         {{forms.form(form)}}
+    {% endblock %}
+    )";
+
 int main(int argc, char *argv[]) {
     HttpServer server("127.0.0.1:5110") ;
 
@@ -69,7 +80,8 @@ int main(int argc, char *argv[]) {
     
     server.setHandler(&app) ;
 
-    twig::TemplateRenderer rdr(nullptr) ;
+    std::shared_ptr<twig::FileSystemTemplateLoader> loader(new twig::FileSystemTemplateLoader({"/Users/malasiot/source/wsrv/data/templates/"}));
+    twig::TemplateRenderer rdr(loader) ;
 
     Form form("/form", "POST") ;
 
@@ -87,10 +99,19 @@ int main(int argc, char *argv[]) {
         .label("Role");
   
     app.addRoute("GET|POST", "/form", [&rdr, &form](HTTPServerRequest& req, HTTPServerResponse& resp) {
-         if ( req.getMethod() == "POST" && form.process(req.getPostAttributes()) ) {
+       
+        if ( req.getMethod() == "POST" && form.process(req.getPostAttributes()) ) {
             resp.write("Thank you") ;
-         } else 
-             resp.write(rdr.renderString(FORM_TEMPLATE, {{"form", form.render()}})) ;
+            return ;
+         } 
+           
+            try {
+             resp.write(rdr.render("test_form.html", {{"form", form.render()}})) ;
+            } catch ( std::exception &e ) {
+                cout << e.what() << endl ;
+            }
+        
+
         
     }) ;
     

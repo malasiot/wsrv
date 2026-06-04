@@ -52,7 +52,7 @@ public:
     // label
     FormField &label(const std::string &val) { label_ = val ; return *this ; }
     // set field value
-    FormField &value(const Variant &val) { value_ = val ; return *this ; }
+    FormField &value(const Variant &val) { value_ = val ; default_ = val ; return *this ; }
 
     FormField &id(const std::string &val) { id_ = val ; return *this ; }
 
@@ -89,6 +89,8 @@ public:
     std::string getName() const { return name_ ; }
 
     bool hasErrors() { return !is_valid_ ; }
+
+    void reset() ;
    
     virtual bool process(const std::string &val) ;
 
@@ -104,7 +106,7 @@ protected:
     virtual bool validate(const Variant &value) ;
 
     std::string key_, name_, label_, widget_, id_, group_ ;
-    Variant value_ ;
+    Variant value_, default_ ;
     Variant::Object attrs_ ;
     std::set<std::string> css_class_ ;
 
@@ -147,6 +149,8 @@ public:
 
     virtual bool process(const dictionary_t &data) ;
     virtual Variant::Object render() const ;
+
+    void reset() ;
 
 private:
 

@@ -59,6 +59,10 @@ bool FormField::process(const std::string &v) {
     return is_valid_ ;
 }
 
+void FormField::reset() {
+    value_ = default_ ;
+}
+
 std::string FormField::interpolateMessage(const std::string &msg_template, const Variant &value, const dictionary_t &params) const {
 
     string res, param ;
@@ -179,4 +183,10 @@ Variant::Object Form::render() const {
     return ctx;
 }
 
+void Form::reset() {
+    global_error_msg_.clear() ;
+    for (const auto& [name,  field]: fields_) {
+        field->reset() ;
+    }
+}
 }
