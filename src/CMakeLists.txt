@@ -58,6 +58,8 @@ SET ( SOURCES
     forms/form_builder.cpp
     forms/normalizers.cpp
     forms/validators.cpp
+
+    middleware/locale.cpp
 )
 
 ADD_LIBRARY(wsrv ${LIBRARY_TYPE} ${SOURCES})

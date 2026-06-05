@@ -9,7 +9,10 @@
 #include <set>
 #include <unordered_map>
 
+#include <twig/translator.hpp>
+
 using dictionary_t = std::map<std::string, std::string> ;
+
 
 namespace ws {
 
@@ -18,9 +21,11 @@ namespace ws {
 // 2) validate input data for those fields e.g passed in a POST request via validators
 // 3) controller for server side form handling
 class FormField ;
+
+
 struct ValidationResult {
     bool is_valid_;
-    std::string error_msg_ ;
+    twig::TranslatableMessage error_msg_ ;
 
     bool operator()() const { return is_valid_ ; }
 
@@ -29,7 +34,7 @@ struct ValidationResult {
         return {true, {}};
     }
 
-    static ValidationResult failure(const std::string &msg) {
+    static ValidationResult failure(const twig::TranslatableMessage &msg) {
         return {false, std::move(msg)};
     }
 };
@@ -41,7 +46,6 @@ class FormField {
 public:
 
     // The normalizer preprocesses an input value before passing it to validators
-   
 
     typedef std::shared_ptr<FormField> Ptr ;
 
@@ -50,7 +54,7 @@ public:
     FormField(const std::string &name): name_(name), id_(name) {}
 
     // label
-    FormField &label(const std::string &val) { label_ = val ; return *this ; }
+    FormField &label(const twig::TranslatableMessage &val) { label_ = val ; return *this ; }
     // set field value
     FormField &value(const Variant &val) { value_ = val ; default_ = val ; return *this ; }
 
@@ -100,17 +104,17 @@ protected:
 
     friend class Form ;
 
-    virtual void render(Variant::Object &data) const ;
+    virtual void render(Variant::Object &data, twig::TranslationManager *trans, const std::string &locale = "en_US") const ;
 
     virtual Variant normalize(const std::string &val) ;
     virtual bool validate(const Variant &value) ;
 
-    std::string key_, name_, label_, widget_, id_, group_ ;
+    std::string key_, name_,  widget_, id_, group_ ;
     Variant value_, default_ ;
     Variant::Object attrs_ ;
     std::set<std::string> css_class_ ;
+    twig::TranslatableMessage label_, error_msg_ ;
 
-    std::string error_msg_ ;
     std::vector<FormFieldValidator> validators_ ;
     std::vector<FormFieldNormalizer> normalizers_ ;
 
@@ -141,6 +145,16 @@ public:
         return dynamic_cast<T*>(*(it->second)) ;
     }
 
+    Variant getValue(const std::string &name) const {
+        auto it = fields_.find(name) ;
+        if ( it == fields_.end() ) return Variant::undefined ;
+        else {
+            const FormField *f = it->second.get() ;
+            return f->value_ ;
+        }
+    }
+
+
     Form &group(const std::string &name, const std::string &label) { groups_[name] = label ; return *this ; }
 
     Form &addValidator(FormValidator val) { validators_.push_back(val) ; return *this ; }
@@ -148,7 +162,7 @@ public:
     Form &enableCSRF(const std::string &token) { csrf_enabled_ = true ; csrf_token_ = token ; return *this ; }
 
     virtual bool process(const dictionary_t &data) ;
-    virtual Variant::Object render() const ;
+    virtual Variant::Object render(twig::TranslationManager *trans, const std::string &locale = "en_US") const ;
 
     void reset() ;
 
@@ -157,7 +171,8 @@ private:
     bool validateForm(const dictionary_t &data) ;
 
     std::unordered_map<std::string, std::unique_ptr<FormField>> fields_ ;
-    std::string method_, enc_type_, action_, global_error_msg_ ;
+    std::string method_, enc_type_, action_ ;
+    twig::TranslatableMessage global_error_msg_ ;
     std::vector<FormValidator> validators_ ;
     std::string csrf_token_;
     dictionary_t groups_ ;
@@ -171,8 +186,8 @@ public:
         widget_ = "input" ;
     }
 protected:
-    virtual void render(Variant::Object &data) const override {
-        FormField::render(data) ;
+    virtual void render(Variant::Object &data, twig::TranslationManager *mgr, const std::string &locale) const override {
+        FormField::render(data, mgr, locale) ;
         data["type"] = type_ ;
     }
     std::string type_ ;
@@ -215,8 +230,8 @@ class CheckBoxField: public InputField {
 
     protected:
 
-    void render(Variant::Object &data) const override {
-        InputField::render(data) ;
+    void render(Variant::Object &data, twig::TranslationManager *trans, const std::string &locale) const override {
+        InputField::render(data, trans, locale) ;
         data["checked"] = value_.toBoolean(); 
     }
 };
@@ -224,23 +239,25 @@ class CheckBoxField: public InputField {
 
 class SelectField: public FormField {
 public:
-    SelectField(const std::string &name, const dictionary_t &options = {}): 
+    SelectField(const std::string &name, const std::map<std::string, twig::TranslatableMessage> &options = {}): 
         FormField(name), options_(options) { widget_ = "select" ; }
 
-    SelectField &addOption(const std::string &key, const std::string &label) {
+    SelectField &addOption(const std::string &key, const twig::TranslatableMessage &label) {
         options_.emplace(key, label) ;
         return *this ;
     }
 protected:
-    void render(Variant::Object &data) const override {
-        FormField::render(data) ;
+    void render(Variant::Object &data, twig::TranslationManager *tr, const std::string &locale) const override {
+        assert(tr != nullptr) ;
+
+        FormField::render(data, tr, locale) ;
         
         Variant::Array options ;
 
         for (const auto& [val, lbl] : options_) {
             options.push_back(Variant::Object{
                 {"value", val},
-                {"label", lbl},
+                {"label", tr->translate(lbl, locale)},
                 {"selected", (val == value_.toString())}
             } 
             );
@@ -250,12 +267,12 @@ protected:
     }
 
 private:
-    dictionary_t options_ ;
+    std::map<std::string, twig::TranslatableMessage> options_ ;
 };
 
 class RadioField: public FormField {
 public:
-    RadioField(const std::string &name, const dictionary_t &options = {}): 
+    RadioField(const std::string &name, const std::map<std::string, twig::TranslatableMessage> &options = {}): 
         FormField(name), options_(options) { widget_ = "radio" ; }
 
     RadioField &addOption(const std::string &key, const std::string &label) {
@@ -263,15 +280,15 @@ public:
         return *this ;
     }
 protected:
-    void render(Variant::Object &data) const override {
-        FormField::render(data) ;
+    void render(Variant::Object &data, twig::TranslationManager *tr, const std::string &locale) const override {
+        FormField::render(data, tr, locale) ;
         
         Variant::Array options ;
 
         for (const auto& [val, lbl] : options_) {
             options.push_back(Variant::Object{
                 {"value", val},
-                {"label", lbl},
+                {"label", tr->translate(lbl, locale)},
                 {"checked", (val == value_.toString())}
             } 
             );
@@ -281,7 +298,7 @@ protected:
     }
 
 private:
-    dictionary_t options_ ;
+    std::map<std::string, twig::TranslatableMessage> options_ ;
 };
 
 class FileUploadField: public FormField {

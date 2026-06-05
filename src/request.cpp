@@ -83,6 +83,5 @@ bool HTTPServerRequest::matchesMethod(const string &method) const {
     return std::find(methods.begin(), methods.end(), method_) != methods.end() ;
 }
 
-    
 
 } // namespace ws

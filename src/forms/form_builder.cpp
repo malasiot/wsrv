@@ -1,4 +1,5 @@
 #include <wsrv/forms/form_builder.hpp>
+#include <twig/translator.hpp>
 
 using namespace std ;
 
@@ -14,9 +15,14 @@ Variant FormField::normalize(const std::string &src) {
     return norm_value ;
 }
 
-void FormField::render(Variant::Object &data) const {
+void FormField::render(Variant::Object &data, twig::TranslationManager *trans, const std::string &locale) const {
     data["name"] = name_ ;
-    if ( !label_.empty() ) data["label"] = label_ ;
+    if ( !label_.key_.empty() ) {
+        if ( trans )
+            data["label"] = trans->translate(label_, locale) ;
+        else
+            data["label"] = label_.key_ ;
+    }
     data["id"] = id_ ;
     Variant::Object attrs ;
     for( const auto &[key, val]: attrs_ )
@@ -26,7 +32,10 @@ void FormField::render(Variant::Object &data) const {
 
     Variant::Array classes ;
     if ( !is_valid_ ) {
-        data["error"] = error_msg_ ;
+         if ( trans )
+            data["error"] = trans->translate(error_msg_, locale) ;
+        else
+            data["error"] = error_msg_.key_ ;
     }
 
      for( const auto &c: css_class_ )
@@ -50,7 +59,7 @@ bool FormField::validate(const Variant &value) {
 
 
 bool FormField::process(const std::string &v) {
-    error_msg_.clear() ;
+    error_msg_.key_.clear() ;
     Variant nrm = normalize(v) ;
     is_valid_ =  validate(nrm) ;
     if ( is_valid_ )
@@ -152,7 +161,7 @@ bool Form::validateForm(const dictionary_t &data) {
     return true ;
 }
 
-Variant::Object Form::render() const {
+Variant::Object Form::render(twig::TranslationManager *tr, const std::string &locale) const {
     Variant::Object ctx ;
     
     ctx["action"] = action_ ;
@@ -162,15 +171,18 @@ Variant::Object Form::render() const {
         ctx["_token"] = csrf_token_ ;
     }
 
-    if ( !is_valid_ && !global_error_msg_.empty() ) {
-        ctx["error"] = global_error_msg_ ;
+    if ( !is_valid_ && !global_error_msg_.key_.empty() ) {
+        if ( tr != nullptr)
+            ctx["error"] = tr->translate(global_error_msg_, locale)  ;
+        else
+            ctx["error"] = global_error_msg_.key_ ;
     }
     
     Variant::Object fields, groups ;
     
     for (const auto& [name,  field]: fields_) {
         Variant::Object field_data ;
-        field->render(field_data) ;
+        field->render(field_data, tr, locale) ;
         fields.emplace(name, field_data);
     }
     ctx["fields"] = fields ;
@@ -184,7 +196,7 @@ Variant::Object Form::render() const {
 }
 
 void Form::reset() {
-    global_error_msg_.clear() ;
+    global_error_msg_.key_.clear() ;
     for (const auto& [name,  field]: fields_) {
         field->reset() ;
     }

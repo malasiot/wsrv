@@ -1,0 +1,5 @@
+{
+    "msg": "Field {field} cannot be empty",
+    "admin": "Admin",
+    "guest": "Guest"
+}

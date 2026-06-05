@@ -12,15 +12,15 @@ namespace ws {
 class FormFieldValidators {
 public:
 
-    static FormFieldValidator isBoolean(const std::string &msg = {}) ;
-    static FormFieldValidator isInteger(const std::string &msg = {}) ; 
-    static FormFieldValidator required(const std::string &msg = {}) ; 
-    static FormFieldValidator atLeastNChars(size_t min_len, const std::string &msg = {}) ;
-    static FormFieldValidator atMostNChars(size_t max_len, const std::string &msg = {}) ;
-    static FormFieldValidator matches(const std::regex &rx, const std::string &msg = {}) ;
-    static FormFieldValidator isOneOf(const std::vector<std::string> &choices, const std::string &msg = {}) ;
-    static FormFieldValidator isNoneOf(const std::vector<std::string> &choices, const std::string &msg = {}) ;
-    static FormFieldValidator inRange(int min_val, int max_val, const std::string &msg = {}) ;
+    static FormFieldValidator isBoolean(const twig::TranslatableMessage &msg = {}) ;
+    static FormFieldValidator isInteger(const twig::TranslatableMessage &msg = {}) ; 
+    static FormFieldValidator required(const twig::TranslatableMessage &msg = {}) ; 
+    static FormFieldValidator atLeastNChars(size_t min_len, const twig::TranslatableMessage &msg = {}) ;
+    static FormFieldValidator atMostNChars(size_t max_len, const twig::TranslatableMessage &msg = {}) ;
+    static FormFieldValidator matches(const std::regex &rx, const twig::TranslatableMessage &msg = {}) ;
+    static FormFieldValidator isOneOf(const std::vector<std::string> &choices, const twig::TranslatableMessage &msg = {}) ;
+    static FormFieldValidator isNoneOf(const std::vector<std::string> &choices, const twig::TranslatableMessage &msg = {}) ;
+    static FormFieldValidator inRange(int min_val, int max_val, const twig::TranslatableMessage &msg = {}) ;
 };
 
 #if 0

@@ -1,0 +1,11 @@
+{% macro form(form) %}   
+
+   <form {% if form.action is defined %}action="{{form.action}}"{% endif %} {% if form.method is defined %}method="{{form.method}}"{% endif %} {% if form.enctype is defined %}enctype="{{form.enctype}}"{% endif %}>
+	{% include 'error-message' %} 
+{% for field in form.fields %}
+{% include field.widget ~ '_field' with field %}
+{% endfor %}
+    <button type="submit">Register</button>
+</form>
+
+{% endmacro %}

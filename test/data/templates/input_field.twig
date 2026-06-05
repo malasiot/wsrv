@@ -1,0 +1,12 @@
+<div class="form-group {{ (error) ? 'has-error has-feedback' : '' }}">
+{% if label is defined %}
+	<label class="control-label" for="{{id}}">{{ label }}</label>
+{% endif %}
+
+<input type="{{type}}" id="{{id}}" name={{name}}  {% if required %}required{% endif %} {% if disabled  %}disabled{% endif %} 
+{% if placeholder is defined %}placeholder="{{placeholder}}"{% endif %} {{ html_attr(attrs) }} 
+class="form-control {{ error ? 'is-invalid' : '' }}"
+>
+{% include 'field-errors' %}
+
+</div>
