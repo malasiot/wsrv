@@ -40,7 +40,7 @@ void FormField::render(Variant::Object &data, twig::TranslationManager *trans, c
 
      for( const auto &c: css_class_ )
         classes.push_back(c) ;
-    data["class"] = classes ;
+    data["cls"] = classes ;
     data["widget"] = widget_ ;
     if ( !group_.empty() ) data["group"] = group_ ;
   

@@ -1,14 +1,17 @@
-<div class="form-group {% if error is defined%}has-error has-feedback{% endif %}">
+{% set container_cls = ["form-group"] | merge(error ? ["has-error", "has-feedback"] : []) | merge(cls) %}
+
+<div class="{{container_cls|join(' ')}}">
 {% if label %}
-	<label class="control-label" for="{{id}}">{{ label }}</label>
+	<label class="form-label" for="{{id}}">{{ label }}</label>
 {% endif %}
 
-<select id="{{id}}" name={{name}} class="form-control" {% if required %}required{% endif %} {% if disabled %}disabled{% endif %} {% if placeholder %}placeholder={{placeholder}}{% endif %}{% for a in extra_attrs %}{{a.key}}="{{a.val}}" {% endfor %} {% if value %}value="{{value}}"{% endif %}>
+{% set cls_ = ["form-select"] | merge( error ? ["is-invalid"] : []) %}
+<select id="{{id}}" name={{name}} class="{{cls_|join(' ')}}" {% if placeholder %}placeholder={{placeholder}}{% endif %} {{html_attr(attr)}}>
 {% for option in options %}
 <option value="{{option.value}}" {% if option.selected %}selected="selected"{% endif %}>{{option.label}}</option>
 {% endfor %}
 </select>
 
-{% include 'field-errors' %}
+{%if error %}{% include 'field-errors' %}{% endif %}
 
 </div>

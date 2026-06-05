@@ -7,5 +7,11 @@
 {% endfor %}
     <button type="submit">Register</button>
 </form>
+{% endmacro %}
 
+{% macro field(f, cls_ = [], attr_ = {}) %}
+{% set cls = f.cls | merge(cls_) %}
+{% set attr = f.attr | merge(attr_) %}
+{% set field_ = f | merge( {cls: cls, attr: attr} ) %}
+{% include f.widget ~ '_field' with field_ %}
 {% endmacro %}

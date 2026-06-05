@@ -45,10 +45,10 @@ int main(int argc, char *argv[]) {
     Form form("/form", "POST") ;
 
     form.field<TextField>("username")
+        .placeholder(tr("Write user name"))
         .label(tr("Username"))
         .attribute("required", true)
-        .attribute("placeholder", "Write user name")
-        .attribute("class", Variant::Array{"grid", "flex"})
+        .addClass("grid").addClass("flex")
         .addValidator(FormFieldValidators::required())
         .addValidator(FormFieldValidators::matches(std::regex("[a-zA-Z_]+"))) ;
 

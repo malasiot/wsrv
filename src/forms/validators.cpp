@@ -9,7 +9,7 @@ namespace ws {
 template<typename Predicate>
 FormFieldValidator makeValidator(
     Predicate pred, // error condition predicate: should return true if the value is invalid
-    const twig::TranslatableMessage &custom_msg,
+    const twig::Translatable &custom_msg,
     const std::string &default_msg,
     std::map<std::string, Variant> default_params = {})
 {
@@ -22,11 +22,11 @@ FormFieldValidator makeValidator(
         Variant::Object args(default_params) ;
         args.emplace("field", field.getName()) ;
         args.emplace("value", field.getValue()) ;
-        return ValidationResult::failure(twig::TranslatableMessage(default_msg, args)) ;
+        return ValidationResult::failure(twig::Translatable(default_msg, args)) ;
     };
 }
 
-FormFieldValidator FormFieldValidators::isBoolean(const twig::TranslatableMessage &msg) {
+FormFieldValidator FormFieldValidators::isBoolean(const twig::Translatable &msg) {
     return makeValidator(
         [](const Variant &val) { return !val.isBoolean(); },
         msg,
@@ -34,7 +34,7 @@ FormFieldValidator FormFieldValidators::isBoolean(const twig::TranslatableMessag
     );
 }
 
-FormFieldValidator FormFieldValidators::isInteger(const twig::TranslatableMessage &msg) {
+FormFieldValidator FormFieldValidators::isInteger(const twig::Translatable &msg) {
     return makeValidator(
         [](const Variant &val) { return !val.isInteger(); },
         msg,
@@ -42,7 +42,7 @@ FormFieldValidator FormFieldValidators::isInteger(const twig::TranslatableMessag
     );
 }
 
-FormFieldValidator FormFieldValidators::required(const twig::TranslatableMessage &msg) {
+FormFieldValidator FormFieldValidators::required(const twig::Translatable &msg) {
     return makeValidator(
         [](const Variant &val) { return val.isString() && val.toString().empty(); },
         msg,
@@ -50,7 +50,7 @@ FormFieldValidator FormFieldValidators::required(const twig::TranslatableMessage
     );
 }
 
-FormFieldValidator FormFieldValidators::atLeastNChars(size_t min_len, const twig::TranslatableMessage &msg) {
+FormFieldValidator FormFieldValidators::atLeastNChars(size_t min_len, const twig::Translatable &msg) {
     return makeValidator(
         [min_len](const Variant &val) { return !val.isString() || val.toString().size() < min_len; },
         msg,
@@ -59,7 +59,7 @@ FormFieldValidator FormFieldValidators::atLeastNChars(size_t min_len, const twig
     );
 }
 
-FormFieldValidator FormFieldValidators::atMostNChars(size_t max_len, const twig::TranslatableMessage &msg) {
+FormFieldValidator FormFieldValidators::atMostNChars(size_t max_len, const twig::Translatable &msg) {
     return makeValidator(
         [max_len](const Variant &val) { return !val.isString() || val.toString().size() > max_len; },
         msg,
@@ -68,7 +68,7 @@ FormFieldValidator FormFieldValidators::atMostNChars(size_t max_len, const twig:
     );
 }
 
-FormFieldValidator FormFieldValidators::matches(const std::regex &rx, const twig::TranslatableMessage &msg) {
+FormFieldValidator FormFieldValidators::matches(const std::regex &rx, const twig::Translatable &msg) {
     return makeValidator(
         [rx](const Variant &val) { return !val.isString() || !std::regex_match(val.toString(), rx); },
         msg,
@@ -76,7 +76,7 @@ FormFieldValidator FormFieldValidators::matches(const std::regex &rx, const twig
     );
 }
 
-FormFieldValidator FormFieldValidators::isOneOf(const std::vector<std::string> &keys, const twig::TranslatableMessage &msg) {
+FormFieldValidator FormFieldValidators::isOneOf(const std::vector<std::string> &keys, const twig::Translatable &msg) {
     return makeValidator(
         [keys](const Variant &val) { return std::find(keys.begin(), keys.end(), val.toString()) == keys.end(); },
         msg,
@@ -84,7 +84,7 @@ FormFieldValidator FormFieldValidators::isOneOf(const std::vector<std::string> &
     );
 }
 
-FormFieldValidator FormFieldValidators::isNoneOf(const std::vector<std::string> &keys, const twig::TranslatableMessage &msg) {
+FormFieldValidator FormFieldValidators::isNoneOf(const std::vector<std::string> &keys, const twig::Translatable &msg) {
     return makeValidator(
         [keys](const Variant &val) { return std::find(keys.begin(), keys.end(), val.toString()) != keys.end(); },
         msg,
@@ -92,7 +92,7 @@ FormFieldValidator FormFieldValidators::isNoneOf(const std::vector<std::string> 
     );
 }
 
-FormFieldValidator FormFieldValidators::inRange(int min_val, int max_val, const twig::TranslatableMessage &msg) {
+FormFieldValidator FormFieldValidators::inRange(int min_val, int max_val, const twig::Translatable &msg) {
     return makeValidator(
         [min_val, max_val](const Variant &val) { 
             try {

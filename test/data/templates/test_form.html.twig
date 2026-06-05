@@ -1,7 +1,21 @@
 {% import 'forms.twig' as forms %}
 {% extends 'page.html.twig' %}
 {% block content %}
+{#
 {{forms.form(form)}}
+#}
+<form method="POST" action="/form" class="row">
+
+{{forms.field(form.fields.username, cls = ["mb-3"])}}
+<div class="row">
+{{forms.field(form.fields.role, cls = ["col-md-3"])}}
+</div>
+<div class="row">
+ <div class="col-12">
+    <button class="btn btn-primary" type="submit">Submit form</button>
+  </div>
+  </div>
+</form>
 {% endblock %}
 {%block title %}
 Hello

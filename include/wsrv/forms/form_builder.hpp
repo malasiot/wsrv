@@ -25,7 +25,7 @@ class FormField ;
 
 struct ValidationResult {
     bool is_valid_;
-    twig::TranslatableMessage error_msg_ ;
+    twig::Translatable error_msg_ ;
 
     bool operator()() const { return is_valid_ ; }
 
@@ -34,7 +34,7 @@ struct ValidationResult {
         return {true, {}};
     }
 
-    static ValidationResult failure(const twig::TranslatableMessage &msg) {
+    static ValidationResult failure(const twig::Translatable &msg) {
         return {false, std::move(msg)};
     }
 };
@@ -54,7 +54,7 @@ public:
     FormField(const std::string &name): name_(name), id_(name) {}
 
     // label
-    FormField &label(const twig::TranslatableMessage &val) { label_ = val ; return *this ; }
+    FormField &label(const twig::Translatable &val) { label_ = val ; return *this ; }
     // set field value
     FormField &value(const Variant &val) { value_ = val ; default_ = val ; return *this ; }
 
@@ -104,6 +104,9 @@ protected:
 
     friend class Form ;
 
+    // this will output a dictionary with the following keys: 
+    // name, label, id, attr (attribute dict), cls (array of class names), error, widget, group
+    
     virtual void render(Variant::Object &data, twig::TranslationManager *trans, const std::string &locale = "en_US") const ;
 
     virtual Variant normalize(const std::string &val) ;
@@ -113,7 +116,7 @@ protected:
     Variant value_, default_ ;
     Variant::Object attrs_ ;
     std::set<std::string> css_class_ ;
-    twig::TranslatableMessage label_, error_msg_ ;
+    twig::Translatable label_, error_msg_ ;
 
     std::vector<FormFieldValidator> validators_ ;
     std::vector<FormFieldNormalizer> normalizers_ ;
@@ -147,7 +150,7 @@ public:
 
     Variant getValue(const std::string &name) const {
         auto it = fields_.find(name) ;
-        if ( it == fields_.end() ) return Variant::undefined ;
+        if ( it == fields_.end() ) return Variant::undefined() ;
         else {
             const FormField *f = it->second.get() ;
             return f->value_ ;
@@ -172,7 +175,7 @@ private:
 
     std::unordered_map<std::string, std::unique_ptr<FormField>> fields_ ;
     std::string method_, enc_type_, action_ ;
-    twig::TranslatableMessage global_error_msg_ ;
+    twig::Translatable global_error_msg_ ;
     std::vector<FormValidator> validators_ ;
     std::string csrf_token_;
     dictionary_t groups_ ;
@@ -185,12 +188,19 @@ public:
     InputField(const std::string &key, const std::string &type): FormField(key), type_(type) {
         widget_ = "input" ;
     }
+
+     InputField &placeholder(const twig::Translatable &v) {
+        placeholder_ = v ; return *this ;
+    }
 protected:
     virtual void render(Variant::Object &data, twig::TranslationManager *mgr, const std::string &locale) const override {
         FormField::render(data, mgr, locale) ;
         data["type"] = type_ ;
+        data["placeholder"] = mgr->translate(placeholder_, locale) ;
     }
+
     std::string type_ ;
+    twig::Translatable placeholder_ ;
 };
 
 class TextField: public InputField {
@@ -239,10 +249,10 @@ class CheckBoxField: public InputField {
 
 class SelectField: public FormField {
 public:
-    SelectField(const std::string &name, const std::map<std::string, twig::TranslatableMessage> &options = {}): 
+    SelectField(const std::string &name, const std::map<std::string, twig::Translatable> &options = {}): 
         FormField(name), options_(options) { widget_ = "select" ; }
 
-    SelectField &addOption(const std::string &key, const twig::TranslatableMessage &label) {
+    SelectField &addOption(const std::string &key, const twig::Translatable &label) {
         options_.emplace(key, label) ;
         return *this ;
     }
@@ -267,12 +277,12 @@ protected:
     }
 
 private:
-    std::map<std::string, twig::TranslatableMessage> options_ ;
+    std::map<std::string, twig::Translatable> options_ ;
 };
 
 class RadioField: public FormField {
 public:
-    RadioField(const std::string &name, const std::map<std::string, twig::TranslatableMessage> &options = {}): 
+    RadioField(const std::string &name, const std::map<std::string, twig::Translatable> &options = {}): 
         FormField(name), options_(options) { widget_ = "radio" ; }
 
     RadioField &addOption(const std::string &key, const std::string &label) {
@@ -298,7 +308,7 @@ protected:
     }
 
 private:
-    std::map<std::string, twig::TranslatableMessage> options_ ;
+    std::map<std::string, twig::Translatable> options_ ;
 };
 
 class FileUploadField: public FormField {

@@ -1,12 +1,13 @@
-<div class="form-group {{ (error) ? 'has-error has-feedback' : '' }}">
+{% set container_cls = ["form-group"] | merge(error ? ["has-error", "has-feedback"] : []) | merge(cls) %}
+<div class="{{container_cls|join(' ')}}">
 {% if label is defined %}
-	<label class="control-label" for="{{id}}">{{ label }}</label>
+	<label class="form-label" for="{{id}}">{{ label }}</label>
 {% endif %}
-
-<input type="{{type}}" id="{{id}}" name={{name}}  {% if required %}required{% endif %} {% if disabled  %}disabled{% endif %} 
+{% set cls_ = ["form-control"] | merge( error ? ["is-invalid"] : []) %}
+<input type="{{type}}" id="{{id}}" name={{name}} 
 {% if placeholder is defined %}placeholder="{{placeholder}}"{% endif %} {{ html_attr(attrs) }} 
-class="form-control {{ error ? 'is-invalid' : '' }}"
+class="{{ cls_ | join(" ") }}"
 >
-{% include 'field-errors' %}
+{%if error %}{% include 'field-errors' %}{%endif%}
 
 </div>
