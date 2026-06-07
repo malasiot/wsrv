@@ -65,10 +65,14 @@ int main(int argc, char *argv[]) {
 
     SessionManager *session_manager = new SQLite3SessionManager("/tmp/session.sqlite");
     twig::TemplateRenderer rdr(nullptr) ;
+
+    Blueprint bp("user") ;
+
+
   
     app->useGlobal(std::make_shared<RequestLogger>()) ;
   //  app->useGlobal(std::make_shared<GZipFilter>()) ;
-    app->addRoute("GET", "user/{id:\\d+}/{action:show|hide}", [session_manager, &rdr](HTTPServerRequest& req, HTTPServerResponse& resp) {
+    bp.addRoute("GET", "/{id:\\d+}/{action:show|hide}", [session_manager, &rdr](HTTPServerRequest& req, HTTPServerResponse& resp) {
          Session session(*session_manager, req, resp) ;
 
          auto locale_data = req.data().get<LocaleResolverData>() ;
@@ -87,6 +91,8 @@ int main(int argc, char *argv[]) {
              resp = HTTPServerResponse::stockReply(HTTPServerResponse::not_found) ;
         }
     }) ;
+
+    app->registerBlueprint(bp) ;
     
     server.run() ;
 }

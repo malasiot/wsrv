@@ -33,9 +33,13 @@ public:
 
     std::string url(const Dictionary &params, bool relative = true) const  ;
 
+    void setName(const std::string &name) { name_ = name ; }
+    const std::string &getName() const { return name_ ; }
+
 private:
 
     std::unique_ptr<RouteImpl> impl_ ;
+    std::string name_ ;
 };
 
 }

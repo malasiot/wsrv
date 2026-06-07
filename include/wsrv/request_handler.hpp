@@ -23,6 +23,24 @@ public:
 
 };
 
+
+using RequestHandlerCallable = std::function<void(HTTPServerRequest&, HTTPServerResponse&)>;
+
+class RequestHandlerWrapper : public RequestHandler {
+public:
+    explicit RequestHandlerWrapper(RequestHandlerCallable callable) 
+        : handler_func_(std::move(callable)) {}
+
+    void handle(HTTPServerRequest& req, HTTPServerResponse& res) override {
+        if (handler_func_) {
+            handler_func_(req, res); // Forward execution to the lambda
+        }
+    }
+private:
+    RequestHandlerCallable handler_func_;
+};
+
+
 } // namespace ws
 
 #endif

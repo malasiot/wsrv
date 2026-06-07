@@ -27,8 +27,9 @@ public:
     RouteImpl(const std::string &pattern) {
         if ( pattern.back() == '/' ) pattern_ = pattern ;
         else pattern_ = pattern + '/' ;
-        assert(parse(pattern_)) ;
+        assert(parse(pattern_));
     }
+
     bool parse(const string &pattern) ;
     bool makeRegex() ;
     bool match(const string &path, Dictionary &vars);
@@ -36,6 +37,7 @@ public:
 
     vector<RouteElement> elements_ ;
     string pattern_ ;
+    bool compiled_ = false ;
 };
 
 

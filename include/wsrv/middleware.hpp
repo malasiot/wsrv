@@ -16,6 +16,8 @@ public:
     virtual void handle(HTTPServerRequest& req, HTTPServerResponse& res, MiddlewareContext& ctx) = 0;
 };
 
+using IMiddlewarePtr = std::shared_ptr<IMiddleware> ;
+
 class MiddlewareContext {
 public:
     MiddlewareContext(const std::vector<std::shared_ptr<IMiddleware>>& mw, RequestHandler *h)

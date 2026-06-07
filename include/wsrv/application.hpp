@@ -8,23 +8,9 @@
 #include <wsrv/middleware.hpp>
 #include <wsrv/route.hpp>
 
+#include <wsrv/blueprint.hpp>
+
 namespace ws {
-
-using RequestHandlerCallable = std::function<void(HTTPServerRequest&, HTTPServerResponse&)>;
-
-class RequestHandlerWrapper : public RequestHandler {
-public:
-    explicit RequestHandlerWrapper(RequestHandlerCallable callable) 
-        : handler_func_(std::move(callable)) {}
-
-    void handle(HTTPServerRequest& req, HTTPServerResponse& res) override {
-        if (handler_func_) {
-            handler_func_(req, res); // Forward execution to the lambda
-        }
-    }
-private:
-    RequestHandlerCallable handler_func_;
-};
 
 // implementation of the main application handler that supports routing and middleware
 
@@ -43,22 +29,36 @@ public:
     }
 
     // add a route with a handler and optional route-specific middleware. The handler can be either a lambda or a class that inherits from RequestHandler.
-    void addRoute(const std::string &method, const std::string& path, const std::shared_ptr<RequestHandler> &handler, const std::vector<std::shared_ptr<IMiddleware>>& middlewares = {}) {
+    void addRoute(const std::string &method, const std::string& path, const std::shared_ptr<RequestHandler> &handler, const std::vector<std::shared_ptr<IMiddleware>>& middlewares = {}, const std::string &name = {}) {
         routes_.emplace_back(method, path, std::move(handler), std::move(middlewares)) ;
+        if ( !name.empty() ) named_routes_[name] = routes_.back().route_.get() ;
     }
 
     void addRoute(const std::string &method, const std::string& path, 
                    RequestHandlerCallable lambda_handler, 
-                   const std::vector<std::shared_ptr<IMiddleware>> &route_mw = {}) {
+                   const std::vector<std::shared_ptr<IMiddleware>> &route_mw = {},
+                const std::string &name = {}) {
         
         // Wrap the incoming lambda inside our polymorphism bridge
         auto wrapped_handler = std::make_shared<RequestHandlerWrapper>(std::move(lambda_handler));
         
         // Save it using the exact same underlying logic
-        routes_.emplace_back(method, path, std::move(wrapped_handler), std::move(route_mw));
+        routes_.emplace_back(method, path, wrapped_handler, route_mw);
+
+        if ( !name.empty() ) named_routes_[name] = routes_.back().route_.get() ;
     }
 
+    void registerBlueprint(const Blueprint &bp) ;
+
+    std::string url(const std::string &name, const Dictionary &params = {}, bool relative = false) ; 
+    
+
 private:
+
+    void registerBlueprintRecursive(const Blueprint& bp, 
+                              const std::string &current_prefix, 
+                              std::vector<IMiddlewarePtr> accumulated_middleware);
+
 
     struct RouteEntry {
         RouteEntry(const std::string &m, const std::string &p, const std::shared_ptr<RequestHandler> &h, const std::vector<std::shared_ptr<IMiddleware>> &mw = {})
@@ -84,6 +84,7 @@ private:
 
     std::vector<std::shared_ptr<IMiddleware>> global_middlewares_;
     std::vector<RouteEntry> routes_;
+    std::unordered_map<std::string, Route *> named_routes_ ;
 };
 
 }

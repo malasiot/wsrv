@@ -12,6 +12,7 @@
 
 #include <twig/renderer.hpp>
 #include <twig/translator.hpp>
+#include <wsrv/blueprint.hpp>
 
 using namespace ws ;
 using namespace std ;
