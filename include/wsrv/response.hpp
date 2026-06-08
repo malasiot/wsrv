@@ -97,7 +97,8 @@ struct HTTPServerResponse
                    const std::string &path = std::string(),
                    const std::string &domain = std::string(),
                    bool secure = false,
-                   bool http_only = false
+                   bool http_only = false,
+                   const std::string &same_site = "Lax"
                    ) ;
 
     void deleteCookie(const std::string &name, const std::string &path = std::string(), const std::string &domain = std::string(), bool secure = false, bool http_only = false );

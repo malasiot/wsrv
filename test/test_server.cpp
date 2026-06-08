@@ -6,6 +6,7 @@
 #include <wsrv/middleware.hpp>
 #include <wsrv/application.hpp>
 #include <wsrv/middleware/locale.hpp>
+#include <wsrv/middleware/request_logger.hpp>
 #include <mutex>
 #include <iostream>
 
@@ -13,43 +14,6 @@
 
 using namespace ws ;
 using namespace std ;
-
-
-class RequestLogger: public IMiddleware {
-public:
-    void handle(HTTPServerRequest& req, HTTPServerResponse& res, MiddlewareContext& ctx) {
-        ctx.next(req, res); 
-        std::lock_guard<std::mutex> lock(log_mutex_);
-       
-        cout << "[" << current_time_str() << "] "
-                  << req.toString() << " -> " ;
-
-        cout <<  res.toString() << endl ;
-    }
-private:
-     std::mutex log_mutex_;
-
-    // Helper to get the current timestamp string
-     std::string current_time_str() {
-        auto now = std::chrono::system_clock::now();
-        auto in_time_t = std::chrono::system_clock::to_time_t(now);
-        
-        std::stringstream ss;
-        ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %H:%M:%S");
-        return ss.str();
-    }
-};
-
-class GZipFilter: public IMiddleware {
-public:
-
-    void handle(HTTPServerRequest& req, HTTPServerResponse& res, MiddlewareContext& ctx) {
-        ctx.next(req, res); // Move to next layer
-
-        if ( req.supportsGzip() && res.contentBenefitsFromCompression() )
-            res.compress();
-    }
-};
 
 
 
@@ -68,10 +32,10 @@ int main(int argc, char *argv[]) {
 
     Blueprint bp("user") ;
 
-
+    DebugLogger logger ;
   
-    app->useGlobal(std::make_shared<RequestLogger>()) ;
-  //  app->useGlobal(std::make_shared<GZipFilter>()) ;
+    app->useGlobal(std::make_shared<RequestLogger>(logger)) ;
+
     bp.addRoute("GET", "/{id:\\d+}/{action:show|hide}", [session_manager, &rdr](HTTPServerRequest& req, HTTPServerResponse& resp) {
          Session session(*session_manager, req, resp) ;
 

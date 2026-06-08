@@ -5,6 +5,8 @@
 #include <wsrv/forms/form_builder.hpp>
 #include <wsrv/forms/validators.hpp>
 #include <wsrv/middleware/locale.hpp>
+#include <wsrv/middleware/csrf.hpp>
+#include <wsrv/middleware/compress.hpp>
 #include <twig/loader.hpp>
 
 #include <mutex>
@@ -35,6 +37,8 @@ int main(int argc, char *argv[]) {
     
     server.setHandler(&app) ;
 
+    SQLite3SessionManager session_mgr("/tmp/session.sqlite") ;
+
     std::shared_ptr<twig::FileSystemTemplateLoader> loader(new twig::FileSystemTemplateLoader({std::string(DATA_DIR) + "/templates/"}));
     twig::TemplateRenderer rdr(loader) ;
 
@@ -61,6 +65,11 @@ int main(int argc, char *argv[]) {
     app.addRoute("GET|POST", "/form", [&rdr, &form, &translator](HTTPServerRequest& req, HTTPServerResponse& resp) {
        
         auto locale = req.data().get<LocaleResolverData>() ;
+        auto csrf = req.data().get<CSRFMiddlewareData>() ;
+
+        if ( req.getMethod() == "GET" )
+        form.enableCSRF(csrf->token()) ;
+    
         if ( req.getMethod() == "POST" && form.process(req.getPostAttributes()) ) {
             resp.write(translator.translate("welcome", locale->locale_, Variant::Object{{"name", form.getValue("username")}})) ;
             return ;
@@ -68,14 +77,16 @@ int main(int argc, char *argv[]) {
            
         try {
             auto locale = req.data().get<LocaleResolverData>() ;
-             resp.write(rdr.render("test_form.html", Variant::Object{{"form", form.render(&translator, locale->locale_)}})) ;
+            resp.write(rdr.render("test_form.html", Variant::Object{{"form", form.render(&translator, locale->locale_)}})) ;
         } catch ( std::exception &e ) {
              cout << e.what() << endl ;
         }
-        
-
-        
-    }, {std::make_shared<LocaleResolver>(translator.getSupportedLocales())})  ;
+       
+    }, {
+        std::make_shared<CSRFMiddleware>(&session_mgr),
+        std::make_shared<LocaleResolver>(translator.getSupportedLocales()),
+        std::make_shared<CompressMiddleware>()
+    })  ;
     
     server.run() ;
 }

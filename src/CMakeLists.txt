@@ -60,6 +60,10 @@ SET ( SOURCES
     forms/validators.cpp
 
     middleware/locale.cpp
+    middleware/request_logger.cpp
+    middleware/csrf.cpp
+
+    util/logger.cpp
 )
 
 ADD_LIBRARY(wsrv ${LIBRARY_TYPE} ${SOURCES})
@@ -75,6 +79,8 @@ target_include_directories(wsrv PUBLIC
     ${SQLITE3_INCLUDE_DIR}
     ${ZLIB_INCLUDE_DIR}
 )
+
+target_compile_features(wsrv PRIVATE cxx_std_17)
 
 target_link_libraries(wsrv PUBLIC
        ${CryptoPP_LIBRARY} ${SQLITE3_LIBRARY} ${OPENSSL_LIBRARIES} z jwt-cpp::jwt-cpp

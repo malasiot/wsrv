@@ -471,7 +471,8 @@ bool HTTPServerResponse::serveStaticFile(const string &folder, const string &pat
     return false ;
 }
 
-void HTTPServerResponse::setCookie(const string &name, const string &value, time_t expires, const string &path, const string &domain, bool secure, bool http_only)
+void HTTPServerResponse::setCookie(const string &name, const string &value, time_t expires, 
+    const string &path, const string &domain, bool secure, bool http_only, const std::string &same_site_policy)
 {
     string cookie = name + '=' + value ;
     if ( expires > 0 ) {
@@ -491,6 +492,9 @@ void HTTPServerResponse::setCookie(const string &name, const string &value, time
 
     if ( http_only )
         cookie += "; HttpOnly" ;
+
+    if ( !same_site_policy.empty())
+        cookie += "; SameSite=" + same_site_policy ;
 
     addHeader("Set-Cookie", cookie) ;
 

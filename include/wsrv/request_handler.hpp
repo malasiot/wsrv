@@ -2,6 +2,7 @@
 #define SERVER_REQUEST_HANDLER_HPP
 
 #include <string>
+#include <functional>
 
 #include <wsrv/request.hpp>
 #include <wsrv/response.hpp>
@@ -17,15 +18,14 @@ public:
     explicit RequestHandler() = default;
     RequestHandler(const RequestHandler &) = delete ;
 
-    /// Override to handle a request and produce a response.
-
+    // Override to handle a request and produce a response.
     virtual void handle(HTTPServerRequest &req, HTTPServerResponse &resp) = 0;
-
 };
 
 
 using RequestHandlerCallable = std::function<void(HTTPServerRequest&, HTTPServerResponse&)>;
 
+// Use to pass a functor as a handler
 class RequestHandlerWrapper : public RequestHandler {
 public:
     explicit RequestHandlerWrapper(RequestHandlerCallable callable) 

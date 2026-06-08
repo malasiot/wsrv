@@ -39,20 +39,15 @@ public:
                    const std::vector<std::shared_ptr<IMiddleware>> &route_mw = {},
                 const std::string &name = {}) {
         
-        // Wrap the incoming lambda inside our polymorphism bridge
         auto wrapped_handler = std::make_shared<RequestHandlerWrapper>(std::move(lambda_handler));
         
-        // Save it using the exact same underlying logic
         routes_.emplace_back(method, path, wrapped_handler, route_mw);
-
         if ( !name.empty() ) named_routes_[name] = routes_.back().route_.get() ;
     }
 
     void registerBlueprint(const Blueprint &bp) ;
 
     std::string url(const std::string &name, const Dictionary &params = {}, bool relative = false) ; 
-    
-
 private:
 
     void registerBlueprintRecursive(const Blueprint& bp, 

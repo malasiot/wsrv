@@ -77,7 +77,7 @@ TEST_F(RouteTest, OptionalSegments) {
 }
 
 TEST_F(RouteTest, MultipleOptionalSegments) {
-    Route route("/api/{version}/users");
+    Route route("/api/{version}?/users");
     Dictionary params;
     
     EXPECT_TRUE(route.matches("/api/v1/users", params));
@@ -86,6 +86,10 @@ TEST_F(RouteTest, MultipleOptionalSegments) {
     params.clear();
     EXPECT_TRUE(route.matches("/api/v2/users/", params));
     EXPECT_EQ(params["version"], "v2");
+
+    params.clear();
+    EXPECT_TRUE(route.matches("/api/users/", params));
+    EXPECT_EQ(params["version"], "");
 }
 
 // Removed MixedStaticDynamic - inline parameters not supported by router

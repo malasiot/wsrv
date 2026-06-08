@@ -43,7 +43,6 @@ void FormField::render(Variant::Object &data, twig::TranslationManager *trans, c
     data["cls"] = classes ;
     data["widget"] = widget_ ;
     if ( !group_.empty() ) data["group"] = group_ ;
-  
 }
 
 bool FormField::validate(const Variant &value) {
@@ -124,7 +123,7 @@ std::string FormField::interpolateMessage(const std::string &msg_template, const
 
 bool Form::process(const dictionary_t &data) {
     if ( csrf_enabled_) {
-        auto it = data.find("_token");
+        auto it = data.find("csrf_token");
         if ( it == data.end() || it->second != csrf_token_ ) {
             return false; 
         }
@@ -168,7 +167,7 @@ Variant::Object Form::render(twig::TranslationManager *tr, const std::string &lo
     ctx["method"] = method_ ;
 
     if ( csrf_enabled_ ) {
-        ctx["_token"] = csrf_token_ ;
+        ctx["_csrf_token"] = csrf_token_ ;
     }
 
     if ( !is_valid_ && !global_error_msg_.key_.empty() ) {

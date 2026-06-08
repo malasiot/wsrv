@@ -58,8 +58,8 @@ protected:
     std::string session_cookie_path_, session_cookie_domain_ ;
     long int session_cookie_expiration_ = 24 * 60 * 60 ;
     long int session_id_max_lifetime_ = 24 * 60 * 60 ; // 1 day
-    bool session_cookie_http_only_ = false ;
-    bool session_cookie_secure_ = false ;
+    bool session_cookie_http_only_ = true ;
+    bool session_cookie_secure_ = true ;
 };
 
 } // namespace ws

@@ -22,11 +22,10 @@ private:
     std::string prefix_;
     std::vector<IMiddlewarePtr> group_middlewares_ ;
     std::vector<StagedRoute> routes_ ;
-    
     std::vector<Blueprint> children_ ;
 
 public:
-    explicit Blueprint(std::string prefix) : prefix_(std::move(prefix)) {}
+    explicit Blueprint(const std::string &prefix) : prefix_(prefix) {}
 
     Blueprint& use(const IMiddlewarePtr &mw) {
         group_middlewares_.push_back(mw);

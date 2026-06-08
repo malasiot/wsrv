@@ -5,7 +5,9 @@
 {{forms.form(form)}}
 #}
 <form method="POST" action="/form" class="row">
-
+{%if form._csrf_token %}
+<input type="hidden" name="csrf_token" value="{{form._csrf_token}}">
+{%endif%}
 {{forms.field(form.fields.username, cls = ["mb-3"])}}
 <div class="row">
 {{forms.field(form.fields.role, cls = ["col-md-3"])}}

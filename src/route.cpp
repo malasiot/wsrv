@@ -11,7 +11,6 @@ using namespace std ;
 namespace ws {
 
 struct RouteElement {
-
     RouteElement(const string &name, const string &pattern, bool optional, int idx = -1):
         name_(name), pattern_(pattern), optional_(optional), idx_(idx) {}
 
@@ -21,6 +20,22 @@ struct RouteElement {
     bool optional_ ;
 };
 
+
+class UriPatternMatcher {
+    using Dictionary = map<string, string>;
+public:
+    UriPatternMatcher(RouteImpl &route) ;
+    bool matches(const string &uri, Dictionary &vars) ;
+
+private:
+    std::regex makeRegexFromPattern(const string &pat, RouteImpl &route_data);
+    bool matchPattern(const std::regex &rx, const RouteImpl &route, const string &path, Dictionary &vars) ;
+
+    std::regex rx_ ;
+    RouteImpl &route_ ;
+};
+
+
 struct RouteImpl {
     using Dictionary = map<string, string>;
 public:
@@ -28,16 +43,18 @@ public:
         if ( pattern.back() == '/' ) pattern_ = pattern ;
         else pattern_ = pattern + '/' ;
         assert(parse(pattern_));
+        makeRegexFromPattern() ;
     }
 
     bool parse(const string &pattern) ;
-    bool makeRegex() ;
+    void makeRegexFromPattern();
+
     bool match(const string &path, Dictionary &vars);
     string url(const Dictionary &params, bool relative) const;
 
     vector<RouteElement> elements_ ;
     string pattern_ ;
-    bool compiled_ = false ;
+    std::regex rx_ ;
 };
 
 
@@ -100,33 +117,13 @@ bool RouteImpl::parse(const string &pattern) {
     return true ;
 }
 
-
-class UriPatternMatcher {
-    using Dictionary = map<string, string>;
-public:
-
-    bool matches(const string &pattern, RouteImpl &route, const string &uri, Dictionary &vars) ;
-
-    static UriPatternMatcher &instance() {
-        static UriPatternMatcher the_instance ;
-        return the_instance;
-    }
-
-private:
-    std::regex makeRegexFromPattern(const string &pat, RouteImpl &route_data);
-    bool matchPattern(const std::regex &rx, const RouteImpl &route, const string &path, Dictionary &vars) ;
-
-    std::map<std::string, std::regex> cache_ ;
-    mutable std::mutex cache_mutex_ ;
-};
-
-bool UriPatternMatcher::matchPattern(const std::regex &rx, const RouteImpl &route, const string &path, Dictionary &vars)
+bool RouteImpl::match(const string &path, Dictionary &vars)
 {
     // TODO implement without named capture groups
 
     std::smatch results ;
-    if ( std::regex_match(path, results, rx) ) {
-        for( const RouteElement &e: route.elements_ ) {
+    if ( std::regex_match(path, results, rx_) ) {
+        for( const RouteElement &e: elements_ ) {
             if ( e.idx_ > 0 ) {
                 string val = results[e.idx_].str() ;
                 if ( !val.empty() ) vars[e.name_] = val ;
@@ -138,26 +135,12 @@ bool UriPatternMatcher::matchPattern(const std::regex &rx, const RouteImpl &rout
     return false ;
 }
 
-bool UriPatternMatcher::matches(const string &pattern, RouteImpl &route, const string &uri, Dictionary &vars) {
-    std::unique_lock<std::mutex> l(cache_mutex_) ;
-
-    auto it = cache_.find(pattern) ;
-    if ( it != cache_.end() )  // pattern exists in cache
-        return matchPattern(it->second, route, uri, vars) ;
-    else {
-        std::regex rxs = makeRegexFromPattern(pattern, route) ;
-        bool res = matchPattern(rxs, route, uri, vars) ;
-        cache_[pattern] = std::move(rxs) ;
-        return res ;
-    }
-}
-
-std::regex  UriPatternMatcher::makeRegexFromPattern(const string &pat, RouteImpl &route) {
+void RouteImpl::makeRegexFromPattern() {
     string rx ;
 
     vector<string> patterns ;
     uint capture_idx = 1 ;
-    for( RouteElement &e: route.elements_ ) {
+    for( RouteElement &e: elements_ ) {
         string param = e.name_ ;
         string pattern = e.pattern_ ;
 
@@ -171,10 +154,10 @@ std::regex  UriPatternMatcher::makeRegexFromPattern(const string &pat, RouteImpl
             patterns.push_back( "(?:" + pattern + ")") ;
     }
 
-    auto it = route.elements_.begin() ;
+    auto it = elements_.begin() ;
     auto pit = patterns.begin() ;
 
-    for(  ; it != route.elements_.end() ; ++it, ++pit ) {
+    for(  ; it != elements_.end() ; ++it, ++pit ) {
         const RouteElement &e = *it ;
 
         if ( e.optional_ ) rx += "(?:" + *pit + "\\/)?"  ;
@@ -185,18 +168,11 @@ std::regex  UriPatternMatcher::makeRegexFromPattern(const string &pat, RouteImpl
 
 
     try {
-        std::regex res(rx) ;
-        return res ;
+        rx_.assign(rx) ;
     }
     catch ( std::regex_error &e ) {
         std::cout << e.what() << endl ;
-        return std::regex() ;
     }
-}
-
-bool RouteImpl::match(const string &path, Dictionary &data) {
-    return UriPatternMatcher::instance().matches(pattern_, *this, path, data) ;
-
 }
 
 string RouteImpl::url(const Dictionary &params, bool relative) const {
