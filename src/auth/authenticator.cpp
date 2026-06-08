@@ -21,7 +21,7 @@ void SessionAuthController::handle(HTTPServerRequest &req, HTTPServerResponse &r
     }  else {
          std::shared_ptr<IAuthenticatedUser> user = provider_->loadUser(user_id);
         
-        req.data().set(user);
+        req.data().set("auth.user", user->getUniqueId());
     }
     ctx.next(req, res) ;
 }
@@ -41,14 +41,14 @@ void SessionLoginController::handle(HTTPServerRequest &req, HTTPServerResponse &
         auto user = provider_->authenticate(username, password) ;
         if ( user != nullptr ) { // user authenticated
             session.add(USER_KEY, user->getUniqueId()) ; // add session cookie
-            req.data().set(user) ;
+            req.data().set("auth.user", user->getUniqueId()) ;
         }
 
     } else { 
         std::string user_id = session.get(USER_KEY) ;
         if ( !user_id.empty() ) {
             auto user = provider_->loadUser(user_id) ;
-            req.data().set(user) ;
+            req.data().set("auth.user", user->getUniqueId()) ;
         }
     }
     ctx.next(req, res) ;
@@ -66,7 +66,7 @@ void SessionLogoutController::handle(HTTPServerRequest &req, HTTPServerResponse 
     if ( !user_id.empty() )
         session.remove(USER_KEY) ;
     
-    req.data().remove<std::shared_ptr<IAuthenticatedUser>>() ;
+    req.data().remove("auth.user") ;
     
 
     ctx.next(req, res) ;

@@ -6,6 +6,7 @@
 #include <any>
 
 namespace ws {
+    /*
 class MiddlwareDataStorage {
     private:
         std::unordered_map<std::type_index, std::any> storage_;
@@ -33,6 +34,29 @@ class MiddlwareDataStorage {
         template <typename T>
         void remove() {
             storage_.erase(std::type_index(typeid(T)));
+        }
+    };*/
+
+class MiddlwareDataStorage {
+    private:
+        std::unordered_map<std::string, std::string> storage_;
+
+    public:
+        
+        void set(const std::string &key, const std::string &val) {
+            storage_[key] = val;
+        }
+
+        std::string get(const std::string &key, const std::string &def = {}) {
+            auto it = storage_.find(key);
+            if ( it == storage_.end() ) {
+                return def;
+            }
+            return it->second;
+        }
+
+        void remove(const std::string &key) {
+            storage_.erase(key);
         }
     };
 }

@@ -368,18 +368,12 @@ HTTPServerResponse HTTPServerResponse::file(const std::string &path_name, const 
     return response ;
 }
 
-HTTPServerResponse HTTPServerResponse::json(const string &obj)
-{
-    HTTPServerResponse response ;
-    response.write(obj, "application/json") ;
-    return response ;
+void HTTPServerResponse::json(const string &obj) {
+   write(obj, "application/json") ;
 }
 
-HTTPServerResponse HTTPServerResponse::html(const string &html)
-{
-    HTTPServerResponse response ;
-    response.write(html, "text/html") ;
-    return response ;
+void HTTPServerResponse::html(const string &html) {
+    write(html, "text/html") ;
 }
 
 void HTTPServerResponse::write(const string &content, const string &mime)
@@ -450,7 +444,8 @@ bool is_path_safe(const fs::path& root_dir, const std::string& user_request_path
     try {
         // Formulate the full path relative to the root folder
         fs::path target_path = fs::weakly_canonical(root_dir / user_request_path);
-        fs::path canonical_root = fs::canonical(root_dir);
+        std::error_code ec ;
+        fs::path canonical_root = fs::canonical(root_dir, ec);
 
         // Check if the resolved path starts with the root folder's path
         auto [root_end, target_end] = std::mismatch(canonical_root.begin(), canonical_root.end(), target_path.begin());
@@ -463,7 +458,7 @@ bool is_path_safe(const fs::path& root_dir, const std::string& user_request_path
 bool HTTPServerResponse::serveStaticFile(const string &folder, const string &path) {
     string p(folder + '/' + path) ;
 
-    if ( is_path_safe(folder, path) && fileExists(p) ) {
+    if (is_path_safe(folder, path) && fileExists(p) ) {
         encodeFile(p);
         return true ;
     }

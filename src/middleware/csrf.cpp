@@ -54,7 +54,7 @@ void CSRFMiddleware::handle(HTTPServerRequest& req, HTTPServerResponse& res, Mid
         return;
     }
 
-    req.data().set(make_shared<CSRFMiddlewareData>(session_token)) ;
+    req.data().set("csrf.token", session_token) ;
     
     // Token is valid. Forward to next middleware or final route handler.
     ctx.next(req, res);
@@ -66,7 +66,7 @@ void CSRFMiddleware::ensure_session_has_token(HTTPServerRequest &req, Session &s
         session_token = generate_secure_token() ;
         session.add("csrf_token", session_token);
     }
-    req.data().set(make_shared<CSRFMiddlewareData>(session_token)) ;
+     req.data().set("csrf.token", session_token) ;
 }
 
 }

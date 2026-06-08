@@ -81,6 +81,7 @@ private:
 
                         catch ( std::runtime_error &e ) {
                             response_ = HTTPServerResponse::stockReply(HTTPServerResponse::internal_server_error) ;
+                            std::cerr << e.what() << std::endl ;
                         }
                     }
 

@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'routes.title'|trans }} - {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="row mb-4 align-items-center" id="searchHeader" data-no-results="{{ 'routes.no_results'|trans }}">
+    <div class="col-md-6 mb-3 mb-md-0">
+        <h2 class="text-dark fw-bold">{{ 'routes.heading'|trans }}</h2>
+    </div>
+    <div class="col-md-6">
+        <input type="text" id="trailSearch" class="form-control form-control-lg shadow-sm" placeholder="{{ 'routes.search_placeholder'|trans }}">
+    </div>
+</div>
+
+<!-- Trails Card Collection -->
+<div class="row" id="trailGrid">
+    {% for route in routes %}
+        <div class="col-md-4 mb-4 trail-card" data-name="{{ route.name|lower }}">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title fw-bold text-dark">{{ route.name }}</h5>
+                    <div class="mb-2">
+                        <span class="badge bg-primary px-2 py-1">{{ route.difficulty|trans }}</span>
+                    </div>
+                    <p class="card-text text-muted mb-4 small">{{ 'routes.distance'|trans }}: <strong>{{ route.distance }} km</strong></p>
+                    <a href="/route/{{ route.id }}" class="btn btn-outline-success mt-auto btn-sm w-100">{{ 'routes.details'|trans }}</a>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="col-12" id="emptyState">
+            <p class="text-center text-muted py-5">{{ 'routes.no_results'|trans }}</p>
+        </div>
+    {% endfor %}
+</div>
+
+<div id="loadMoreWrapper" class="text-center my-4 {% if total_pages|default(1) <= 1 %}d-none{% endif %}">
+    <button id="loadMoreBtn" class="btn btn-success px-4 py-2 shadow-sm" data-end-of-data="false">
+        <span id="btnSpinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
+        {{ 'routes.btn_load_more'|trans }}
+    </button>
+</div>
+{% endblock %}

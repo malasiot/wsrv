@@ -71,8 +71,8 @@ struct HTTPServerResponse
                      ) ;
 
     // Calls write() appropriately setting the content type
-    static HTTPServerResponse json(const std::string &json) ;
-    static HTTPServerResponse html(const std::string &html) ;
+    void json(const std::string &json) ;
+    void html(const std::string &html) ;
 
     // Will write a string and set content type and content length. It will also set status to OK.
     void write(const std::string &content, const std::string &mime = "text/html") ;

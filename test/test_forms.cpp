@@ -64,20 +64,20 @@ int main(int argc, char *argv[]) {
   
     app.addRoute("GET|POST", "/form", [&rdr, &form, &translator](HTTPServerRequest& req, HTTPServerResponse& resp) {
        
-        auto locale = req.data().get<LocaleResolverData>() ;
-        auto csrf = req.data().get<CSRFMiddlewareData>() ;
+        auto locale = req.data().get("locale");
+        auto csrf = req.data().get("csrf.token") ;
 
         if ( req.getMethod() == "GET" )
-        form.enableCSRF(csrf->token()) ;
+            form.enableCSRF(csrf) ;
     
         if ( req.getMethod() == "POST" && form.process(req.getPostAttributes()) ) {
-            resp.write(translator.translate("welcome", locale->locale_, Variant::Object{{"name", form.getValue("username")}})) ;
+            resp.write(translator.translate("welcome", locale, Variant::Object{{"name", form.getValue("username")}})) ;
             return ;
          } 
            
         try {
-            auto locale = req.data().get<LocaleResolverData>() ;
-            resp.write(rdr.render("test_form.html", Variant::Object{{"form", form.render(&translator, locale->locale_)}})) ;
+           
+            resp.write(rdr.render("test_form.html", Variant::Object{{"form", form.render(&translator, locale)}})) ;
         } catch ( std::exception &e ) {
              cout << e.what() << endl ;
         }

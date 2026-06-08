@@ -39,9 +39,9 @@ int main(int argc, char *argv[]) {
     bp.addRoute("GET", "/{id:\\d+}/{action:show|hide}", [session_manager, &rdr](HTTPServerRequest& req, HTTPServerResponse& resp) {
          Session session(*session_manager, req, resp) ;
 
-         auto locale_data = req.data().get<LocaleResolverData>() ;
+         auto locale = req.data().get("locale") ;
   
-         resp.write("hello " +  req.getRouteAttribute("id") + " " + (locale_data ? locale_data->locale_ : "") ) ;
+         resp.write("hello " +  req.getRouteAttribute("id") + " " + locale) ;
 
          if ( session.contains("id") )
             resp.append(", your session id is: " + session.get("id")) ;

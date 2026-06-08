@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'landing.title'|trans }} - {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="p-5 mb-4 bg-white rounded-3 shadow-sm text-center">
+    <div class="container-fluid py-5">
+        <h1 class="display-4 fw-bold text-success mb-3">{{ 'landing.hero_title'|trans }}</h1>
+        <p class="col-md-8 mx-auto fs-5 text-secondary mb-4">{{ 'landing.hero_subtitle'|trans }}</p>
+        <a href="/routes" class="btn btn-success btn-lg px-4 shadow-sm">{{ 'landing.cta_btn'|trans }}</a>
+    </div>
+</div>
+{% endblock %}
