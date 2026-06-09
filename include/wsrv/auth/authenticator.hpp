@@ -32,10 +32,22 @@ public:
 
 class SessionManager ;
 
-class SessionAuthController: public IMiddleware {
+class SessionRequireAuth: public IMiddleware {
 public:
 
-    SessionAuthController(SessionManager *, IAuthenticationProvider *provider);
+    SessionRequireAuth(SessionManager *, IAuthenticationProvider *provider);
+
+    void handle(HTTPServerRequest &req, HTTPServerResponse &res, MiddlewareContext &ctx) override ;
+
+private:
+    SessionManager *session_manager_ = nullptr ;
+    IAuthenticationProvider *provider_ ;
+};
+
+class SessionCheckAuth: public IMiddleware {
+public:
+
+    SessionCheckAuth(SessionManager *, IAuthenticationProvider *provider);
 
     void handle(HTTPServerRequest &req, HTTPServerResponse &res, MiddlewareContext &ctx) override ;
 

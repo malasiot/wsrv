@@ -15,8 +15,6 @@
 using namespace ws ;
 using namespace std ;
 
-
-
 int main(int argc, char *argv[]) {
 
     HttpServer server("127.0.0.1:5110") ;
@@ -39,9 +37,9 @@ int main(int argc, char *argv[]) {
     bp.addRoute("GET", "/{id:\\d+}/{action:show|hide}", [session_manager, &rdr](HTTPServerRequest& req, HTTPServerResponse& resp) {
          Session session(*session_manager, req, resp) ;
 
-         auto locale = req.data().get("locale") ;
+         auto locale = req.data().get<LocaleResolverData>() ;
   
-         resp.write("hello " +  req.getRouteAttribute("id") + " " + locale) ;
+         resp.write("hello " +  req.getRouteAttribute("id") + " " + locale->locale()) ;
 
          if ( session.contains("id") )
             resp.append(", your session id is: " + session.get("id")) ;

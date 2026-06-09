@@ -9,6 +9,8 @@ namespace ws {
 // data to store on the request object
 struct LocaleResolverData {
     LocaleResolverData(const std::string &loc): locale_(loc) {}
+
+    const std::string &locale() const { return locale_ ; }
     std::string locale_ ;
 };
 

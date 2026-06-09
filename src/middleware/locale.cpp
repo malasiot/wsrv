@@ -14,7 +14,7 @@ bool LocaleResolver::isLocaleSupported(const std::string &locale_str) const {
 
 void LocaleResolver::handle(HTTPServerRequest& req, HTTPServerResponse& res, MiddlewareContext& ctx) {
     string resolved = resolve(req) ;
-    req.data().set("locale", resolved);
+    req.data().set(make_shared<LocaleResolverData>(resolved));
     ctx.next(req, res) ;
 }
 

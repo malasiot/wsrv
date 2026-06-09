@@ -43,6 +43,25 @@ class SimpleAuthProvider: public IAuthenticationProvider {
 
 const char *web_root = "/Users/malasiot/source/wsrv/app/web/" ;
 
+void render(const char *templ, twig::TemplateRenderer &rdr, HTTPServerRequest &req, HTTPServerResponse &res) {
+    auto user_data = req.data().get<IAuthenticatedUser>() ;
+    auto locale = req.data().get<LocaleResolverData>() ;
+    rdr.setLocale(locale->locale()) ;
+
+       
+    res.write(rdr.render(templ, 
+                Variant::Object{
+                    {"app", Variant::Object{
+                        {
+                            "locale", locale->locale()
+                        }, {
+                            "is_authenticated", user_data != nullptr
+                        }}
+                    },
+                }
+            ));
+}
+
 int main(int argc, char *argv[]) {
 
     HttpServer server("127.0.0.1:5110") ;
@@ -64,7 +83,9 @@ int main(int argc, char *argv[]) {
 
     SimpleAuthProvider provider ;
     auto login = std::make_shared<SessionLoginController>(&session_manager, &provider);
-    auto auth = std::make_shared<SessionAuthController>(&session_manager, &provider);
+    auto auth = std::make_shared<SessionRequireAuth>(&session_manager, &provider);
+    auto check = std::make_shared<SessionCheckAuth>(&session_manager, &provider) ;
+    auto logout = std::make_shared<SessionLogoutController>(&session_manager) ;
 
     DebugLogger logger ;
   
@@ -73,18 +94,14 @@ int main(int argc, char *argv[]) {
     Blueprint admin("admin/") ;
 
     admin.addRoute("GET|POST", "login/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
-        auto user_data = req.data().get("auth.user") ;
-        auto locale = req.data().get("locale") ;
-        rdr.setLocale(locale) ;
+        auto user_data = req.data().get<IAuthenticatedUser>() ;
+        auto locale = req.data().get<LocaleResolverData>() ;
+        rdr.setLocale(locale->locale()) ;
 
          if ( req.getMethod() == "GET" ) {
-            resp.write(rdr.render("admin/login.html", 
-                Variant::Object{{"app", Variant::Object{{
-                    "locale", locale
-                }}
-            }}));
+            render("admin/login.html", rdr, req, resp) ;
         } else {
-            if ( !user_data.empty() )
+            if ( user_data )
                 resp.json(R"({"success": true })");
             else
                 resp.json(R"({"success": false, "message": "Invalid password or username credentials."})");
@@ -92,54 +109,30 @@ int main(int argc, char *argv[]) {
         
     }, {locale, login} ) ;
 
-     admin.addRoute("GET", "dashboard/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
-        auto user_data = req.data().get("auth.user") ;
-        auto locale = req.data().get("locale") ;
-        rdr.setLocale(locale) ;
-
-       
-            resp.write(rdr.render("admin/dashboard.html", 
-                Variant::Object{
-                    {"app", Variant::Object{{
-                            "locale", locale
-                             }}
-                    }
-                }));
+    admin.addRoute("GET", "dashboard/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
+        render("admin/dashboard.html", rdr, req, resp) ;
         
-        
-    }, {locale} ) ;
+    }, {locale, auth} ) ;
 
-     app.addRoute("GET", "/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
+     admin.addRoute("GET", "logout/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
+         auto user_data = req.data().get<IAuthenticatedUser>() ;
+           if ( !user_data )
+                resp.json(R"({"success": true })");
+            
+    }, {logout} ) ;
+
+    app.addRoute("GET", "/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
         resp.redirect("/home/");
     } ) ;
 
     app.addRoute("GET", "home/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
-      
-        auto locale = req.data().get("locale") ;
-        rdr.setLocale(locale) ;
+        render("landing.html", rdr, req, resp) ;
+    }, { locale, check } ) ;
 
-
-         resp.write(rdr.render("landing.html", 
-            Variant::Object{{"app", Variant::Object{{
-                "locale", locale
-            }}
-        }}));
-
-  
-    }, { locale } ) ;
-
-      app.addRoute("GET", "routes/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
-        auto locale = req.data().get("locale") ;
-        rdr.setLocale(locale) ;
-
-         resp.write(rdr.render("routes.html", 
-            Variant::Object{{"app", Variant::Object{{
-                "locale", locale
-            }}
-        }}));
-
-  
-    }, { locale } ) ;
+    app.addRoute("GET", "routes/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
+         render("routes.html", rdr, req, resp) ;
+    }, { locale, check } ) ;
+    
     app.addRoute("GET", "public/{file:.*}", [&session_manager, &rdr](HTTPServerRequest& req, HTTPServerResponse& resp) {
      //   resp.write(rdr.renderString("Requested file: {{file}}", { {"file", req.getRouteAttribute("file")} })) ;
       

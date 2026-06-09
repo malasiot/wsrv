@@ -71,10 +71,10 @@ int main(int argc, char *argv[]) {
     SimpleAuthProvider provider ;
 
     app->addRoute("GET|POST", "/login", [&rdr](HTTPServerRequest& req, HTTPServerResponse& resp) {
-        auto user_id = req.data().get("auth.user");
+        auto user = req.data().get<IAuthenticatedUser>();
         
-        if ( !user_id.empty() ) {
-            resp.write(rdr.renderString("<h1>Hello user {{id}}</h1><h3><a href=\"/logout/\">Logout</a> ", {{"id", user_id}})) ;
+        if ( user ) {
+            resp.write(rdr.renderString("<h1>Hello user {{id}}</h1><h3><a href=\"/logout/\">Logout</a> ", {{"id", user->getUniqueId()}})) ;
         }
         else {
             string error = "";
@@ -91,9 +91,9 @@ int main(int argc, char *argv[]) {
     }, { std::make_shared<SessionLoginController>(session_manager.get(), &provider)}) ;
 
     app->addRoute("GET", "/logout", [](HTTPServerRequest& req, HTTPServerResponse& resp) {
-       auto user_id = req.data().get("auth.user");
+        auto user = req.data().get<IAuthenticatedUser>();
         
-        if ( user_id.empty()) 
+        if ( user == nullptr ) 
             resp.write("<h1>Logout out succesfully</h1><h3><a href=\"/login/\">Login</a> ") ;
         else {
             resp.write("Logout failed");
@@ -102,12 +102,12 @@ int main(int argc, char *argv[]) {
     }, { std::make_shared<SessionLogoutController>(session_manager.get())}) ;
 
      app->addRoute("GET", "/dashboard", [](HTTPServerRequest& req, HTTPServerResponse& resp) {
-        auto user_id = req.data().get("auth.user");
+        auto user = req.data().get<IAuthenticatedUser>();
         
-        if ( !user_id.empty() ) 
-            resp.write("<h1>User dashboard</h1><h3>" + user_id + "</h3>") ;
+        if ( user ) 
+            resp.write("<h1>User dashboard</h1><h3>" + user->getUniqueId() + "</h3>") ;
 
-    }, { std::make_shared<SessionAuthController>(session_manager.get(), &provider)}) ;
+    }, { std::make_shared<SessionRequireAuth>(session_manager.get(), &provider)}) ;
   
   
     

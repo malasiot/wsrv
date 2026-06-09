@@ -17,11 +17,11 @@
             <div class="navbar-nav ms-auto align-items-center flex-row">
                 <a class="nav-link me-3" href="/routes">{{ 'navbar.explore'|trans }}</a>
                  <!-- Dynamic Session-Based Admin Links -->
-                {% if is_authenticated|default(false) %}
+                {% if app.is_authenticated|default(false) %}
                     <a class="nav-link me-3 text-warning fw-bold" href="/admin/dashboard">
                         🛠️ {{ 'navbar.dashboard'|trans }}
                     </a>
-                    <a class="btn btn-sm btn-outline-warning me-3" href="/admin/logout">
+                    <a class="btn btn-sm btn-outline-warning me-3" href="javascript:void(0);" id="logoutBtn">
                         {{ 'navbar.logout'|trans }}
                     </a>
                 {% else %}

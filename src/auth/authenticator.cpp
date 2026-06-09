@@ -7,11 +7,11 @@ namespace ws {
 const char *USER_KEY = "user_id" ;
 const char *USER_TOKEN = "user_token" ;
 
-SessionAuthController::SessionAuthController(SessionManager *sm, IAuthenticationProvider *provider): 
+SessionRequireAuth::SessionRequireAuth(SessionManager *sm, IAuthenticationProvider *provider): 
     session_manager_(sm), provider_(provider) {
 }
 
-void SessionAuthController::handle(HTTPServerRequest &req, HTTPServerResponse &res, MiddlewareContext &ctx) {
+void SessionRequireAuth::handle(HTTPServerRequest &req, HTTPServerResponse &res, MiddlewareContext &ctx) {
     Session session(*session_manager_, req, res) ;
 
     std::string user_id = session.get(USER_KEY) ;
@@ -21,10 +21,26 @@ void SessionAuthController::handle(HTTPServerRequest &req, HTTPServerResponse &r
     }  else {
          std::shared_ptr<IAuthenticatedUser> user = provider_->loadUser(user_id);
         
-        req.data().set("auth.user", user->getUniqueId());
+        req.data().set<IAuthenticatedUser>(user);
     }
     ctx.next(req, res) ;
 }
+
+SessionCheckAuth::SessionCheckAuth(SessionManager *sm, IAuthenticationProvider *provider): 
+    session_manager_(sm), provider_(provider) {
+}
+
+void SessionCheckAuth::handle(HTTPServerRequest &req, HTTPServerResponse &res, MiddlewareContext &ctx) {
+    Session session(*session_manager_, req, res) ;
+
+    std::string user_id = session.get(USER_KEY) ;
+    if ( !user_id.empty() ) {
+         std::shared_ptr<IAuthenticatedUser> user = provider_->loadUser(user_id);
+        req.data().set<IAuthenticatedUser>(user);
+    }
+    ctx.next(req, res) ;
+}
+
 
 SessionLoginController::SessionLoginController(SessionManager *sm, IAuthenticationProvider *provider): 
     session_manager_(sm), provider_(provider) {
@@ -41,14 +57,14 @@ void SessionLoginController::handle(HTTPServerRequest &req, HTTPServerResponse &
         auto user = provider_->authenticate(username, password) ;
         if ( user != nullptr ) { // user authenticated
             session.add(USER_KEY, user->getUniqueId()) ; // add session cookie
-            req.data().set("auth.user", user->getUniqueId()) ;
+            req.data().set<IAuthenticatedUser>(user) ;
         }
 
     } else { 
         std::string user_id = session.get(USER_KEY) ;
         if ( !user_id.empty() ) {
             auto user = provider_->loadUser(user_id) ;
-            req.data().set("auth.user", user->getUniqueId()) ;
+            req.data().set<IAuthenticatedUser>(user) ;
         }
     }
     ctx.next(req, res) ;
@@ -66,7 +82,7 @@ void SessionLogoutController::handle(HTTPServerRequest &req, HTTPServerResponse 
     if ( !user_id.empty() )
         session.remove(USER_KEY) ;
     
-    req.data().remove("auth.user") ;
+    req.data().remove<IAuthenticatedUser>() ;
     
 
     ctx.next(req, res) ;

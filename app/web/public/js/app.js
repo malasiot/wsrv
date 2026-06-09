@@ -66,6 +66,27 @@ $(document).ready(function() {
             }
         });
     });
+
+      $('#logoutBtn').click(function(e) {
+        e.preventDefault();
+
+        // Dispatch verification command to your server-side session destroyer
+        $.ajax({
+            url: '/admin/logout',
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                // If backend session clearance verifies true, execute fresh template load
+                if (response.success) {
+                    location.reload();
+                }
+            },
+            error: function() {
+                // Fallback option in case network state errors interrupt response payloads
+                location.reload();
+            }
+        });
+    });
     
     
 });
