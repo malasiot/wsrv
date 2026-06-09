@@ -1,0 +1,252 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'upload.title'|trans }} - {{ parent() }}{% endblock %}
+
+{% block body %}
+    <form id="editRouteForm" data-route-id="{{ route.id }}" enctype="multipart/form-data">
+        <div class="card-body bg-light">
+            <div class="row g-4">
+                
+                {# Left Column: Details & Photo Upload #}
+                <div class="col-lg-5">
+                    <div class="card h-100 border-0 shadow-xs">
+                        <div class="card-body">
+                            {# Route Title #}
+                            <div class="mb-3">
+                                <label for="routeTitle" class="form-label fw-bold">{{ 'route.form.title'|trans }}</label>
+                                <input type="text" class="form-control" id="routeTitle" name="title" value="{{ route.title }}" required>
+                            </div>
+
+                            {# Difficulty Level #}
+                            <div class="mb-3">
+                                <label for="routeDifficulty" class="form-label fw-bold">{{ 'route.form.difficulty'|trans }}</label>
+                                <select class="form-select" id="routeDifficulty" name="difficulty" required>
+                                    <option value="easy" {% if route.difficulty == 'easy' %}selected{% endif %}>{{ 'route.difficulty.easy'|trans }}</option>
+                                    <option value="medium" {% if route.difficulty == 'medium' %}selected{% endif %}>{{ 'route.difficulty.medium'|trans }}</option>
+                                    <option value="hard" {% if route.difficulty == 'hard' %}selected{% endif %}>{{ 'route.difficulty.hard'|trans }}</option>
+                                </select>
+                            </div>
+
+                            {# Length & Duration #}
+                            <div class="row g-2 mb-4">
+                                <div class="col-6">
+                                    <label for="routeLength" class="form-label fw-bold">{{ 'route.form.length'|trans }}</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.1" class="form-control" id="routeLength" name="length" value="{{ route.length }}" required>
+                                        <span class="input-group-text">km</span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <label for="routeDuration" class="form-label fw-bold">{{ 'route.form.duration'|trans }}</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="routeDuration" name="duration" value="{{ route.duration }}" required>
+                                        <span class="input-group-text">{{ 'route.form.minutes'|trans }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {# New: Pictures Upload Dropzone/Input Area #}
+                           <div class="border-top pt-3">
+                                <label class="form-label fw-bold">{{ 'route.form.pictures'|trans }}</label>
+    
+                                {# Separate, dedicated async file input #}
+                                <div class="input-group">
+                                    <input class="form-control" type="file" id="asyncRoutePictures" accept="image/*" multiple>
+                                    <label class="input-group-text btn btn-primary" for="asyncRoutePictures">
+                                    <i class="bi bi-upload"></i>
+                                    </label>
+                                </div>
+                                <div class="form-text">{{ 'route.form.pictures_help'|trans }}</div>
+    
+                                {# Active Gallery Area #}
+                                <div id="imageGalleryContainer" class="d-flex flex-wrap gap-3 mt-3">
+                                {% for picture in route.pictures %}
+                                    <div class="position-relative gallery-item-wrapper" id="pic-box-{{ picture.id }}">
+                                        <img src="{{ asset(picture.url) }}" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;">
+                                        <button type="button" 
+                                            class="btn btn-danger btn-sm position-absolute top-0 end-0 rounded-circle btn-delete-pic p-0 shadow-sm" 
+                                            style="width: 24px; height: 24px; line-height: 1;"
+                                            data-picture-id="{{ picture.id }}">
+                                            &times;
+                                        </button>
+                                    </div>
+                                {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {# Right Column: Multilingual Description #}
+                <div class="col-lg-7">
+                    <div class="card h-100 border-0 shadow-xs">
+                        <div class="card-body d-flex flex-column">
+                            <label class="form-label fw-bold mb-2">{{ 'route.form.description'|trans }}</label>
+                            
+                            <ul class="nav nav-tabs" id="langTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active fw-semibold" id="el-tab" data-bs-toggle="tab" data-bs-target="#lang-el" type="button" role="tab" aria-controls="lang-el" aria-selected="true">
+                                        🇬🇷 {{ 'language.greek'|trans }}
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link fw-semibold" id="en-tab" data-bs-toggle="tab" data-bs-target="#lang-en" type="button" role="tab" aria-controls="lang-en" aria-selected="false">
+                                        🇬🇧 {{ 'language.english'|trans }}
+                                    </button>
+                                </li>
+                            </ul>
+                            
+                            <div class="tab-content border border-top-0 rounded-bottom p-3 flex-grow-1 bg-white" id="langTabsContent">
+                                {# Greek Pane #}
+                                <div class="tab-pane fade show active h-100" id="lang-el" role="tabpanel" aria-labelledby="el-tab">
+                                    <textarea class="form-control h-100 min-vh-25" id="descriptionEl" name="description_el" rows="12" required>{{ route.descriptionEl }}</textarea>
+                                </div>
+                                {# English Pane #}
+                                <div class="tab-pane fade h-100" id="lang-en" role="tabpanel" aria-labelledby="en-tab">
+                                    <textarea class="form-control h-100 min-vh-25" id="descriptionEn" name="description_en" rows="12" required>{{ route.descriptionEn }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        
+        {# Bottom Action Bar #}
+        <div class="card-footer bg-white d-flex justify-content-end gap-2 py-3">
+            <a href="/admin/dashboard/" class="btn btn-secondary px-4" id="btnCancelBottom">
+                {{ 'route.form.cancel'|trans }}
+            </a>
+            <button type="submit" 
+                    class="btn btn-success px-5 fw-bold" 
+                    id="btnSubmitRoute" 
+                    data-txt-save="{{ 'route.form.update'|trans }}" 
+                    data-txt-saving="{{ 'route.form.saving'|trans }}">
+                {{ 'route.form.update'|trans }}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+$(document).ready(function() {
+
+    var $form = $('#editRouteForm');
+    var routeId = $form.data('route-id'); // Read the specific route ID safely
+
+    // 1. ASYNC UPLOAD: Triggers immediately upon file selection
+    $('#asyncRoutePictures').on('change', function() {
+        var files = this.files;
+        if (!files.length) return;
+
+        var formData = new FormData();
+        // Append all selected files into an array format for the backend payload
+        $.each(files, function(i, file) {
+            formData.append('pictures[]', file);
+        });
+
+        // Append temporary loader elements into the grid structure
+        var $gallery = $('#imageGalleryContainer');
+        var loadingPlaceholderHtml = '<div class="d-flex align-items-center justify-content-center border img-thumbnail bg-light async-loader" style="width: 100px; height: 100px;"><div class="spinner-border spinner-border-sm text-secondary" role="status"></div></div>';
+        
+        for (var i = 0; i < files.length; i++) {
+            $gallery.append(loadingPlaceholderHtml);
+        }
+
+        $.ajax({
+            url: '/api/routes/' + routeId + '/pictures/upload',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function(response) {
+                // Clear out loading indicators
+                $('.async-loader').remove();
+
+                // Append new images returned from backend array schema: [{id: X, url: 'Y'}, ...]
+                $.each(response.uploaded_pictures, function(index, pic) {
+                    var newPicHtml = 
+                        '<div class="position-relative gallery-item-wrapper" id="pic-box-' + pic.id + '">' +
+                            '<img src="' + pic.url + '" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;">' +
+                            '<button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 rounded-circle btn-delete-pic p-0 shadow-sm" style="width: 24px; height: 24px; line-height: 1;" data-picture-id="' + pic.id + '">&times;</button>' +
+                        '</div>';
+                    $gallery.append(newPicHtml);
+                });
+            },
+            error: function(xhr) {
+                $('.async-loader').remove();
+                alert('Failed to upload pictures: ' + xhr.responseText);
+            },
+            complete: function() {
+                // Clear form input value to allow uploading the same file selection again if needed
+                $('#asyncRoutePictures').val('');
+            }
+        });
+    });
+
+    // 2. ASYNC DELETE: Event delegation to handle existing and dynamically added DOM elements
+    $('#imageGalleryContainer').on('click', '.btn-delete-pic', function(e) {
+        e.preventDefault();
+        
+        var $button = $(this);
+        var pictureId = $button.data('picture-id');
+        var $wrapper = $('#pic-box-' + pictureId);
+
+        if (!confirm('Are you sure you want to remove this photo?')) return;
+
+        // Apply a visual fade out cue while transaction processes
+        $wrapper.css('opacity', '0.5');
+
+        $.ajax({
+            url: '/api/routes/pictures/delete/' + pictureId,
+            type: 'DELETE', // RESTful action method
+            success: function(response) {
+                // Smoothly wipe item completely out of DOM hierarchy
+                $wrapper.fadeOut(300, function() {
+                    $(this).remove();
+                });
+            },
+            error: function(xhr) {
+                $wrapper.css('opacity', '1');
+                alert('Could not remove photo: ' + xhr.responseText);
+            }
+        });
+    });
+});
+
+    // AJAX PUT / POST Handler
+    $form.on('submit', function(e) {
+        e.preventDefault();
+        
+        var formData = new FormData(this);
+        var $submitBtn = $('#btnSubmitRoute');
+        
+        
+        $submitBtn.prop('disabled', true)
+                  .html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ' + textSaving + '...');
+
+        $.ajax({
+            url: '/api/routes/update/' + routeId, // RESTful endpoint using dynamic ID
+            type: 'POST', // Use POST because standard multipart/form-data files struggle natively over standard PUT requests
+            data: formData,
+            processData: false, 
+            contentType: false, 
+            success: function(response) {
+                // Return to dashboard main screen on success
+                window.location.href = '/admin/dashboard';
+            },
+            error: function(xhr) {
+                alert('Error editing route: ' + xhr.responseText);
+                $submitBtn.prop('disabled', false).text(textSave);
+            }
+        });
+    });
+});
+
+
+</script>
+{% endblock %}
