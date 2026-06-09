@@ -2,8 +2,8 @@
 #include <wsrv/sqlite3_session_manager.hpp>
 #include <wsrv/middleware.hpp>
 #include <wsrv/application.hpp>
-#include <wsrv/forms/form_builder.hpp>
-#include <wsrv/forms/validators.hpp>
+#include <twig/forms/form_builder.hpp>
+#include <twig/forms/validators.hpp>
 #include <wsrv/middleware/locale.hpp>
 #include <wsrv/middleware/csrf.hpp>
 #include <wsrv/middleware/compress.hpp>
@@ -18,6 +18,7 @@
 
 using namespace ws ;
 using namespace std ;
+using namespace twig ;
 using twig::tr ;
 
 string FORM_TEMPLATE = R"(

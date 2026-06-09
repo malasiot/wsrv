@@ -14,6 +14,8 @@
 #include <twig/renderer.hpp>
 #include <twig/translator.hpp>
 
+#include "routes.hpp"
+
 using namespace ws ;
 using namespace std ;
 
@@ -41,16 +43,15 @@ class SimpleAuthProvider: public IAuthenticationProvider {
     }
 };
 
-const char *web_root = "/Users/malasiot/source/wsrv/app/web/" ;
+const char *web_root = "/home/malasiot/source/wsrv/app/web/" ;
 
-void render(const char *templ, twig::TemplateRenderer &rdr, HTTPServerRequest &req, HTTPServerResponse &res) {
+void render(const char *templ, twig::TemplateRenderer &rdr, 
+    HTTPServerRequest &req, HTTPServerResponse &res, const Variant::Object &data = {}) {
     auto user_data = req.data().get<IAuthenticatedUser>() ;
     auto locale = req.data().get<LocaleResolverData>() ;
     rdr.setLocale(locale->locale()) ;
 
-       
-    res.write(rdr.render(templ, 
-                Variant::Object{
+    Variant::Object ctx{
                     {"app", Variant::Object{
                         {
                             "locale", locale->locale()
@@ -58,8 +59,11 @@ void render(const char *templ, twig::TemplateRenderer &rdr, HTTPServerRequest &r
                             "is_authenticated", user_data != nullptr
                         }}
                     },
-                }
-            ));
+                };
+
+    ctx.insert(data.begin(), data.end()) ;
+       
+    res.write(rdr.render(templ, ctx ));
 }
 
 int main(int argc, char *argv[]) {
@@ -114,12 +118,35 @@ int main(int argc, char *argv[]) {
         
     }, {locale, auth} ) ;
 
-     admin.addRoute("GET", "logout/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
+    admin.addRoute("GET", "upload/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
+            render("admin/upload.html", rdr, req, resp) ;
+    }, {locale, auth} ) ;
+
+    admin.addRoute("GET", "logout/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
          auto user_data = req.data().get<IAuthenticatedUser>() ;
            if ( !user_data )
                 resp.json(R"({"success": true })");
-            
     }, {logout} ) ;
+
+
+    Blueprint routes("routes/") ;
+
+    routes.addRoute("POST", "create/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
+        
+        xdb::Connection con(std::string("sqlite:") + web_root);
+        Routes model(con) ;
+        uint64_t id = model.createRoute(req.getPostAttribute("title"), req.getPostAttribute("difficulty")) ;
+        resp.json("({\"id\":" + std::to_string(id) + "}") ;
+    }, {locale, auth} ) ;
+
+    routes.addRoute("GET", "edit/{id}/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
+        render("routes/edit.html", rdr, req, resp, Variant::Object{ 
+            {"route", Variant::Object{
+                { "id", "10"},
+                { "title", "kkk" }
+            }
+            }}) ;
+    }, {locale, auth} ) ;
 
     app.addRoute("GET", "/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
         resp.redirect("/home/");
@@ -142,6 +169,7 @@ int main(int argc, char *argv[]) {
     }) ;
 
     app.registerBlueprint(admin) ;
+    app.registerBlueprint(routes) ;
 
     
     server.run() ;

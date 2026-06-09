@@ -55,10 +55,6 @@ SET ( SOURCES
     auth/authenticator.cpp
     auth/jwt_service.cpp
 
-    forms/form_builder.cpp
-    forms/normalizers.cpp
-    forms/validators.cpp
-
     middleware/locale.cpp
     middleware/request_logger.cpp
     middleware/csrf.cpp
