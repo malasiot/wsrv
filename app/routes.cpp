@@ -1,13 +1,14 @@
 #include "routes.hpp"
 
-uint64_t Routes::addRoute(const std::string &title, int difficulty) {
+uint64_t Routes::createRoute(const std::string &title, const std::string &difficulty, const GPX &gpx) {
     createTables() ;
     con_.execute("INSERT INTO routes (title, difficulty) VALUES (?, ?)", title, difficulty);
     return con_.last_insert_rowid() ;
 }
 
 void Routes::createTables() {
-    con_.execute("CREATE TABLE IF NOT EXISTS routes (id INTEGER PRIMARY KEY, title TEXT, difficulty INTEGER)");
+    con_.execute("SELECT InitSpatialMetadata(1);");
+    con_.execute("CREATE TABLE IF NOT EXISTS routes (id INTEGER PRIMARY KEY, title TEXT, difficulty TEXT)");
 }
 
 std::optional<Route> Routes::fetchRoute(uint64_t id) {

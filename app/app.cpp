@@ -15,6 +15,7 @@
 #include <twig/translator.hpp>
 
 #include "routes.hpp"
+#include "util/gpx.hpp"
 
 using namespace ws ;
 using namespace std ;
@@ -43,7 +44,7 @@ class SimpleAuthProvider: public IAuthenticationProvider {
     }
 };
 
-const char *web_root = "/home/malasiot/source/wsrv/app/web/" ;
+const char *web_root = "/Users/malasiot/source/wsrv/app/web/" ;
 
 void render(const char *templ, twig::TemplateRenderer &rdr, 
     HTTPServerRequest &req, HTTPServerResponse &res, const Variant::Object &data = {}) {
@@ -132,11 +133,24 @@ int main(int argc, char *argv[]) {
     Blueprint routes("routes/") ;
 
     routes.addRoute("POST", "create/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
-        
-        xdb::Connection con(std::string("sqlite:") + web_root);
+        auto locale = req.data().get<LocaleResolverData>() ;
+        GPX data ;
+        auto files = req.getUploadedFiles();
+        if ( files.count("gps_file") ) {
+            istringstream strm(files["gps_file"].data_) ;
+           
+            GPXParser parser ;
+            if ( !parser.parse(strm, data) ) {
+                 string error = translator.translate(twig::tr("gpx.error"), locale->locale()) ;
+                 resp.json("{\"error\":\"" + error + "\"}") ;
+                 return ;
+            }
+        }
+        const char *spatialite = "/opt/homebrew/lib/mod_spatialite";
+        xdb::Connection con(std::string("sqlite:mode=rc;db=") + web_root + "db/db.sqlite" + ";ext=" + spatialite);
         Routes model(con) ;
-        uint64_t id = model.createRoute(req.getPostAttribute("title"), req.getPostAttribute("difficulty")) ;
-        resp.json("({\"id\":" + std::to_string(id) + "}") ;
+        uint64_t id = model.createRoute(req.getPostAttribute("title"), req.getPostAttribute("difficulty"), data) ;
+        resp.json("{\"id\":" + std::to_string(id) + "}") ;
     }, {locale, auth} ) ;
 
     routes.addRoute("GET", "edit/{id}/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {

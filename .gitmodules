@@ -4,6 +4,6 @@
 [submodule "libs/twig"]
 	path = libs/twig
 	url = git@github.com:malasiot/twig.git
-[submodule "app/xdb"]
-	path = app/xdb
+[submodule "app/libs/xdb"]
+	path = app/libs/xdb
 	url = git@github.com:malasiot/xdb.git

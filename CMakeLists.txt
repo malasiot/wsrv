@@ -5,7 +5,14 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMake/ ${CMAKE_MODULE_PATH} )
 
 include(setup)
 
-find_package(Sqlite3 REQUIRED)
+if(APPLE)
+    list(APPEND CMAKE_PREFIX_PATH 
+        "/opt/homebrew/opt/sqlite"     # Apple Silicon (M1/M2/M3/M4)
+        "/usr/local/opt/sqlite"         # Intel Macs
+    )
+endif()
+
+find_package(SQLite3 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(CryptoPP REQUIRED)
 find_package(OpenSSL REQUIRED)
