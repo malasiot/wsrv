@@ -404,7 +404,8 @@ bool RequestParser::parse_mime_data(HTTPServerRequest &session, istream &strm, c
             file_info.data_ = data ;
 
             file_info.size_ = data.size() ;
-            session.FILE_.insert({fld, file_info}) ;
+            file_info.id_ = fld ;
+            session.FILE_.push_back(std::move(file_info)) ;
         }
     }
 

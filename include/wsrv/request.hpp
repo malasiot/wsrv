@@ -32,6 +32,7 @@ public:
     bool supportsGzip() const ;
 
     struct UploadedFile {
+        std::string id_ ;
         std::string name_ ;	// The original filename
         std::string path_ ; // The path of a local temporary copy of the uploaded file
         std::string mime_ ;	// MIME information of the uploaded file
@@ -53,7 +54,8 @@ public:
 
     MiddlwareDataStorage &data() { return mw_data_ ; }
 
-    const std::map<std::string, UploadedFile> &getUploadedFiles() const { return FILE_ ; }
+    const std::vector<UploadedFile> &getUploadedFiles() const { return FILE_ ; }
+
     const Dictionary &getCookies() const { return COOKIE_ ; }
     std::string getCookie(const std::string &key, const std::string &def = std::string()) const ;
 
@@ -80,7 +82,7 @@ protected:
     Dictionary COOKIE_ ; // Cookies
     Dictionary ROUTE_ ;  // Attributes extracted from the request path (e.g. id in /user/{id})
    
-    std::map<std::string, UploadedFile> FILE_ ;	// Uploaded files
+    std::vector<UploadedFile> FILE_ ;	// Uploaded files
 
     MiddlwareDataStorage mw_data_ ;
 

@@ -60,9 +60,9 @@
     
                                 {# Active Gallery Area #}
                                 <div id="imageGalleryContainer" class="d-flex flex-wrap gap-3 mt-3">
-                                {% for picture in route.pictures %}
+                                {% for picture in route.photos %}
                                     <div class="position-relative gallery-item-wrapper" id="pic-box-{{ picture.id }}">
-                                        <img src="{{ asset(picture.url) }}" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;">
+                                        <img src="{{ picture.url }}" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;">
                                         <button type="button" 
                                             class="btn btn-danger btn-sm position-absolute top-0 end-0 rounded-circle btn-delete-pic p-0 shadow-sm" 
                                             style="width: 24px; height: 24px; line-height: 1;"
@@ -157,7 +157,7 @@ $(document).ready(function() {
         }
 
         $.ajax({
-            url: '/api/routes/' + routeId + '/pictures/upload',
+            url: '/api/routes/' + routeId + '/photos/upload',
             type: 'POST',
             data: formData,
             processData: false,
@@ -202,8 +202,8 @@ $(document).ready(function() {
         $wrapper.css('opacity', '0.5');
 
         $.ajax({
-            url: '/api/routes/pictures/delete/' + pictureId,
-            type: 'DELETE', // RESTful action method
+            url: '/api/photos/delete/' + pictureId,
+            type: 'POST', // RESTful action method
             success: function(response) {
                 // Smoothly wipe item completely out of DOM hierarchy
                 $wrapper.fadeOut(300, function() {
@@ -216,7 +216,7 @@ $(document).ready(function() {
             }
         });
     });
-});
+
 
     // AJAX PUT / POST Handler
     $form.on('submit', function(e) {
@@ -245,8 +245,7 @@ $(document).ready(function() {
             }
         });
     });
+
 });
-
-
 </script>
 {% endblock %}

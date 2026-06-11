@@ -12,7 +12,7 @@ static string gpxToWKTLines(const GPX &data) {
     for( const auto &trk: data.tracks_ ) {
        
         for(const auto &seg: trk.segments_ ) {
-            if ( seg.points_.empty() ) continue ;
+            if ( seg.points_.size() < 2 ) continue ;
             if ( !is_first_seg ) ls <<  ',' ;
             else is_first_seg = false ;
             
@@ -32,13 +32,22 @@ static string gpxToWKTLines(const GPX &data) {
     }
 
     ls << ')' ;
+
+    ofstream ss("/tmp/test.txt") ;
+    ss << ls.str() ;
     return ls.str() ;
 }
 
-uint64_t Routes::createRoute(xdb::Connection &con, const Variant &title, const std::string &difficulty, const GPX &gpx) {
-    con.execute("INSERT INTO tracks (title, difficulty, geom) VALUES ($1, $2, ST_GeomFromText($3, 4326))", title.toJSON(), difficulty, "MULTILINESTRING EMPTY");
-    return con.last_insert_rowid() ;
+int64_t Routes::createRoute(xdb::Connection &con, const Variant &title, const std::string &difficulty, const GPX &gpx) {
+    return con.execInsert("INSERT INTO tracks (title, difficulty, geom) VALUES ($1, $2, ST_GeomFromText($3, 4326))", title.toJSON(), difficulty, gpxToWKTLines(gpx));
 }
+
+int64_t Routes::addPhoto(xdb::Connection &con, uint64_t track_id, const std::string &data,
+const std::string &mime) {
+    xdb::Blob img(data.data(), data.data() + data.size()) ;
+    return con.execInsert("INSERT INTO photos (data, mime, track_id) VALUES ($1, $2, $3) RETURNING id", img, mime, track_id);
+}
+
 
 void Routes::createTables(xdb::Connection &con) {
     con.execute("SET client_min_messages = WARNING;");
@@ -65,7 +74,8 @@ void Routes::createTables(xdb::Connection &con) {
     con.execute("CREATE INDEX IF NOT EXISTS idx_wpts_name_jsonb ON waypoints USING gin (name)");
 
     con.execute(R"(CREATE TABLE IF NOT EXISTS photos (id SERIAL PRIMARY KEY, 
-        url TEXT NOT NULL, 
+        data BYTEA NOT NULL,
+        mime TEXT NOT NULL, 
         caption JSONB,
         track_id INTEGER NOT NULL, 
         wpt INTEGER DEFAULT NULL,
@@ -80,6 +90,36 @@ void Routes::createTables(xdb::Connection &con) {
 
 }
 
+std::optional<Photo> Routes::getPhoto(xdb::Connection &con, uint64_t id) {
+    auto q = con.query("SELECT data, mime FROM photos WHERE id = $1 LIMIT 1", id);
+    auto row = q.getOne() ;
+
+    xdb::Blob img ;
+    if ( row ) {
+        Photo photo ;
+        photo.id_ = id ;
+        
+        row >> img >> photo.mime_ ;
+        photo.data_.assign(img.data(), img.data() + img.size()) ;
+        return photo ;
+    } else 
+    return {} ;
+}
+
+std::vector<int64_t> Routes::getAllPhotos(xdb::Connection &con, int64_t track_id) {
+    vector<int64_t> ids ;
+    auto q = con.query("SELECT id FROM photos WHERE track_id = $1", track_id);
+    for ( auto row: q ) {
+       int64_t id ;
+       row.into(id) ;
+       ids.push_back(id) ;
+    } 
+    return ids ;
+}
+
+void Routes::deletePhoto(xdb::Connection &con, int64_t photo_id) {
+    con.execute("DELETE FROM photos WHERE id = $1", photo_id);
+}
 
 std::optional<Route> Routes::fetchRoute(xdb::Connection &con, uint64_t id) {
     auto q = con.query("SELECT title, difficulty FROM routes WHERE id = ? LIMIT 1", id);

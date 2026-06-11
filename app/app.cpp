@@ -8,6 +8,7 @@
 #include <wsrv/middleware/locale.hpp>
 #include <wsrv/middleware/request_logger.hpp>
 #include <wsrv/auth/authenticator.hpp>
+
 #include <mutex>
 #include <iostream>
 
@@ -18,13 +19,11 @@
 #include "util/gpx.hpp"
 #include "connection_pool.hpp"
 #include "context.hpp"
+#include "util/string_util.hpp"
 
 using namespace ws ;
 using namespace std ;
 
-
-
-const char *web_root = "/home/malasiot/source/wsrv/app/web/" ;
 
 void render(const char *templ, twig::TemplateRenderer &rdr, 
     HTTPServerRequest &req, HTTPServerResponse &res, const Variant::Object &data = {}) {
@@ -51,7 +50,7 @@ int main(int argc, char *argv[]) {
 
     HttpServer server("127.0.0.1:5110") ;
 
-    AppContext app_context(Variant::fromJSONFile("/Users/malasiot/wsrv/app/config.json"));
+    AppContext app_context(Variant::fromJSONFile("/Users/malasiot/source/wsrv/app/config.json"));
 
     Application app ;
     
@@ -111,14 +110,59 @@ int main(int argc, char *argv[]) {
     }, {logout} ) ;
 
 
+    Blueprint api("api/") ;
+
+    api.addRoute("POST", "/routes/{id}/photos/upload/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
+        auto locale = req.data().get<LocaleResolverData>() ;
+       
+        uint64_t id = stoull(req.getRouteAttribute("id")) ;
+
+        Variant::Array photos ;
+        auto files = req.getUploadedFiles();
+        for( const auto &pic: files ) {
+            if ( pic.id_ != "pictures[]") continue ;
+            string mime = mimeFromHeader(pic.data_) ;
+
+            ConnectionPool::ConnectionPtr conn = con.acquireConnection();
+            uint64_t photo_id = Routes::addPhoto(*conn, id, pic.data_, mime) ;
+            string rel_url =  "/api/photo/" + std::to_string(photo_id) + "/";
+
+            photos.push_back( Variant::Object{{"id", id }, {"url", rel_url}} ) ; 
+           
+        }
+        Variant::Object result{{"uploaded_pictures", photos}} ;
+        resp.json(Variant(result).toJSON()) ;
+      
+
+    });
+
+     api.addRoute("GET", "/photo/{id}/",  [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
+        uint64_t id = stoull(req.getRouteAttribute("id")) ;
+
+        ConnectionPool::ConnectionPtr conn = con.acquireConnection();
+        auto photo = Routes::getPhoto(*conn, id) ;
+        if ( photo ) 
+            resp.write(photo->data_, photo->mime_); 
+     }) ;
+
+    api.addRoute("POST", "/photos/delete/{id}/",  [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
+        int64_t photo_id = stoll(req.getRouteAttribute("id")) ;
+
+        ConnectionPool::ConnectionPtr conn = con.acquireConnection();
+        Routes::deletePhoto(*conn, photo_id) ;
+        resp = HTTPServerResponse::stockReply(HTTPServerResponse::ok) ;
+     }) ;
+
+
     Blueprint routes("routes/") ;
 
     routes.addRoute("POST", "create/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
         auto locale = req.data().get<LocaleResolverData>() ;
         GPX data ;
         auto files = req.getUploadedFiles();
-        if ( files.count("gps_file") ) {
-            istringstream strm(files["gps_file"].data_) ;
+        for ( const auto &file: files ) {
+            if ( file.id_ != "gps_file" ) continue ;
+            istringstream strm(file.data_) ;
            
             GPXParser parser ;
             if ( !parser.parse(strm, data) ) {
@@ -128,25 +172,30 @@ int main(int argc, char *argv[]) {
             }
         }
 
-     //   const char *spatialite = "/opt/homebrew/lib/mod_spatialite";
-    //    xdb::Connection con(std::string("sqlite:mode=rc;db=") + web_root + "db/db.sqlite" + ";ext=" + spatialite);
-    
-    ConnectionPool::ConnectionPtr conn = con.acquireConnection();
- Variant::Object title{{locale->locale(), req.getPostAttribute("title")}};
+        ConnectionPool::ConnectionPtr conn = con.acquireConnection();
+
+        Variant::Object title{{locale->locale(), req.getPostAttribute("title")}};
     
         uint64_t id = Routes::createRoute(*conn, title, req.getPostAttribute("difficulty"), data) ;
-
-
-       
-     
+   
         resp.json("{\"id\":" + std::to_string(id) + "}") ;
     }, {locale, auth} ) ;
 
     routes.addRoute("GET", "edit/{id}/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
+         ConnectionPool::ConnectionPtr conn = con.acquireConnection();
+
+        string id = req.getRouteAttribute("id") ;
+        auto photos = Routes::getAllPhotos(*conn, stoll(id)) ;
+        Variant::Array photo_list ;
+        for( const auto &photo_id: photos) {
+            Variant::Object item{{"id", photo_id}, {"url", "/api/photo/" + std::to_string(photo_id)}} ;
+            photo_list.emplace_back(std::move(item));
+        }
         render("routes/edit.html", *app_context.rdr_, req, resp, Variant::Object{ 
             {"route", Variant::Object{
-                { "id", "10"},
-                { "title", "kkk" }
+                { "id", req.getRouteAttribute("id")},
+                { "title", "kkk" },
+                { "photos", photo_list}
             }
             }}) ;
     }, {locale, auth} ) ;
@@ -163,16 +212,21 @@ int main(int argc, char *argv[]) {
          render("routes.html", *app_context.rdr_, req, resp) ;
     }, { locale, check } ) ;
     
-    app.addRoute("GET", "public/{file:.*}", [&app_context](HTTPServerRequest& req, HTTPServerResponse& resp) {
-     //   resp.write(rdr.renderString("Requested file: {{file}}", { {"file", req.getRouteAttribute("file")} })) ;
-      
-        if ( !resp.serveStaticFile(string(web_root) + "public/", req.getRouteAttribute("file")) ) {
+    app.addRoute("GET", "public/{file:.*}", [&app_context](HTTPServerRequest& req, HTTPServerResponse& resp) {  
+        if ( !resp.serveStaticFile(app_context.web_root_ + "public/", req.getRouteAttribute("file")) ) {
+             resp = HTTPServerResponse::stockReply(HTTPServerResponse::not_found) ;
+        }
+    }) ;
+
+      app.addRoute("GET", "data/photos/{file}", [&app_context](HTTPServerRequest& req, HTTPServerResponse& resp) {  
+        if ( !resp.serveStaticFile(app_context.web_root_ + "/public/data/photos/", req.getRouteAttribute("file")) ) {
              resp = HTTPServerResponse::stockReply(HTTPServerResponse::not_found) ;
         }
     }) ;
 
     app.registerBlueprint(admin) ;
     app.registerBlueprint(routes) ;
+    app.registerBlueprint(api) ;
 
     
     server.run() ;

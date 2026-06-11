@@ -43,17 +43,17 @@ int main(int argc, char *argv[]) {
   
          if ( req.getMethod() == "POST"  ) {
              auto files = req.getUploadedFiles() ;
-             if ( files.empty() 
-                  || files.find("file") == files.end() 
-                  || files["file"].size_ == 0 ) {
-                        resp.write(std::regex_replace(UPLOAD_FORM, std::regex("{{error}}"), "No file uploaded")) ;
-                 return ;
-             } else {
-                auto &file = files["file"] ;
+          
+             for( const auto &file: files ) {
+                if ( file.id_ != "file" ) continue ;
+                if ( file.size_ == 0 ) continue ;
+
                 cout << "Received file: " << file.name_ << " (" << file.size_ << " bytes)\n" ;
                 resp.write("File uploaded successfully: " + file.name_) ;
+                return ;
              }
 
+            resp.write(std::regex_replace(UPLOAD_FORM, std::regex("{{error}}"), "No file uploaded")) ;
             
          }
          else {
