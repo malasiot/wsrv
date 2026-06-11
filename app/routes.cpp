@@ -1,18 +1,49 @@
 #include "routes.hpp"
 
-uint64_t Routes::createRoute(const std::string &title, const std::string &difficulty, const GPX &gpx) {
-    createTables() ;
-    con_.execute("INSERT INTO routes (title, difficulty) VALUES (?, ?)", title, difficulty);
-    return con_.last_insert_rowid() ;
+#include <iostream>
+
+using namespace std ;
+
+static string gpxToWKTLines(const GPX &data) {
+    stringstream ls ;
+    ls << "MULTILINESTRING(" ;
+        
+    bool is_first_seg = true ;
+    for( const auto &trk: data.tracks_ ) {
+       
+        for(const auto &seg: trk.segments_ ) {
+            if ( seg.points_.empty() ) continue ;
+            if ( !is_first_seg ) ls <<  ',' ;
+            else is_first_seg = false ;
+            
+            ls << '(' ;
+           
+            bool is_first_pt = true ;
+            for( const auto &pt: seg.points_ ) {
+                if ( !is_first_pt ) ls << ',' ;
+                else is_first_pt = false ;
+                
+                ls << pt.lat_ << ' ' << pt.lon_ ; 
+            }
+            ls << ')';
+
+        }
+
+    }
+
+    ls << ')' ;
+    return ls.str() ;
 }
 
-void Routes::createTables() {
-    con_.execute("SELECT InitSpatialMetadata(1);");
-    con_.execute("CREATE TABLE IF NOT EXISTS routes (id INTEGER PRIMARY KEY, title TEXT, difficulty TEXT)");
+uint64_t Routes::createRoute(xdb::Connection &con, const std::string &title, const std::string &difficulty, const GPX &gpx) {
+    con.execute("INSERT INTO routes (title, difficulty, geometry) VALUES (?, ?, ST_GeomFromText(?, 4326))", 
+        title, difficulty, gpxToWKTLines(gpx));
+    return con.last_insert_rowid() ;
 }
 
-std::optional<Route> Routes::fetchRoute(uint64_t id) {
-    auto q = con_.query("SELECT title, difficulty FROM routes WHERE id = ? LIMIT 1", id);
+
+std::optional<Route> Routes::fetchRoute(xdb::Connection &con, uint64_t id) {
+    auto q = con.query("SELECT title, difficulty FROM routes WHERE id = ? LIMIT 1", id);
     auto row = q.getOne() ;
     if ( row ) {
         Route r ;
@@ -21,4 +52,22 @@ std::optional<Route> Routes::fetchRoute(uint64_t id) {
         return r ;
     } else 
     return {} ;
+}
+
+ 
+
+
+void Routes::initTables(xdb::Connection &con) {
+    try {
+        con.execute("CREATE TABLE IF NOT EXISTS routes ("
+            "    id INT AUTO_INCREMENT PRIMARY KEY,"
+            "    title VARCHAR(250) NOT NULL,"
+            "    difficulty VARCHAR(20) NOT NULL,"
+            "    geometry MULTILINESTRING NOT NULL,"
+            "    SPATIAL INDEX(geometry)"
+            ") ENGINE=InnoDB;");
+    } catch ( xdb::Exception &e ) {
+        cerr << e.what() << endl ;
+    }
+
 }

@@ -11,14 +11,11 @@ struct Route {
 
 class Routes {
 public:
-    Routes(xdb::Connection &con): con_(con) {}
 
-    uint64_t createRoute(const std::string &title, const std::string &difficulty, const GPX &gpx) ;
-    std::optional<Route> fetchRoute(uint64_t id) ;
 
-private:
+    static uint64_t createRoute(xdb::Connection &con, const std::string &title, const std::string &difficulty, const GPX &gpx) ;
+    static std::optional<Route> fetchRoute(xdb::Connection &con, uint64_t id) ;
 
-    void createTables() ;
+    static void initTables(xdb::Connection &con) ;
 
-    xdb::Connection &con_ ;
 };

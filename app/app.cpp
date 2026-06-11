@@ -16,6 +16,7 @@
 
 #include "routes.hpp"
 #include "util/gpx.hpp"
+#include "connection_pool.hpp"
 
 using namespace ws ;
 using namespace std ;
@@ -93,8 +94,15 @@ int main(int argc, char *argv[]) {
     auto logout = std::make_shared<SessionLogoutController>(&session_manager) ;
 
     DebugLogger logger ;
-  
     app.useGlobal(std::make_shared<RequestLogger>(logger)) ;
+
+    string url = "mysql:db=hp;host=localhost;username=malasiot;password=sotiris99" ;
+    ConnectionPool con(url, 4) ;
+    
+    {
+        xdb::Connection  c(url) ;
+        Routes::initTables(c) ;
+    }
 
     Blueprint admin("admin/") ;
 
@@ -146,10 +154,13 @@ int main(int argc, char *argv[]) {
                  return ;
             }
         }
-        const char *spatialite = "/opt/homebrew/lib/mod_spatialite";
-        xdb::Connection con(std::string("sqlite:mode=rc;db=") + web_root + "db/db.sqlite" + ";ext=" + spatialite);
-        Routes model(con) ;
-        uint64_t id = model.createRoute(req.getPostAttribute("title"), req.getPostAttribute("difficulty"), data) ;
+     //   const char *spatialite = "/opt/homebrew/lib/mod_spatialite";
+    //    xdb::Connection con(std::string("sqlite:mode=rc;db=") + web_root + "db/db.sqlite" + ";ext=" + spatialite);
+    
+    ConnectionPool::ConnectionPtr conn = con.acquireConnection();
+
+    
+        uint64_t id = Routes::createRoute(*conn, req.getPostAttribute("title"), req.getPostAttribute("difficulty"), data) ;
         resp.json("{\"id\":" + std::to_string(id) + "}") ;
     }, {locale, auth} ) ;
 
