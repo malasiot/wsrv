@@ -16,35 +16,14 @@
 
 #include "routes.hpp"
 #include "util/gpx.hpp"
+#include "context.hpp"
 
 using namespace ws ;
 using namespace std ;
 
-class User: public IAuthenticatedUser {
-public:
 
-    User(const std::string &id): id_(id) {} 
-    virtual std::string getUniqueId() const override { return id_ ; };
-private:
-    std::string id_ ;
-};
 
-class SimpleAuthProvider: public IAuthenticationProvider {
- virtual std::shared_ptr<IAuthenticatedUser> authenticate(
-        const std::string& username, 
-        const std::string& password
-    ) override {
-        
-        if ( username == "root" && password == "test" ) return make_shared<User>("1");
-        else return nullptr ;
-    }
-
-    std::shared_ptr<IAuthenticatedUser> loadUser(const std::string &id) override {
-        return make_shared<User>(id) ;
-    }
-};
-
-const char *web_root = "/Users/malasiot/source/wsrv/app/web/" ;
+const char *web_root = "/home/malasiot/source/wsrv/app/web/" ;
 
 void render(const char *templ, twig::TemplateRenderer &rdr, 
     HTTPServerRequest &req, HTTPServerResponse &res, const Variant::Object &data = {}) {
@@ -98,6 +77,10 @@ int main(int argc, char *argv[]) {
 
     Blueprint admin("admin/") ;
 
+    xdb::Connection con("pgsql:dbname=hp;host=localhost;port=5432;user=postgres");
+    Routes routes_db(con) ;
+    routes_db.createTables() ;
+
     admin.addRoute("GET|POST", "login/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
         auto user_data = req.data().get<IAuthenticatedUser>() ;
         auto locale = req.data().get<LocaleResolverData>() ;
@@ -146,10 +129,10 @@ int main(int argc, char *argv[]) {
                  return ;
             }
         }
-        const char *spatialite = "/opt/homebrew/lib/mod_spatialite";
-        xdb::Connection con(std::string("sqlite:mode=rc;db=") + web_root + "db/db.sqlite" + ";ext=" + spatialite);
-        Routes model(con) ;
-        uint64_t id = model.createRoute(req.getPostAttribute("title"), req.getPostAttribute("difficulty"), data) ;
+
+        Variant::Object title{{locale->locale(), req.getPostAttribute("title")}};
+     
+        uint64_t id = routes_db.createRoute(title, req.getPostAttribute("difficulty"), data) ;
         resp.json("{\"id\":" + std::to_string(id) + "}") ;
     }, {locale, auth} ) ;
 

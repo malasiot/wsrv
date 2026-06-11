@@ -4,6 +4,7 @@ include_directories(
 
 add_subdirectory(libs/xdb)
 
-add_executable(web_app app.cpp routes.cpp util/xml_pull_parser.cpp util/gpx.cpp)
+add_executable(web_app app.cpp routes.cpp util/xml_pull_parser.cpp util/gpx.cpp
+    context.cpp)
 target_link_libraries(web_app wsrv xdb)
 
