@@ -17,35 +17,14 @@
 #include "routes.hpp"
 #include "util/gpx.hpp"
 #include "connection_pool.hpp"
+#include "context.hpp"
 
 using namespace ws ;
 using namespace std ;
 
-class User: public IAuthenticatedUser {
-public:
 
-    User(const std::string &id): id_(id) {} 
-    virtual std::string getUniqueId() const override { return id_ ; };
-private:
-    std::string id_ ;
-};
 
-class SimpleAuthProvider: public IAuthenticationProvider {
- virtual std::shared_ptr<IAuthenticatedUser> authenticate(
-        const std::string& username, 
-        const std::string& password
-    ) override {
-        
-        if ( username == "root" && password == "test" ) return make_shared<User>("1");
-        else return nullptr ;
-    }
-
-    std::shared_ptr<IAuthenticatedUser> loadUser(const std::string &id) override {
-        return make_shared<User>(id) ;
-    }
-};
-
-const char *web_root = "/Users/malasiot/source/wsrv/app/web/" ;
+const char *web_root = "/home/malasiot/source/wsrv/app/web/" ;
 
 void render(const char *templ, twig::TemplateRenderer &rdr, 
     HTTPServerRequest &req, HTTPServerResponse &res, const Variant::Object &data = {}) {
@@ -72,47 +51,41 @@ int main(int argc, char *argv[]) {
 
     HttpServer server("127.0.0.1:5110") ;
 
+    AppContext app_context(Variant::fromJSONFile("/Users/malasiot/wsrv/app/config.json"));
+
     Application app ;
     
     server.setHandler(&app) ;
 
-    SQLite3SessionManager session_manager("/tmp/session.sqlite");
+    auto locale = std::make_shared<LocaleResolver>(app_context.locales_, app_context.default_locale_) ;
 
-    std::shared_ptr<twig::FileSystemTemplateLoader> loader(new twig::FileSystemTemplateLoader({std::string(web_root) + "/templates/"}));
-    twig::TemplateRenderer rdr(loader) ;
-
-    twig::TranslationManager translator ;
-    translator.loadAllFromDirectory(std::string(web_root) + "/translations/");
-    rdr.setTranslationManager(&translator);
-
-    auto locale = std::make_shared<LocaleResolver>(std::vector<std::string>{"en", "el"}, "en") ;
-
-    SimpleAuthProvider provider ;
-    auto login = std::make_shared<SessionLoginController>(&session_manager, &provider);
-    auto auth = std::make_shared<SessionRequireAuth>(&session_manager, &provider);
-    auto check = std::make_shared<SessionCheckAuth>(&session_manager, &provider) ;
-    auto logout = std::make_shared<SessionLogoutController>(&session_manager) ;
+    auto login = std::make_shared<SessionLoginController>(app_context.session_manager_.get(), app_context.auth_.get());
+    auto auth = std::make_shared<SessionRequireAuth>(app_context.session_manager_.get(), app_context.auth_.get());
+    auto check = std::make_shared<SessionCheckAuth>(app_context.session_manager_.get(), app_context.auth_.get()) ;
+    auto logout = std::make_shared<SessionLogoutController>(app_context.session_manager_.get()) ;
 
     DebugLogger logger ;
     app.useGlobal(std::make_shared<RequestLogger>(logger)) ;
 
-    string url = "mysql:db=hp;host=localhost;username=malasiot;password=sotiris99" ;
-    ConnectionPool con(url, 4) ;
+    string url = app_context.url_ ;//"mysql:db=hp;host=localhost;username=malasiot;password=sotiris99" ;
+    ConnectionPool con(url, app_context.num_connections_) ;
     
     {
         xdb::Connection  c(url) ;
-        Routes::initTables(c) ;
+        Routes::createTables(c) ;
     }
 
     Blueprint admin("admin/") ;
 
+    
+
     admin.addRoute("GET|POST", "login/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
         auto user_data = req.data().get<IAuthenticatedUser>() ;
         auto locale = req.data().get<LocaleResolverData>() ;
-        rdr.setLocale(locale->locale()) ;
+        app_context.rdr_->setLocale(locale->locale()) ;
 
          if ( req.getMethod() == "GET" ) {
-            render("admin/login.html", rdr, req, resp) ;
+            render("admin/login.html", *app_context.rdr_, req, resp) ;
         } else {
             if ( user_data )
                 resp.json(R"({"success": true })");
@@ -123,12 +96,12 @@ int main(int argc, char *argv[]) {
     }, {locale, login} ) ;
 
     admin.addRoute("GET", "dashboard/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
-        render("admin/dashboard.html", rdr, req, resp) ;
+        render("admin/dashboard.html", *app_context.rdr_, req, resp) ;
         
     }, {locale, auth} ) ;
 
     admin.addRoute("GET", "upload/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
-            render("admin/upload.html", rdr, req, resp) ;
+            render("admin/upload.html", *app_context.rdr_, req, resp) ;
     }, {locale, auth} ) ;
 
     admin.addRoute("GET", "logout/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
@@ -149,23 +122,28 @@ int main(int argc, char *argv[]) {
            
             GPXParser parser ;
             if ( !parser.parse(strm, data) ) {
-                 string error = translator.translate(twig::tr("gpx.error"), locale->locale()) ;
+                 string error = app_context.translator_->translate(twig::tr("gpx.error"), locale->locale()) ;
                  resp.json("{\"error\":\"" + error + "\"}") ;
                  return ;
             }
         }
+
      //   const char *spatialite = "/opt/homebrew/lib/mod_spatialite";
     //    xdb::Connection con(std::string("sqlite:mode=rc;db=") + web_root + "db/db.sqlite" + ";ext=" + spatialite);
     
     ConnectionPool::ConnectionPtr conn = con.acquireConnection();
-
+ Variant::Object title{{locale->locale(), req.getPostAttribute("title")}};
     
-        uint64_t id = Routes::createRoute(*conn, req.getPostAttribute("title"), req.getPostAttribute("difficulty"), data) ;
+        uint64_t id = Routes::createRoute(*conn, title, req.getPostAttribute("difficulty"), data) ;
+
+
+       
+     
         resp.json("{\"id\":" + std::to_string(id) + "}") ;
     }, {locale, auth} ) ;
 
     routes.addRoute("GET", "edit/{id}/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
-        render("routes/edit.html", rdr, req, resp, Variant::Object{ 
+        render("routes/edit.html", *app_context.rdr_, req, resp, Variant::Object{ 
             {"route", Variant::Object{
                 { "id", "10"},
                 { "title", "kkk" }
@@ -178,14 +156,14 @@ int main(int argc, char *argv[]) {
     } ) ;
 
     app.addRoute("GET", "home/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
-        render("landing.html", rdr, req, resp) ;
+        render("landing.html", *app_context.rdr_, req, resp) ;
     }, { locale, check } ) ;
 
     app.addRoute("GET", "routes/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
-         render("routes.html", rdr, req, resp) ;
+         render("routes.html", *app_context.rdr_, req, resp) ;
     }, { locale, check } ) ;
     
-    app.addRoute("GET", "public/{file:.*}", [&session_manager, &rdr](HTTPServerRequest& req, HTTPServerResponse& resp) {
+    app.addRoute("GET", "public/{file:.*}", [&app_context](HTTPServerRequest& req, HTTPServerResponse& resp) {
      //   resp.write(rdr.renderString("Requested file: {{file}}", { {"file", req.getRouteAttribute("file")} })) ;
       
         if ( !resp.serveStaticFile(string(web_root) + "public/", req.getRouteAttribute("file")) ) {

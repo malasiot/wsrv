@@ -72,14 +72,13 @@ target_include_directories(wsrv PRIVATE
 )
 
 target_include_directories(wsrv PUBLIC
-    ${SQLite3_INCLUDE_DIRS}
     ${ZLIB_INCLUDE_DIR}
 )
 
 target_compile_features(wsrv PRIVATE cxx_std_17)
 
 target_link_libraries(wsrv PUBLIC
-       ${CryptoPP_LIBRARY} SQLite3 ${OPENSSL_LIBRARIES} z jwt-cpp::jwt-cpp
+       ${CryptoPP_LIBRARY} SQLite3::SQLite3 ${OPENSSL_LIBRARIES} z jwt-cpp::jwt-cpp
     OpenSSL::Crypto
     OpenSSL::SSL
     twig

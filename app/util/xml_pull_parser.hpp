@@ -4,6 +4,7 @@
 #include <map>
 #include <sstream>
 #include <memory>
+#include <vector>
 
 #include "detail/read_ahead_stream_adapter.hpp"
 
