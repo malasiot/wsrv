@@ -17,6 +17,10 @@ find_package(ZLIB REQUIRED)
 find_package(CryptoPP REQUIRED)
 find_package(OpenSSL REQUIRED)
 
+if(NOT TARGET SQLite3::SQLite3 AND TARGET SQLite::SQLite3)
+    add_library(SQLite3::SQLite3 ALIAS SQLite::SQLite3)
+endif()
+
 add_subdirectory(libs/twig)
 
 set(JWT_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)

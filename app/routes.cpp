@@ -2,13 +2,13 @@
 
 uint64_t Routes::createRoute(const std::string &title, const std::string &difficulty, const GPX &gpx) {
     createTables() ;
-    con_.execute("INSERT INTO routes (title, difficulty) VALUES (?, ?)", title, difficulty);
+    con_.execute("INSERT INTO routes (title, difficulty, geom) VALUES ($1, $2, ST_GeomFromText($3, 4326))", title, difficulty, );
     return con_.last_insert_rowid() ;
 }
 
 void Routes::createTables() {
-    con_.execute("SELECT InitSpatialMetadata(1);");
-    con_.execute("CREATE TABLE IF NOT EXISTS routes (id INTEGER PRIMARY KEY, title TEXT, difficulty TEXT)");
+    con_.execute(R"(CREATE TABLE IF NOT EXISTS routes (id SERIAL PRIMARY KEY, title TEXT, 
+        difficulty VARCHAR(20), length FLOAT, duration FLOAT, geom GEOMTRY)");
 }
 
 std::optional<Route> Routes::fetchRoute(uint64_t id) {
