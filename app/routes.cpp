@@ -39,7 +39,7 @@ static string gpxToWKTLines(const GPX &data) {
 }
 
 int64_t Routes::createRoute(xdb::Connection &con, const Variant &title, const std::string &difficulty, const GPX &gpx) {
-    return con.execInsert("INSERT INTO tracks (title, difficulty, geom) VALUES ($1, $2, ST_GeomFromText($3, 4326))", title.toJSON(), difficulty, gpxToWKTLines(gpx));
+    return con.execInsert("INSERT INTO tracks (title, difficulty, geom) VALUES ($1, $2, ST_GeomFromText($3, 4326)) RETURNING id", title.toJSON(), difficulty, gpxToWKTLines(gpx));
 }
 
 int64_t Routes::addPhoto(xdb::Connection &con, uint64_t track_id, const std::string &data,
@@ -58,8 +58,9 @@ void Routes::createTables(xdb::Connection &con) {
     con.execute(R"(CREATE TABLE IF NOT EXISTS tracks (id SERIAL PRIMARY KEY, 
         title JSONB NOT NULL, 
         "desc" JSONB,
-        stats JSONB, 
         difficulty VARCHAR(20) NOT NULL,
+        length DOUBLE,
+        duration DOUBLE,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         geom GEOMETRY(MultiLineString, 4326) NOT NULL))");
@@ -92,13 +93,13 @@ void Routes::createTables(xdb::Connection &con) {
 
 }
 
-std::optional<Photo> Routes::getPhoto(xdb::Connection &con, uint64_t id) {
+std::optional<PhotoImageData> Routes::getPhoto(xdb::Connection &con, uint64_t id) {
     auto q = con.query("SELECT data, mime FROM photos WHERE id = $1 LIMIT 1", id);
     auto row = q.getOne() ;
 
     xdb::Blob img ;
     if ( row ) {
-        Photo photo ;
+        PhotoImageData photo ;
         photo.id_ = id ;
         
         row >> img >> photo.mime_ ;
@@ -108,13 +109,15 @@ std::optional<Photo> Routes::getPhoto(xdb::Connection &con, uint64_t id) {
     return {} ;
 }
 
-std::vector<int64_t> Routes::getAllPhotos(xdb::Connection &con, int64_t track_id) {
-    vector<int64_t> ids ;
-    auto q = con.query("SELECT id FROM photos WHERE track_id = $1", track_id);
+std::vector<Photo> Routes::getAllPhotosForTrack(xdb::Connection &con, int64_t track_id, const std::string &locale) {
+    vector<Photo> ids ;
+    string sql = "SELECT id, caption->>'" + locale + "' FROM photos WHERE track_id = $1 AND wpt = -1" ;
+    auto q = con.query(sql.c_str(), track_id);
     for ( auto row: q ) {
-       int64_t id ;
-       row.into(id) ;
-       ids.push_back(id) ;
+       Photo p ;
+       row.into(p.id_, p.caption_) ;
+
+       ids.push_back(std::move(p)) ;
     } 
     return ids ;
 }
@@ -124,15 +127,15 @@ void Routes::deletePhoto(xdb::Connection &con, int64_t photo_id) {
 }
 
 void Routes::updatePhotoCaption(xdb::Connection &con, int64_t id, const std::string &cap, const std::string &locale) {
-    string sql = "UPDATE photos SET caption = jsonb_set(caption, '{" + locale + "}', $1) WHERE id = $2";
+    string sql = "UPDATE photos SET caption = jsonb_set( COALESCE(caption, '{}'::jsonb), '{" + locale + "}', to_jsonb($1::text)) WHERE id = $2";
     con.execute(sql.c_str(), cap, id);
 }
 
-std::optional<Route> Routes::fetchRoute(xdb::Connection &con, uint64_t id) {
+std::optional<RouteEntry> Routes::fetchRoute(xdb::Connection &con, uint64_t id) {
     auto q = con.query("SELECT title, difficulty FROM routes WHERE id = ? LIMIT 1", id);
     auto row = q.getOne() ;
     if ( row ) {
-        Route r ;
+        RouteEntry r ;
         r.id_ = id ;
         row >> r.title_ >> r.difficulty_ ;
         return r ;
@@ -140,3 +143,11 @@ std::optional<Route> Routes::fetchRoute(xdb::Connection &con, uint64_t id) {
     return {} ;
 }
 
+void Routes::updateRoute(xdb::Connection &con, int64_t id, const std::string &title,
+        const std::string &desc, float duration, float length, const std::string &difficulty, const std::string &locale) {
+    string sql = "UPDATE tracks SET title = jsonb_set(title, '{" + locale + "}', to_jsonb($1::text)) " ;
+    sql += ", \"desc\" = jsonb_set(\"desc\", '{" + locale + "}', to_jsonb($2::text))" ;
+    sql += ", length = $3, duration = $4 WHERE id = $5" ;
+
+    con.execute(sql.c_str(), title, desc, length, duration, id);
+}

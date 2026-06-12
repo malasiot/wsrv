@@ -4,6 +4,7 @@
 #include <memory>
 #include <mutex>
 #include <queue>
+#include <condition_variable>
 
 #include <xdb/connection.hpp>
 

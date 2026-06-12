@@ -14,13 +14,13 @@
                             {# Route Title #}
                             <div class="mb-3">
                                 <label for="routeTitle" class="form-label fw-bold">{{ 'route.form.title'|trans }}</label>
-                                <input type="text" class="form-control" id="routeTitle" name="title" value="{{ route.title }}" required>
+                                <input type="text" class="form-control" id="routeTitle" name="title" value="{{ route.title }}" >
                             </div>
 
                             {# Difficulty Level #}
                             <div class="mb-3">
                                 <label for="routeDifficulty" class="form-label fw-bold">{{ 'route.form.difficulty'|trans }}</label>
-                                <select class="form-select" id="routeDifficulty" name="difficulty" required>
+                                <select class="form-select" id="routeDifficulty" name="difficulty">
                                     <option value="easy" {% if route.difficulty == 'easy' %}selected{% endif %}>{{ 'route.difficulty.easy'|trans }}</option>
                                     <option value="medium" {% if route.difficulty == 'medium' %}selected{% endif %}>{{ 'route.difficulty.medium'|trans }}</option>
                                     <option value="hard" {% if route.difficulty == 'hard' %}selected{% endif %}>{{ 'route.difficulty.hard'|trans }}</option>
@@ -32,14 +32,14 @@
                                 <div class="col-6">
                                     <label for="routeLength" class="form-label fw-bold">{{ 'route.form.length'|trans }}</label>
                                     <div class="input-group">
-                                        <input type="number" step="0.1" class="form-control" id="routeLength" name="length" value="{{ route.length }}" required>
+                                        <input type="number" step="0.1" class="form-control" id="routeLength" name="length" value="{{ route.length }}" >
                                         <span class="input-group-text">km</span>
                                     </div>
                                 </div>
                                 <div class="col-6">
                                     <label for="routeDuration" class="form-label fw-bold">{{ 'route.form.duration'|trans }}</label>
                                     <div class="input-group">
-                                        <input type="number" class="form-control" id="routeDuration" name="duration" value="{{ route.duration }}" required>
+                                        <input type="number" class="form-control" id="routeDuration" name="duration" value="{{ route.duration }}" >
                                         <span class="input-group-text">{{ 'route.form.minutes'|trans }}</span>
                                     </div>
                                 </div>
@@ -49,7 +49,7 @@
                            <div class="border-top pt-3">
                                   {% include 'routes/gallery.html' with {
                                      'gallery_id': 'global-gallery',
-                                      'gallery_title': 'Summer Vacation 2026',
+                                      'gallery_title':  "global-gallery" | trans,
                                       'route_id': route.id,
                                      'images': route.photos
                                 } %}
@@ -63,28 +63,10 @@
                     <div class="card h-100 border-0 shadow-xs">
                         <div class="card-body d-flex flex-column">
                             <label class="form-label fw-bold mb-2">{{ 'route.form.description'|trans }}</label>
-                            
-                            <ul class="nav nav-tabs" id="langTabs" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active fw-semibold" id="el-tab" data-bs-toggle="tab" data-bs-target="#lang-el" type="button" role="tab" aria-controls="lang-el" aria-selected="true">
-                                        🇬🇷 {{ 'language.greek'|trans }}
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link fw-semibold" id="en-tab" data-bs-toggle="tab" data-bs-target="#lang-en" type="button" role="tab" aria-controls="lang-en" aria-selected="false">
-                                        🇬🇧 {{ 'language.english'|trans }}
-                                    </button>
-                                </li>
-                            </ul>
-                            
-                            <div class="tab-content border border-top-0 rounded-bottom p-3 flex-grow-1 bg-white" id="langTabsContent">
-                                {# Greek Pane #}
-                                <div class="tab-pane fade show active h-100" id="lang-el" role="tabpanel" aria-labelledby="el-tab">
-                                    <textarea class="form-control h-100 min-vh-25" id="descriptionEl" name="description_el" rows="12" required>{{ route.descriptionEl }}</textarea>
-                                </div>
-                                {# English Pane #}
-                                <div class="tab-pane fade h-100" id="lang-en" role="tabpanel" aria-labelledby="en-tab">
-                                    <textarea class="form-control h-100 min-vh-25" id="descriptionEn" name="description_en" rows="12" required>{{ route.descriptionEn }}</textarea>
+                      
+                            <div class="border border-top-0 rounded-bottom p-3 flex-grow-1 bg-white" id="langTabsContent">
+                                <div class="h-100" id="lang-el" role="tabpanel" aria-labelledby="el-tab">
+                                    <textarea class="form-control h-100 min-vh-25" id="descriptionEl" name="description_el" rows="12" >{{ route.descriptionEl }}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -128,9 +110,9 @@ $(document).ready(function() {
         var formData = new FormData(this);
         var $submitBtn = $('#btnSubmitRoute');
         
-        
+       
         $submitBtn.prop('disabled', true)
-                  .html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ' + textSaving + '...');
+                  .html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> {{ "saving" | trans }}');
 
         $.ajax({
             url: '/api/routes/update/' + routeId, // RESTful endpoint using dynamic ID
@@ -139,12 +121,14 @@ $(document).ready(function() {
             processData: false, 
             contentType: false, 
             success: function(response) {
-                // Return to dashboard main screen on success
-                window.location.href = '/admin/dashboard';
+                if ( response.success === false ) {
+                     alert('Error updating route: ');
+                }
+                 $submitBtn.prop('disabled', false).text('{{ "update" | trans }}');
             },
             error: function(xhr) {
                 alert('Error editing route: ' + xhr.responseText);
-                $submitBtn.prop('disabled', false).text(textSave);
+                $submitBtn.prop('disabled', false).text('{{ "update" | trans }}');
             }
         });
     });

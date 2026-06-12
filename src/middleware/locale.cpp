@@ -4,12 +4,13 @@
 using namespace std ;
 
 namespace ws {
-bool LocaleResolver::isLocaleSupported(const std::string &locale_str) const {
-    for( const auto &lang: supported_ ) {
-        if ( lang == locale_str ) return true ;
-        if ( locale_str.size() >= 2 && lang.substr(0, 2) == locale_str.substr(0, 2) ) return true ;
+int LocaleResolver::isLocaleSupported(const std::string &locale_str) const {
+    for( int i=0 ; i<supported_.size() ; i++ ) {
+        const auto &lang = supported_[i] ;
+        if ( lang == locale_str ) return i ;
+        if ( locale_str.size() >= 2 && lang.substr(0, 2) == locale_str.substr(0, 2) ) return i ;
     }
-    return false ;
+    return -1 ;
 }
 
 void LocaleResolver::handle(HTTPServerRequest& req, HTTPServerResponse& res, MiddlewareContext& ctx) {
@@ -60,11 +61,12 @@ std::string LocaleResolver::resolve(HTTPServerRequest &req) const {
     string resolved = req.getRouteAttribute("_locale") ;
     if ( !resolved.empty() && isLocaleSupported(resolved)) return resolved ;
 
+    int res_idx ;
     resolved = req.getQueryAttribute("lang") ;
-    if ( !resolved.empty() && isLocaleSupported(resolved)) return resolved ;
+    if ( !resolved.empty() && ( res_idx = isLocaleSupported(resolved)) != -1 ) return supported_[res_idx] ;
 
     resolved = req.getCookie("locale") ;
-    if ( !resolved.empty() && isLocaleSupported(resolved)) return resolved ;
+    if ( !resolved.empty() && ( res_idx = isLocaleSupported(resolved)) != -1 ) return supported_[res_idx] ;
 
     // check header for Accept-Language
 
@@ -73,8 +75,11 @@ std::string LocaleResolver::resolve(HTTPServerRequest &req) const {
         auto languages = parse_accept_language(accept_lang_header) ;
 
         for ( const auto &lang: languages ) { // iterating from most desirable to less desirable
-            if ( isLocaleSupported(lang.code) ) return lang.code ;
+            res_idx = isLocaleSupported(lang.code) ;
+            if ( res_idx != -1 )
+                return supported_[res_idx] ;
         }
+        
     }
 
     // nothing matched

@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
 
     HttpServer server("127.0.0.1:5110") ;
 
-    AppContext app_context(Variant::fromJSONFile("/Users/malasiot/source/wsrv/app/config.json"));
+    AppContext app_context(Variant::fromJSONFile("/home/malasiot/source/wsrv/app/config.json"));
 
     Application app ;
     
@@ -192,19 +192,20 @@ int main(int argc, char *argv[]) {
 
         Variant::Object title{{locale->locale(), req.getPostAttribute("title")}};
     
-        uint64_t id = Routes::createRoute(*conn, title, req.getPostAttribute("difficulty"), data) ;
+        int64_t id = Routes::createRoute(*conn, title, req.getPostAttribute("difficulty"), data) ;
    
         resp.json("{\"id\":" + std::to_string(id) + "}") ;
     }, {locale, auth} ) ;
 
     routes.addRoute("GET", "edit/{id}/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
+        auto locale = req.data().get<LocaleResolverData>() ;
          ConnectionPool::ConnectionPtr conn = con.acquireConnection();
 
         string id = req.getRouteAttribute("id") ;
-        auto photos = Routes::getAllPhotos(*conn, stoll(id)) ;
+        auto photos = Routes::getAllPhotosForTrack(*conn, std::stoll(id), locale->locale()) ;
         Variant::Array photo_list ;
-        for( const auto &photo_id: photos) {
-            Variant::Object item{{"id", photo_id}, {"url", "/api/photo/" + std::to_string(photo_id)}} ;
+        for( const auto &photo: photos) {
+            Variant::Object item{{"id", photo.id_}, {"caption", photo.caption_}, {"url", "/api/photo/" + std::to_string(photo.id_)}} ;
             photo_list.emplace_back(std::move(item));
         }
         render("routes/edit.html", *app_context.rdr_, req, resp, Variant::Object{ 
@@ -214,6 +215,29 @@ int main(int argc, char *argv[]) {
                 { "photos", photo_list}
             }
             }}) ;
+    }, {locale, auth} ) ;
+
+
+    api.addRoute("POST", "/routes/update/{id}/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
+        auto locale = req.data().get<LocaleResolverData>() ;
+         ConnectionPool::ConnectionPtr conn = con.acquireConnection();
+
+         try {
+        string id = req.getRouteAttribute("id") ;
+
+        string title = req.getPostAttribute("title") ;
+        string desc = req.getPostAttribute("desc") ;
+        string duration = req.getPostAttribute("duration") ;
+        string length = req.getPostAttribute("length") ;
+        string difficulty = req.getPostAttribute("difficulty") ;
+
+        Routes::updateRoute(*conn, stoll(id), title, desc, stof(duration), stof(length), difficulty, locale->locale() );
+        Variant::Object result{{"success", true}} ;
+        resp.json(Variant(result).toJSON()) ;
+         } catch ( invalid_argument &e ) {
+            Variant::Object result{{"success", false}} ;
+        resp.json(Variant(result).toJSON()) ;
+         }
     }, {locale, auth} ) ;
 
     app.addRoute("GET", "/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {

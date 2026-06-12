@@ -29,7 +29,7 @@ public:
     void handle(HTTPServerRequest& req, HTTPServerResponse& res, MiddlewareContext& ctx) override;
 private:
 
-    bool isLocaleSupported(const std::string &locale_str) const;
+    int isLocaleSupported(const std::string &locale_str) const;
     std::string resolve(HTTPServerRequest &req) const ;
 
     std::vector<std::string> supported_ ;
