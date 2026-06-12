@@ -1,0 +1,70 @@
+
+<div class="container my-4 gallery-component-container" id="{{ gallery_id }}"
+     data-route-id="{{ route_id }}"
+     {% if wpt_id is defined %}data-wpt-id="{{ wpt_id }}"{% endif %}>
+
+    <!-- Header & Upload Button -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{{ gallery_title|default('Image Gallery') }}</h2>
+        <button class="btn btn-primary upload-trigger-btn">
+            <i class="bi bi-upload me-2"></i>Upload Image
+        </button>
+        <!-- Hidden File Input -->
+        <input type="file" class="d-none gallery-file-input" accept="image/*" multiple>
+    </div>
+
+    <!-- Image Grid -->
+    <div class="row g-3 gallery-grid">
+        {% for image in images %}
+            <div class="col-6 col-md-4 col-lg-3 gallery-item-wrapper" data-id="{{ image.id }}">
+                <div class="card h-100 cursor-pointer gallery-card">
+                    <div class="ratio ratio-1x1">
+                        <img src="{{ image.url }}" class="card-img-top object-fit-cover gallery-thumb" alt="{{ image.caption }}">
+                    </div>
+                    {% if image.caption %}
+                        <div class="card-footer bg-light text-truncate small text-muted text-center gallery-caption-text">
+                            {{ image.caption }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12 text-center py-5 text-muted empty-gallery-msg">
+                No images uploaded yet.
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Lightbox Modal (Scoped uniquely inside the wrapper container) -->
+    <div class="modal fade lightboxModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header border-0 pb-0">
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0 position-relative text-center">
+                    <!-- Navigation Arrows -->
+                    <button class="btn text-white position-absolute top-50 start-0 translate-middle-y fs-1 navigation-arrow prev-btn">&lsaquo;</button>
+                    <button class="btn text-white position-absolute top-50 end-0 translate-middle-y fs-1 navigation-arrow next-btn">&rsaquo;</button>
+                    
+                    <!-- Main Image -->
+                    <img src="" class="img-fluid max-vh-70 p-3 lightbox-img" alt="">
+                </div>
+                <div class="modal-footer border-0 bg-black bg-opacity-50 d-flex flex-column align-items-stretch">
+                    <!-- Caption Edit Area -->
+                    <div class="input-group mb-2">
+                        <input type="text" class="form-control bg-secondary text-white border-0 lightbox-caption-input" placeholder="Add a caption...">
+                        <button class="btn btn-success save-caption-btn">Save</button>
+                    </div>
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small lightbox-counter"></span>
+                        <button class="btn btn-danger btn-sm delete-photo-btn">
+                            <i class="bi bi-trash me-1"></i>Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

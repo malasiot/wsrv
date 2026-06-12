@@ -43,9 +43,11 @@ int64_t Routes::createRoute(xdb::Connection &con, const Variant &title, const st
 }
 
 int64_t Routes::addPhoto(xdb::Connection &con, uint64_t track_id, const std::string &data,
-const std::string &mime) {
+const std::string &mime, int64_t wpt_id) {
     xdb::Blob img(data.data(), data.data() + data.size()) ;
-    return con.execInsert("INSERT INTO photos (data, mime, track_id) VALUES ($1, $2, $3) RETURNING id", img, mime, track_id);
+    std::optional<int64_t> wpt ;
+    if ( wpt_id != -1 ) wpt = wpt_id ;
+    return con.execInsert("INSERT INTO photos (data, mime, track_id, wpt) VALUES ($1, $2, $3, $4) RETURNING id", img, mime, track_id, wpt_id);
 }
 
 
@@ -119,6 +121,11 @@ std::vector<int64_t> Routes::getAllPhotos(xdb::Connection &con, int64_t track_id
 
 void Routes::deletePhoto(xdb::Connection &con, int64_t photo_id) {
     con.execute("DELETE FROM photos WHERE id = $1", photo_id);
+}
+
+void Routes::updatePhotoCaption(xdb::Connection &con, int64_t id, const std::string &cap, const std::string &locale) {
+    string sql = "UPDATE photos SET caption = jsonb_set(caption, '{" + locale + "}', $1) WHERE id = $2";
+    con.execute(sql.c_str(), cap, id);
 }
 
 std::optional<Route> Routes::fetchRoute(xdb::Connection &con, uint64_t id) {

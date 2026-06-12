@@ -112,28 +112,29 @@ int main(int argc, char *argv[]) {
 
     Blueprint api("api/") ;
 
-    api.addRoute("POST", "/routes/{id}/photos/upload/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
-        auto locale = req.data().get<LocaleResolverData>() ;
+    api.addRoute("POST", "/photos/upload/{id}/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
+        
        
-        uint64_t id = stoull(req.getRouteAttribute("id")) ;
-
-        Variant::Array photos ;
+        int64_t track_id = stoull(req.getRouteAttribute("id")) ;
+        int64_t wpt_id = -1 ;
+        string wpt_id_str = req.getPostAttribute("wpt") ;
+        if ( !wpt_id_str.empty() )
+            wpt_id = stoll(wpt_id_str) ;
         auto files = req.getUploadedFiles();
         for( const auto &pic: files ) {
-            if ( pic.id_ != "pictures[]") continue ;
+            if ( pic.id_ != "image") continue ;
             string mime = mimeFromHeader(pic.data_) ;
 
             ConnectionPool::ConnectionPtr conn = con.acquireConnection();
-            uint64_t photo_id = Routes::addPhoto(*conn, id, pic.data_, mime) ;
+            uint64_t photo_id = Routes::addPhoto(*conn, track_id, pic.data_, mime, wpt_id) ;
             string rel_url =  "/api/photo/" + std::to_string(photo_id) + "/";
 
-            photos.push_back( Variant::Object{{"id", id }, {"url", rel_url}} ) ; 
-           
+            Variant::Object result{{"success", true}, {"id", photo_id }, {"url", rel_url}}; 
+            resp.json(Variant(result).toJSON()) ; 
+            return ;
         }
-        Variant::Object result{{"uploaded_pictures", photos}} ;
+        Variant::Object result{{"success", false}} ;
         resp.json(Variant(result).toJSON()) ;
-      
-
     });
 
      api.addRoute("GET", "/photo/{id}/",  [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
@@ -150,8 +151,23 @@ int main(int argc, char *argv[]) {
 
         ConnectionPool::ConnectionPtr conn = con.acquireConnection();
         Routes::deletePhoto(*conn, photo_id) ;
-        resp = HTTPServerResponse::stockReply(HTTPServerResponse::ok) ;
+        Variant::Object result{{"success", true}} ;
+        resp.json(Variant(result).toJSON()) ;
+        
      }) ;
+
+      api.addRoute("POST", "/photos/caption/{id}/",  [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
+       auto locale = req.data().get<LocaleResolverData>() ;
+        int64_t photo_id = stoll(req.getRouteAttribute("id")) ;
+        string caption = req.getPostAttribute("caption");
+
+        ConnectionPool::ConnectionPtr conn = con.acquireConnection();
+        Routes::updatePhotoCaption(*conn, photo_id, caption, locale->locale()) ;
+        Variant::Object result{{"success", true}} ;
+        resp.json(Variant(result).toJSON()) ;
+        
+     }, {locale}) ;
+
 
 
     Blueprint routes("routes/") ;

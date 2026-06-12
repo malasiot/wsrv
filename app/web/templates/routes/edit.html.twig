@@ -47,31 +47,12 @@
 
                             {# New: Pictures Upload Dropzone/Input Area #}
                            <div class="border-top pt-3">
-                                <label class="form-label fw-bold">{{ 'route.form.pictures'|trans }}</label>
-    
-                                {# Separate, dedicated async file input #}
-                                <div class="input-group">
-                                    <input class="form-control" type="file" id="asyncRoutePictures" accept="image/*" multiple>
-                                    <label class="input-group-text btn btn-primary" for="asyncRoutePictures">
-                                    <i class="bi bi-upload"></i>
-                                    </label>
-                                </div>
-                                <div class="form-text">{{ 'route.form.pictures_help'|trans }}</div>
-    
-                                {# Active Gallery Area #}
-                                <div id="imageGalleryContainer" class="d-flex flex-wrap gap-3 mt-3">
-                                {% for picture in route.photos %}
-                                    <div class="position-relative gallery-item-wrapper" id="pic-box-{{ picture.id }}">
-                                        <img src="{{ picture.url }}" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;">
-                                        <button type="button" 
-                                            class="btn btn-danger btn-sm position-absolute top-0 end-0 rounded-circle btn-delete-pic p-0 shadow-sm" 
-                                            style="width: 24px; height: 24px; line-height: 1;"
-                                            data-picture-id="{{ picture.id }}">
-                                            &times;
-                                        </button>
-                                    </div>
-                                {% endfor %}
-                                </div>
+                                  {% include 'routes/gallery.html' with {
+                                     'gallery_id': 'global-gallery',
+                                      'gallery_title': 'Summer Vacation 2026',
+                                      'route_id': route.id,
+                                     'images': route.photos
+                                } %}
                             </div>
                         </div>
                     </div>
@@ -131,92 +112,14 @@
 {% endblock %}
 
 {% block javascripts %}
+  <script src="/public/js/gallery.js"></script>
 <script>
 $(document).ready(function() {
 
     var $form = $('#editRouteForm');
     var routeId = $form.data('route-id'); // Read the specific route ID safely
 
-    // 1. ASYNC UPLOAD: Triggers immediately upon file selection
-    $('#asyncRoutePictures').on('change', function() {
-        var files = this.files;
-        if (!files.length) return;
-
-        var formData = new FormData();
-        // Append all selected files into an array format for the backend payload
-        $.each(files, function(i, file) {
-            formData.append('pictures[]', file);
-        });
-
-        // Append temporary loader elements into the grid structure
-        var $gallery = $('#imageGalleryContainer');
-        var loadingPlaceholderHtml = '<div class="d-flex align-items-center justify-content-center border img-thumbnail bg-light async-loader" style="width: 100px; height: 100px;"><div class="spinner-border spinner-border-sm text-secondary" role="status"></div></div>';
-        
-        for (var i = 0; i < files.length; i++) {
-            $gallery.append(loadingPlaceholderHtml);
-        }
-
-        $.ajax({
-            url: '/api/routes/' + routeId + '/photos/upload',
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            dataType: 'json',
-            success: function(response) {
-                // Clear out loading indicators
-                $('.async-loader').remove();
-
-                // Append new images returned from backend array schema: [{id: X, url: 'Y'}, ...]
-                $.each(response.uploaded_pictures, function(index, pic) {
-                    var newPicHtml = 
-                        '<div class="position-relative gallery-item-wrapper" id="pic-box-' + pic.id + '">' +
-                            '<img src="' + pic.url + '" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;">' +
-                            '<button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 rounded-circle btn-delete-pic p-0 shadow-sm" style="width: 24px; height: 24px; line-height: 1;" data-picture-id="' + pic.id + '">&times;</button>' +
-                        '</div>';
-                    $gallery.append(newPicHtml);
-                });
-            },
-            error: function(xhr) {
-                $('.async-loader').remove();
-                alert('Failed to upload pictures: ' + xhr.responseText);
-            },
-            complete: function() {
-                // Clear form input value to allow uploading the same file selection again if needed
-                $('#asyncRoutePictures').val('');
-            }
-        });
-    });
-
-    // 2. ASYNC DELETE: Event delegation to handle existing and dynamically added DOM elements
-    $('#imageGalleryContainer').on('click', '.btn-delete-pic', function(e) {
-        e.preventDefault();
-        
-        var $button = $(this);
-        var pictureId = $button.data('picture-id');
-        var $wrapper = $('#pic-box-' + pictureId);
-
-        if (!confirm('Are you sure you want to remove this photo?')) return;
-
-        // Apply a visual fade out cue while transaction processes
-        $wrapper.css('opacity', '0.5');
-
-        $.ajax({
-            url: '/api/photos/delete/' + pictureId,
-            type: 'POST', // RESTful action method
-            success: function(response) {
-                // Smoothly wipe item completely out of DOM hierarchy
-                $wrapper.fadeOut(300, function() {
-                    $(this).remove();
-                });
-            },
-            error: function(xhr) {
-                $wrapper.css('opacity', '1');
-                alert('Could not remove photo: ' + xhr.responseText);
-            }
-        });
-    });
-
+  
 
     // AJAX PUT / POST Handler
     $form.on('submit', function(e) {
