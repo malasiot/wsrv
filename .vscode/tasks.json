@@ -1,0 +1,16 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake: Run Target (No Debugger)",
+            "type": "shell",
+            "command": "${command:cmake.launchTargetPath}",
+           
+            "options": {
+                "cwd": "${workspaceFolder}/app"
+            },
+            "group": "test",
+            "problemMatcher": []
+        }
+    ]
+}

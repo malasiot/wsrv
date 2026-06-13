@@ -1,0 +1,15 @@
+.route-list-thumb-wrapper {
+    width: 100%;
+    height: 140px; /* Fluid block cover height style on mobile viewports */
+}
+
+@media (min-width: 768px) {
+    .route-list-thumb-wrapper {
+        width: 80px;  /* Compact square thumbnail shape layout on standard desk views */
+        height: 80px;
+    }
+}
+
+.object-fit-cover {
+    object-fit: cover;
+}

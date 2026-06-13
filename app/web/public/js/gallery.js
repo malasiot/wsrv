@@ -37,7 +37,7 @@ $(document).ready(function() {
             const formData = new FormData();
             formData.append('image', file);
             if (wptId)
-                 formData.append('wpt', galleryId);
+                 formData.append('wpt', wptId);
 
             // Create temporary container element with a loading overlay spinner
             const tempId = 'uploading-' + Date.now() + '-' + i;
@@ -72,6 +72,7 @@ $(document).ready(function() {
                                 </div>
                             </div>`;
                         $(`#${tempId}`).replaceWith(newHtml);
+                        updateWaypointBadgeCount($container);
                     } else {
                         $(`#${tempId}`).remove();
                         alert('Upload failed: ' + (response.error || 'Unknown error'));
@@ -98,6 +99,18 @@ $(document).ready(function() {
         const bsModal = bootstrap.Modal.getOrCreateInstance(modalElement);
         bsModal.show();
     });
+
+    function updateWaypointBadgeCount($galleryContainer) {
+        const wptId = $galleryContainer.data('wpt-id');
+        if (!wptId) return; // Skip if this is the main route gallery
+
+        // Count how many image items currently exist in this specific gallery grid
+        const totalPhotos = $galleryContainer.find('.gallery-grid .gallery-item-wrapper:not(.upload-placeholder)').length;
+
+        // Find the matching parent card and update its badge text layout
+        const $waypointCard = $(`.waypoint-list-item[data-wpt-id="${wptId}"]`);
+        $waypointCard.find('.wpt-photo-count-badge').text(totalPhotos);
+    }
 
     function updateLightbox() {
         if (!$activeContainer || currentData.length === 0) return;
@@ -150,14 +163,8 @@ $(document).ready(function() {
                 if (response.success) {
                     item.caption = newCaption;
                     const $wrapper = $activeContainer.find(`.gallery-item-wrapper[data-id="${item.id}"]`);
-                    $wrapper.find('.gallery-thumb').attr('alt', newCaption);
+                    $wrapper.find('.gallery-thumb').attr('alt', newCaption).attr('title', newCaption);
                     
-                    let $footer = $wrapper.find('.gallery-caption-text');
-                    if ($footer.length === 0 && newCaption) {
-                        $wrapper.find('.card').append(`<div class="card-footer bg-light text-truncate small text-muted text-center gallery-caption-text"></div>`);
-                        $footer = $wrapper.find('.gallery-caption-text');
-                    }
-                    $footer.text(newCaption);
                     updateLightbox();
                 } else {
                     alert('Could not update caption: ' + (response.error || 'Server error'));
@@ -201,6 +208,7 @@ $(document).ready(function() {
                     } else {
                         updateLightbox();
                     }
+                    updateWaypointBadgeCount($activeContainer);
                 } else {
                     alert('Could not delete image: ' + (response.error || 'Server error'));
                 }

@@ -40,7 +40,7 @@
                                     <label for="routeDuration" class="form-label fw-bold">{{ 'route.form.duration'|trans }}</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="routeDuration" name="duration" value="{{ route.duration }}" >
-                                        <span class="input-group-text">{{ 'route.form.minutes'|trans }}</span>
+                                        <span class="input-group-text">{{ 'route.form.hours'|trans }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -66,7 +66,7 @@
                       
                             <div class="border border-top-0 rounded-bottom p-3 flex-grow-1 bg-white" id="langTabsContent">
                                 <div class="h-100" id="lang-el" role="tabpanel" aria-labelledby="el-tab">
-                                    <textarea class="form-control h-100 min-vh-25" id="descriptionEl" name="description_el" rows="12" >{{ route.descriptionEl }}</textarea>
+                                    <textarea class="form-control h-100 min-vh-25" id="descriptionEl" name="desc" rows="12" >{{ route.desc }}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -79,7 +79,7 @@
         {# Bottom Action Bar #}
         <div class="card-footer bg-white d-flex justify-content-end gap-2 py-3">
             <a href="/admin/dashboard/" class="btn btn-secondary px-4" id="btnCancelBottom">
-                {{ 'route.form.cancel'|trans }}
+                {{ 'cancel'|trans }}
             </a>
             <button type="submit" 
                     class="btn btn-success px-5 fw-bold" 
@@ -90,11 +90,79 @@
             </button>
         </div>
     </form>
+
+   <div class="container my-4" id="waypoints-management-wrapper" data-route-id="{{ route.id }}">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>{{'waypoints'|trans}}</h3>
+        <button class="btn btn-outline-primary btn-sm" id="add-waypoint-btn">
+            <i class="bi bi-geo-alt-fill me-1"></i>{{'waypoint.add.new'|trans}}
+        </button>
+    </div>
+
+    <!-- Flex Layout Flex Container Column Stack -->
+    <div class="d-flex flex-column gap-3" id="waypoints-list-container">
+        {% for wpt in route.waypoints %}
+            <div class="card shadow-sm waypoint-list-item" data-wpt-id="{{ wpt.id }}">
+                <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    
+                    <!-- Content Block Context Section -->
+                    <div class="waypoint-info flex-grow-1">
+                        <h5 class="card-title text-primary mb-1 waypoint-title-text">{{ wpt.name }}</h5>
+                        <p class="card-text text-muted small mb-0 waypoint-desc-text">{{ wpt.desc }}</p>
+                    </div>
+                    
+                    <!-- Action Operation Trigger Layout Buttons -->
+                    <div class="waypoint-actions d-flex align-items-center gap-2 flex-shrink-0">
+                        <!-- Toggles the associated gallery display wrapper container component if desired -->
+                       <button class="btn btn-light btn-sm d-inline-flex align-items-center gap-2" type="button" data-bs-toggle="collapse" data-bs-target="#wpt-gallery-collapse-{{ wpt.id }}" aria-expanded="false" title="View Photos">
+                            <i class="bi bi-images"></i>
+                            <span>{{'photos'|trans}}</span>
+                            <!-- Dynamic Counter Badge -->
+                            <span class="badge bg-secondary rounded-pill wpt-photo-count-badge">
+                             {{ wpt.photos|length }}
+                            </span>
+                        </button>
+                        <button class="btn btn-warning btn-sm edit-waypoint-btn" title="Edit Content">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm delete-waypoint-btn" title="Delete Point">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+
+                </div>
+                 <!-- Collapsible Waypoint Gallery Component Context Container -->
+                    <div class="collapse" id="wpt-gallery-collapse-{{ wpt.id }}">
+                        <div class="pt-3 bg-light rounded border">
+                            
+                            <!-- REUSING THE EXACT SAME GALLERY COMPONENT -->
+                            {% include 'routes/gallery.html' with {
+                                'id': 'gallery-wpt-' ~ wpt.id,
+                                'gallery_title': 'Photos for ' ~ wpt.name,
+                                'route_id': route.id,
+                                'wpt_id': wpt.id,
+                                'images': wpt.photos 
+                            } %}
+                            
+                        </div>
+                    </div>
+            </div>
+        {% else %}
+            <div class="col-12 text-center py-4 text-muted border rounded bg-light empty-waypoints-msg">
+                {{'no-waypoints'|trans}}
+            </div>
+        {% endfor %}
+    </div>
 </div>
+
+{%include 'routes/waypoints.html' %}
+
+
 {% endblock %}
 
 {% block javascripts %}
   <script src="/public/js/gallery.js"></script>
+    <script src="/public/js/waypoints.js"></script>
 <script>
 $(document).ready(function() {
 

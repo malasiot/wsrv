@@ -1,0 +1,13 @@
+{
+    "i18n-ally.localesPaths": [
+        "${workspaceFolder}/app/web/translations",
+        "app/web/translations"
+    ],
+     "i18n-ally.pathMatcher": "{locale}.json",
+  "i18n-ally.sourceLanguage": "en_US",
+"i18n-ally.enabledFrameworks": [
+    "general",
+    "custom"
+],
+"i18n-ally.keystyle": "flat"
+}

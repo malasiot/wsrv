@@ -12,86 +12,19 @@
             <div class="row g-4">
                 
                 {# Left Column: File, Title, Specs #}
-                <div class="col-lg-5">
+                <div class="col-lg-12">
                     <div class="card h-100 border-0 shadow-xs">
                         <div class="card-body">
                             {# GPS File Upload #}
                             <div class="mb-3">
                                 <label for="gpsFile" class="form-label fw-bold">{{ 'upload.route.gps_file'|trans }}</label>
                                 <input class="form-control form-control-lg" type="file" id="gpsFile" name="gps_file" accept=".gpx,.kml" required>
-                                <div class="form-text">{{ 'upload.gps_help'|trans }}</div>
-                            </div>
-
-                            {# Route Title #}
-                            <div class="mb-3">
-                                <label for="routeTitle" class="form-label fw-bold">{{ 'upload.route.title'|trans }}</label>
-                                <input type="text" class="form-control" id="routeTitle" name="title" required>
-                            </div>
-
-                            {# Specs Row 1: Difficulty #}
-                            <div class="mb-3">
-                                <label for="routeDifficulty" class="form-label fw-bold">{{ 'upload.route.difficulty'|trans }}</label>
-                                <select class="form-select" id="routeDifficulty" name="difficulty" required>
-                                    <option value="" selected disabled>{{ 'upload.route.select_difficulty'|trans }}</option>
-                                    <option value="easy">{{ 'upload.route.difficulty.easy'|trans }}</option>
-                                    <option value="medium">{{ 'upload.route.difficulty.medium'|trans }}</option>
-                                    <option value="hard">{{ 'upload.route.difficulty.hard'|trans }}</option>
-                                </select>
-                            </div>
-
-                            {# Specs Row 2: Length & Duration #}
-                            <div class="row g-2">
-                                <div class="col-6">
-                                    <label for="routeLength" class="form-label fw-bold">{{ 'upload.route.length'|trans }}</label>
-                                    <div class="input-group">
-                                        <input type="number" step="0.1" class="form-control" id="routeLength" name="length">
-                                        <span class="input-group-text">km</span>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <label for="routeDuration" class="form-label fw-bold">{{ 'upload.route.duration'|trans }}</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="routeDuration" name="duration">
-                                        <span class="input-group-text">{{ 'upload.route.minutes'|trans }}</span>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {# Right Column: Spaced out Translation Panes #}
-                <div class="col-lg-7">
-                    <div class="card h-100 border-0 shadow-xs">
-                        <div class="card-body d-flex flex-column">
-                            <label class="form-label fw-bold mb-2">{{ 'upload.route.description'|trans }}</label>
-                            
-                            <ul class="nav nav-tabs" id="langTabs" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active fw-semibold" id="el-tab" data-bs-toggle="tab" data-bs-target="#lang-el" type="button" role="tab" aria-controls="lang-el" aria-selected="true">
-                                        🇬🇷 {{ 'language.greek'|trans }}
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link fw-semibold" id="en-tab" data-bs-toggle="tab" data-bs-target="#lang-en" type="button" role="tab" aria-controls="lang-en" aria-selected="false">
-                                        🇬🇧 {{ 'language.english'|trans }}
-                                    </button>
-                                </li>
-                            </ul>
-                            
-                            <div class="tab-content border border-top-0 rounded-bottom p-3 flex-grow-1 bg-white" id="langTabsContent">
-                                {# Greek Pane #}
-                                <div class="tab-pane fade show active h-100" id="lang-el" role="tabpanel" aria-labelledby="el-tab">
-                                    <textarea class="form-control h-100 min-vh-25" id="descriptionEl" name="description_el" rows="12" placeholder="Περιγράψτε τη διαδρομή στα Ελληνικά..." ></textarea>
-                                </div>
-                                {# English Pane #}
-                                <div class="tab-pane fade h-100" id="lang-en" role="tabpanel" aria-labelledby="en-tab">
-                                    <textarea class="form-control h-100 min-vh-25" id="descriptionEn" name="description_en" rows="12" placeholder="Describe the route in English..." ></textarea>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        
 
             </div>
         </div>
@@ -101,7 +34,7 @@
             <a href="/admin/dashboard/" class="btn btn-secondary px-4" id="btnCancelBottom">
         {{ 'cancel'|trans }}
             </a>
-            <button type="submit" class="btn btn-success px-5 fw-bold" id="btnSubmitRoute">{{ 'upload.submit'|trans }}</button>
+            <button type="submit" class="btn btn-success px-5 fw-bold" id="btnSubmitRoute">{{ 'submit'|trans }}</button>
         </div>
     </form>
 </div>
@@ -131,7 +64,7 @@ $(document).ready(function() {
                 alert('Error: ' + xhr.responseText);
             },
             complete: function() {
-                $submitBtn.prop('disabled', false).text("{{ 'route.form.save'|trans }}");
+                $submitBtn.prop('disabled', false).text("{{ 'save'|trans }}");
             }
         });
     });

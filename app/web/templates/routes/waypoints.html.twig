@@ -1,0 +1,30 @@
+<!-- Waypoint Edit Modal -->
+<div class="modal fade" id="waypointEditModal" tabindex="-1" aria-labelledby="waypointModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="waypointModalLabel">Edit Waypoint</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="waypoint-edit-form">
+                    <!-- Hidden input to track which waypoint we are editing -->
+                    <input type="hidden" id="modal-wpt-id">
+                    
+                    <div class="mb-3">
+                        <label for="modal-wpt-title" class="form-label small fw-bold">Waypoint Title</label>
+                        <input type="text" id="modal-wpt-title" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modal-wpt-desc" class="form-label small fw-bold">Description / Notes</label>
+                        <textarea id="modal-wpt-desc" class="form-control" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{'cancel'|trans}}</button>
+                <button type="button" class="btn btn-primary btn-sm" id="save-waypoint-modal-btn">{{'save'|trans}}</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+
+{% block body % }
+<div class="container my-5" 
+     id="routes-page-wrapper" 
+     data-is-admin="{{ app.is_authenticated|default(false) ? 'true' : 'false' }}">
+     
+    <!-- Header Controls -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Explore Trail Routes</h1>
+            <p class="text-muted mb-0">Discover the perfect track for your next adventure.</p>
+        </div>
+        
+        {# Global add button shows only for admins #}
+        {% if app.is_authenticated|default(false) %}
+            <button class="btn btn-success" id="add-route-trigger-btn" data-bs-toggle="modal" data-bs-target="#newRouteDialog">
+                <i class="bi bi-plus-circle-fill me-2"></i>{{'new-route'|trans}}
+            </button>
+        {% endif %}
+    </div>
+
+    <!-- Future Filter Panel Placeholder -->
+    <div class="card p-3 mb-4 bg-light border-0 shadow-sm rounded">
+        <span class="text-muted small"><i class="bi bi-funnel me-2"></i>Filter tools (Search, Difficulty, Distance slider) will mount here seamlessly later.</span>
+    </div>
+
+    <!-- Dynamic Target Container Grid (Populated purely via AJAX) -->
+   <div class="d-flex flex-column gap-3" id="routes-grid-container">
+        <!-- A unified skeleton loading state inside the grid -->
+         <div class="text-center py-5 text-muted" id="routes-loading-spinner">
+            <div class="spinner-border text-primary mb-2" role="status"></div>
+            <p class="small mb-0">{{'loading-routes'|trans}}</p>
+        </div>
+    </div>
+</div>
+
+<div id="newRouteDialog" class="modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ 'upload.form.heading'|trans }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{'close'|trans}}"></button>
+      </div>
+      <div class="modal-body">
+       <form id="newRouteForm" enctype="multipart/form-data">
+      
+            <div class="row g-4">
+                
+                {# Left Column: File, Title, Specs #}
+                <div class="col-lg-12">
+                    <div class="card h-100 border-0 shadow-xs">
+                        <div class="card-body">
+                            {# GPS File Upload #}
+                            <div class="mb-3">
+                                <label for="gpsFile" class="form-label fw-bold">{{ 'upload.route.gps_file'|trans }}</label>
+                                <input class="form-control form-control-lg" type="file" id="form-route-gpx" name="gps_file" accept=".gpx,.kml" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+        
+
+            </div>
+      
+        
+        
+    </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{'close'|trans}}</button>
+        <button type="button" id="upload-route-btn" class="btn btn-primary">{{'save'|trans}}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+ 
+  <script>
+$(document).ready(function() {
+      $('#upload-route-btn').on('click', function() {
+       
+        const fileInput = $('#form-route-gpx')[0];
+        const imageFile = fileInput.files[0]; 
+
+        var formData = new FormData();
+        formData.append('gps_file', imageFile);
+      
+        $.ajax({
+            url: '/routes/create',
+            type: 'POST',
+            data: formData,
+            processData: false, 
+            contentType: false, 
+            dataType: 'json', 
+            success: function(response) {
+                 window.location.href = '/routes/edit/' + response.id;
+            },
+            error: function(xhr) {
+                alert('Error: ' + xhr.responseText);
+            },
+            complete: function() {
+                
+            }
+        });
+    });
+});
+</script>
+<script>
+$(document).ready(function() {
+    const $grid = $('#routes-grid-container');
+    const isAdmin = $('#routes-page-wrapper').data('is-admin') === true;
+
+    // Helper: Maps difficulty level text strings directly into corresponding css classes
+    function getDifficultyBadgeClass(difficulty) {
+        switch (String(difficulty).toLowerCase()) {
+            case 'easy': return 'bg-success';
+            case 'medium': return 'bg-warning text-dark';
+            case 'hard': return 'bg-danger';
+            default: return 'bg-secondary';
+        }
+    }
+
+    function difficultyString(difficulty) {
+         switch (String(difficulty).toLowerCase()) {
+            case 'easy': return '{{'route.difficulty.easy'|trans}}';
+            case 'medium': return '{{'route.difficulty.medium'|trans}}';
+            case 'hard': return '{{'route.difficulty.hard'|trans}}';
+            default: return difficulty;
+        }
+    }
+
+    // CORE METHOD: Fetches and dynamically renders route card entries
+    function fetchRoutes(filters = {}) {
+        // Show loading state placeholder
+
+          $grid.html(`
+        <div class="text-center py-5 text-muted" id="routes-loading-spinner">
+            <div class="spinner-border text-primary mb-2" role="status"></div>
+            <p class="small mb-0">{{'searching'|trans}}</p>
+        </div>
+    `);
+
+        $.ajax({
+            url: '/api/routes/list', // Your backend endpoint returning JSON array
+            type: 'GET',
+            data: filters, // Cleanly appends your future filter options (?difficulty=easy&search=loop)
+            dataType: 'json',
+            success: function(response) {
+                // Expects array: { success: true, data: [ {id:1, title:"", length:5.4, duration:120, difficulty:"Hard"}, ... ] }
+                if (response.success && response.data.length > 0) {
+                    let cardsHtml = '';
+
+                    $.each(response.data, function(idx, route) {
+                        const badgeClass = getDifficultyBadgeClass(route.difficulty);
+                        
+                        // Dynamic Pace Math calculation safety logic
+                        const routeLength = parseFloat(route.length) || 1;
+                        const pace = ((parseInt(route.duration) || 0) / (routeLength || 1)).toFixed(1);
+
+                        // Conditional template creation based on client authorization status
+                        const editButtonHtml = isAdmin 
+                            ? `<a class="btn btn-warning btn-sm edit-route-inline-btn" title="{{'edit'|trans}}" href="/routes/edit/${route.id}"><i class="bi bi-pencil-square"></i></a>` 
+                            : '';
+
+                        cardsHtml += `
+                            <div class="col-12 route-card-wrapper" data-route-id="${route.id}">
+                                <div class="card shadow-sm border-0 transition-hover mb-2 overflow-hidden">
+                                    <div class="card-body d-flex flex-column flex-md-row align-items-md-center gap-3 p-2 pe-3">
+                                        
+                                        <!-- Section 1: Thumbnail Cover Photo -->
+                                        <div class="flex-shrink-0 route-list-thumb-wrapper bg-light rounded overflow-hidden position-relative">
+                                            ${route.cover_image 
+                                                ? `<img src="${route.cover_image}" class="w-100 h-100 object-fit-cover" alt="${route.title}">`
+                                                : `<div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted bg-secondary bg-opacity-10">
+                                                    <i class="bi bi-map-fill fs-4"></i>
+                                                </div>`
+                                            }
+                                        </div>
+
+                                        <!-- Section 2: Title & Difficulty Badge -->
+                                        <div class="d-flex align-items-center gap-3 flex-grow-1 min-w-0" style="flex-basis: 35%;">
+                                            <span class="badge ${badgeClass} text-uppercase px-2 py-1 small route-difficulty-badge flex-shrink-0">
+                                                ${difficultyString(route.difficulty)}
+                                            </span>
+                                            <h5 class="text-primary text-truncate mb-0 route-title-text fw-semibold">${route.title}</h5>
+                                        </div>
+                                        
+                                        <!-- Section 3: Metrics Layout -->
+                                        <div class="d-flex align-items-center justify-content-start justify-content-md-center gap-4 text-muted small flex-grow-1" style="flex-basis: 35%;">
+                                            <div>
+                                                <span class="fw-bold text-dark-emphasis"><i class="bi bi-signpost-split me-1"></i>{{'distance'|trans}}</span>
+                                                <span class="route-length-text text-dark fw-medium">${route.length}</span> {{'km'|trans}}
+                                            </div>
+                                            <div class="border-start ps-4">
+                                                <span class="fw-bold text-dark-emphasis"><i class="bi bi-clock me-1"></i>{{'duration'|trans}}</span>
+                                                <span class="route-duration-text text-dark fw-medium">${route.duration}</span> {{'hours'|trans}} 
+                                            </div>
+                                            <div class="border-start ps-4 d-none d-lg-block">
+                                                <span class="fw-bold text-dark-emphasis"><i class="bi bi-activity me-1"></i>Pace:</span>
+                                                <span class="text-dark fw-medium">~${pace}</span> m/k
+                                            </div>
+                                        </div>
+
+                                        <!-- Section 4: Operational Controls Buttons -->
+                                        <div class="d-flex align-items-center gap-2 flex-shrink-0 justify-content-end" style="flex-basis: 15%;">
+                                            <a href="/route/details/${route.id}" class="btn btn-outline-primary btn-sm px-3">
+                                                {{'details'|trans}} <i class="bi bi-arrow-right-short ms-0.5"></i>
+                                            </a>
+                                            ${editButtonHtml}
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>`;
+                   
+                    });
+
+                    $grid.html(cardsHtml);
+                } else {
+                    // Empty configuration state view matching fallback rules
+                    $grid.html(`
+                        <div class="col-12 text-center py-5 text-muted border rounded bg-white">
+                            <i class="bi bi-map fs-1 text-light-emphasis mb-3 d-block"></i>
+                            <h5>{{'no-routes-found'|trans}}</h5>
+                            <p class="small text-muted">{{'adjust-filters'|trans}}</p>
+                        </div>
+                    `);
+                }
+            },
+            error: function() {
+                $grid.html(`
+                    <div class="col-12 text-center py-5 text-danger border rounded bg-white">
+                        <i class="bi bi-exclamation-triangle fs-1 mb-3 d-block"></i>
+                        <h5>{{'no-connection'|trans}}</h5>
+                        <p class="small text-muted">{{'failed-to-get-results'|trans}}</p>
+                    </div>
+                `);
+            }
+        });
+    }
+
+    // 3. INITIALIZATION CALL ON PAGE LOAD
+    fetchRoutes();
+
+    // Re-expose the fetch function globally so future filtering modules can trigger updates
+    window.RouteEngine = { refresh: fetchRoutes };
+});
+</script>
+{% endblock %}

@@ -1,0 +1,17 @@
+# .vscode/i18n-ally-custom-framework.yml
+
+# Tell the extension to watch Twig and HTML files
+languageIds:
+  - twig
+  - html
+
+# Regex patterns to extract your translation keys from code
+usageMatchRegex:
+  # Matches standard string filters: 'key'|trans or "key"|trans
+  - "['\"‘“]({key})['\"’”‘“]\\s*\\|\\s*trans"
+  
+  # Matches Symfony/Twig trans tags: {% trans %}key{% endtrans %}
+  - "{%\\s*trans\\s*%}\\s*({key})\\s*{%\\s*endtrans\\s*%}"
+
+# Define the character set allowed for keys (adjust if you use special characters)
+keyMatchReg: "[\\w\\d\\.\\-\\_]+"

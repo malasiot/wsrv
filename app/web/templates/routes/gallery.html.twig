@@ -5,9 +5,9 @@
 
     <!-- Header & Upload Button -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>{{ gallery_title|default('Image Gallery') }}</h2>
+        <h2>{{ gallery_title|default('image_gallery'|trans) }}</h2>
         <button class="btn btn-primary upload-trigger-btn">
-            <i class="bi bi-upload me-2"></i>Upload Image
+            <i class="bi bi-upload me-2"></i>{{'upload-image'|trans}}
         </button>
         <!-- Hidden File Input -->
         <input type="file" class="d-none gallery-file-input" accept="image/*" multiple>
@@ -25,7 +25,7 @@
             </div>
         {% else %}
             <div class="col-12 text-center py-5 text-muted empty-gallery-msg">
-                No images uploaded yet.
+                {{'no-photos-uploaded'|trans}}
             </div>
         {% endfor %}
     </div>
@@ -57,13 +57,13 @@
                     <!-- Caption Edit Area -->
                     <div class="input-group mb-2">
                         <input type="text" class="form-control bg-secondary text-white border-0 lightbox-caption-input" placeholder="Add a caption...">
-                        <button class="btn btn-success save-caption-btn">Save</button>
+                        <button class="btn btn-success save-caption-btn">{{'save'|trans}}</button>
                     </div>
                     <!-- Action Buttons -->
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="text-muted small lightbox-counter"></span>
                         <button class="btn btn-danger btn-sm delete-photo-btn">
-                            <i class="bi bi-trash me-1"></i>Delete
+                            <i class="bi bi-trash me-1"></i>{{'delete'|trans}}
                         </button>
                     </div>
                 </div>

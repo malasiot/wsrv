@@ -50,14 +50,13 @@ int main(int argc, char *argv[]) {
 
     HttpServer server("127.0.0.1:5110") ;
 
-    AppContext app_context(Variant::fromJSONFile("/home/malasiot/source/wsrv/app/config.json"));
+    AppContext app_context(Variant::fromJSONFile("config.json"));
 
     Application app ;
     
     server.setHandler(&app) ;
 
     auto locale = std::make_shared<LocaleResolver>(app_context.locales_, app_context.default_locale_) ;
-
     auto login = std::make_shared<SessionLoginController>(app_context.session_manager_.get(), app_context.auth_.get());
     auto auth = std::make_shared<SessionRequireAuth>(app_context.session_manager_.get(), app_context.auth_.get());
     auto check = std::make_shared<SessionCheckAuth>(app_context.session_manager_.get(), app_context.auth_.get()) ;
@@ -156,6 +155,30 @@ int main(int argc, char *argv[]) {
         
      }) ;
 
+      api.addRoute("POST", "/waypoint/update/",  [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
+        auto locale = req.data().get<LocaleResolverData>() ;
+        ConnectionPool::ConnectionPtr conn = con.acquireConnection();
+        int64_t wpt_id = stoll(req.getPostAttribute("wpt_id"));
+        string name = req.getPostAttribute("name");
+        string desc = req.getPostAttribute("desc") ;
+
+        Routes::updateWaypoint(*conn, wpt_id, name, desc, locale->locale()) ;
+        Variant::Object result{{"success", true}} ;
+        resp.json(Variant(result).toJSON()) ;
+        
+     }, {locale}) ;
+
+    api.addRoute("POST", "/waypoint/delete/",  [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
+        
+        ConnectionPool::ConnectionPtr conn = con.acquireConnection();
+        int64_t wpt_id = stoll(req.getPostAttribute("wpt_id"));
+
+        Routes::deleteWaypoint(*conn, wpt_id) ;
+        Variant::Object result{{"success", true}} ;
+        resp.json(Variant(result).toJSON()) ;
+        
+     }, {locale}) ;
+
       api.addRoute("POST", "/photos/caption/{id}/",  [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
        auto locale = req.data().get<LocaleResolverData>() ;
         int64_t photo_id = stoll(req.getRouteAttribute("id")) ;
@@ -176,8 +199,10 @@ int main(int argc, char *argv[]) {
         auto locale = req.data().get<LocaleResolverData>() ;
         GPX data ;
         auto files = req.getUploadedFiles();
+        string file_name ;
         for ( const auto &file: files ) {
             if ( file.id_ != "gps_file" ) continue ;
+            file_name = file.name_ ;
             istringstream strm(file.data_) ;
            
             GPXParser parser ;
@@ -189,10 +214,8 @@ int main(int argc, char *argv[]) {
         }
 
         ConnectionPool::ConnectionPtr conn = con.acquireConnection();
-
-        Variant::Object title{{locale->locale(), req.getPostAttribute("title")}};
     
-        int64_t id = Routes::createRoute(*conn, title, req.getPostAttribute("difficulty"), data) ;
+        int64_t id = Routes::createRoute(*conn, file_name, app_context.locales_, data) ;
    
         resp.json("{\"id\":" + std::to_string(id) + "}") ;
     }, {locale, auth} ) ;
@@ -201,18 +224,39 @@ int main(int argc, char *argv[]) {
         auto locale = req.data().get<LocaleResolverData>() ;
          ConnectionPool::ConnectionPtr conn = con.acquireConnection();
 
-        string id = req.getRouteAttribute("id") ;
+         string id = req.getRouteAttribute("id") ;
+        auto entry = Routes::fetchRoute(*conn, stoll(id), locale->locale());
+        
         auto photos = Routes::getAllPhotosForTrack(*conn, std::stoll(id), locale->locale()) ;
         Variant::Array photo_list ;
         for( const auto &photo: photos) {
             Variant::Object item{{"id", photo.id_}, {"caption", photo.caption_}, {"url", "/api/photo/" + std::to_string(photo.id_)}} ;
             photo_list.emplace_back(std::move(item));
         }
+        auto waypoints = Routes::getAllWaypoints(*conn, std::stoll(id), locale->locale());
+         Variant::Array wpt_list ;
+        for( const auto &wpt: waypoints) {
+
+            auto photos = Routes::getAllPhotosForWaypoint(*conn, wpt.id_, locale->locale());
+            Variant::Array wpt_photo_list ;
+            for( const auto &photo: photos) {
+                Variant::Object item{{"id", photo.id_}, {"caption", photo.caption_}, {"url", "/api/photo/" + std::to_string(photo.id_)}} ;
+                wpt_photo_list.emplace_back(std::move(item));
+            }
+            Variant::Object item{{"id", wpt.id_}, {"name", wpt.name_}, {"desc", wpt.desc_ }, {"photos", wpt_photo_list}} ;
+            wpt_list.emplace_back(std::move(item));
+        }
+
         render("routes/edit.html", *app_context.rdr_, req, resp, Variant::Object{ 
             {"route", Variant::Object{
                 { "id", req.getRouteAttribute("id")},
-                { "title", "kkk" },
-                { "photos", photo_list}
+                { "title", entry->title_ },
+                { "difficulty", entry->difficulty_ },
+                { "desc", entry->desc_ },
+                { "length", entry->length_ },
+                { "duration", entry->duration_},
+                { "photos", photo_list},
+                {"waypoints", wpt_list }
             }
             }}) ;
     }, {locale, auth} ) ;
@@ -240,6 +284,29 @@ int main(int argc, char *argv[]) {
          }
     }, {locale, auth} ) ;
 
+     api.addRoute("GET", "/routes/list/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
+        auto locale = req.data().get<LocaleResolverData>() ;
+         ConnectionPool::ConnectionPtr conn = con.acquireConnection();
+
+         auto routes = Routes::getAllRoutes(*conn, locale->locale()) ;
+
+         Variant::Array routes_json ;
+         for( const auto &route: routes ) {
+            Variant::Object entry ;
+            entry.emplace("id", std::to_string(route.id_)) ;
+            entry.emplace("title", route.title_) ;
+            entry.emplace("length", route.length_) ;
+            entry.emplace("duration", route.duration_) ;
+            entry.emplace("difficulty", route.difficulty_) ;
+            routes_json.push_back(std::move(entry)) ;
+         }
+        
+         Variant::Object result{{"success", "true"}, {"data", routes_json}} ;
+        resp.json(Variant(result).toJSON()) ;
+         
+    }, {locale, auth} ) ;
+
+
     app.addRoute("GET", "/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
         resp.redirect("/home/");
     } ) ;
@@ -249,7 +316,7 @@ int main(int argc, char *argv[]) {
     }, { locale, check } ) ;
 
     app.addRoute("GET", "routes/", [&](HTTPServerRequest& req, HTTPServerResponse& resp) {
-         render("routes.html", *app_context.rdr_, req, resp) ;
+         render("route_list.html", *app_context.rdr_, req, resp) ;
     }, { locale, check } ) ;
     
     app.addRoute("GET", "public/{file:.*}", [&app_context](HTTPServerRequest& req, HTTPServerResponse& resp) {  
